@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    android:gravity="center_horizontal"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/invoice_number"
+        android:layout_weight="1"
+        android:layout_margin="5dp"
+        android:visibility="visible"
+        android:id="@+id/invoice_number"
+        android:textSize="18sp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/month"
+        android:layout_weight="1"
+        android:id="@+id/month"
+        android:textSize="18sp"/>
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/amount"
+        android:visibility="gone"
+        android:text="@string/invoice_amount"
+        android:layout_weight="1"
+        android:textSize="18sp" />
+
+</LinearLayout>

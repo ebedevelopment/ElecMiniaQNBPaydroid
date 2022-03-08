@@ -1,0 +1,4 @@
+<resources>
+    <integer name="card_flip_time_full">200</integer>
+    <integer name="card_flip_time_half">100</integer>
+</resources>

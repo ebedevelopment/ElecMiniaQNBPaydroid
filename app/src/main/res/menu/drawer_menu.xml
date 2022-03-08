@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:title="@string/home" />
+    <item
+        android:id="@+id/nav_reports"
+        android:title="@string/reports" />
+    <item
+        android:id="@+id/nav_re_print"
+        android:title="@string/reprint" />
+    <item
+        android:id="@+id/nav_settle"
+        android:title="@string/settle" />
+    <item
+        android:id="@+id/nav_check_collected"
+        android:title="@string/check_collect" />
+    <item
+        android:id="@+id/nav_total_bills"
+        android:title="@string/total_bills" />
+    <item
+        android:id="@+id/nav_total_collected"
+        android:title="@string/total_collected" />
+    <item
+        android:id="@+id/nav_collected_detailed"
+        android:title="@string/collected_detailed" />
+    <item
+        android:id="@+id/exit"
+        android:title="@string/exit" />
+    <item
+        android:id="@+id/load_clients_data"
+        android:title="@string/get_client_data" />
+    <item
+        android:id="@+id/extract_data"
+        android:title="@string/extract_data" />
+    <item
+        android:id="@+id/logout"
+        android:title="@string/logout" />
+    <item
+        android:id="@+id/app_version"
+        android:title="@string/app_version" />
+</menu>

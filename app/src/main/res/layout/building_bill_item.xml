@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/white_back"
+    android:layout_margin="@dimen/activity_medium_margin"
+    android:padding="@dimen/activity_medium_margin">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:layout_weight="1"
+                android:text="@string/subscriber_number"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/subscriber_number"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:maxLines="1"
+                android:paddingStart="@dimen/activity_medium_margin"
+                android:paddingEnd="@dimen/activity_medium_margin"
+                android:textColor="@color/colorBlack"
+                android:text="1234567890123456"
+                android:textSize="18sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:layout_weight="1"
+                android:text="@string/subscriber_name"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/subscriber_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:maxLines="1"
+                android:paddingStart="@dimen/activity_medium_margin"
+                android:paddingEnd="@dimen/activity_medium_margin"
+                android:textColor="@color/colorBlack"
+                android:layout_weight="2"
+                android:text="@string/subscriber_name"
+                android:textSize="18sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/bills_count"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.2"
+        android:gravity="center"
+        android:layout_margin="@dimen/activity_medium_margin"
+        android:background="@color/colorPrimary"
+        android:text="0"
+        android:textColor="@android:color/white"
+        android:textSize="18sp" />
+
+</LinearLayout>
