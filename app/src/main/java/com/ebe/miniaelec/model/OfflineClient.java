@@ -34,6 +34,7 @@ public class OfflineClient implements Serializable {
     }
 
     public String getSerialNo() {
+
         return SerialNo;
     }
 

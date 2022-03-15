@@ -22,6 +22,7 @@ import com.ebe.ebeunifiedlibrary.message.VoidMsg;
 import com.ebe.ebeunifiedlibrary.sdkconstants.SdkConstants;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.BaseDbHelper;
 import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
@@ -174,7 +175,13 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                                 MiniaElectricity.getPrefsManager().setOfflineBillValue(0);
                                 MiniaElectricity.getPrefsManager().setOfflineBillCount(0);
                                 if (billsStatus != 0)
+                                {
                                     MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
+                                }if (billsStatus == 2)
+                                {
+                                    BaseDbHelper.getInstance(cntxt).dropTables();
+                                }
+
                                 // DBHelper.getInstance(cntxt).deleteTransData(offlineTransData);
                                 for (TransData t :
                                         offlineTransData) {
@@ -421,6 +428,7 @@ public class FinishPendingTransActivity extends AppCompatActivity {
         super.onResume();
         Utils.enableHomeRecentKey(false);
         Utils.enableStatusBar(false);
+
     }
 
     private void finishOK() {

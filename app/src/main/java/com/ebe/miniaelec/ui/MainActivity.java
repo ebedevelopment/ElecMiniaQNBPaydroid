@@ -396,8 +396,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 finish();
             } else {
                 onNavigationItemSelected(nvNavigation.getMenu().getItem(0));
-                if ((!isAfterLogin && MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1) ||
-                        (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || DBHelper.getInstance(cntxt).offlineClientsCount() == 0)) {
+                if ((MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 ||
+                                (isAfterLogin && DBHelper.getInstance(cntxt).offlineClientsCount() == 0))) {
                     getClientsData();
                 }
             }
@@ -497,6 +497,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 MiniaElectricity.getPrefsManager().setMaxOfflineHours(responseBody.getInt("MaxOfflineHoure"));
 
                 MiniaElectricity.getPrefsManager().setMaxOfflineBillCount(responseBody.getInt("MaxOfflineBillCount"));
+
                 MiniaElectricity.getPrefsManager().setMaxOfflineBillValue(responseBody.getInt("MaxOfflineBillValue"));
             } catch (JSONException e) {
                 e.printStackTrace();

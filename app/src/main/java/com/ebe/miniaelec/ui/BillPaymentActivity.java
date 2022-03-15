@@ -364,43 +364,53 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        if (MiniaElectricity.getPrefsManager().getMaxOfflineBillCount() >= MiniaElectricity.getPrefsManager().getOfflineBillCount() + billsCount &&
-                MiniaElectricity.getPrefsManager().getMaxOfflineBillValue() * 100 >= MiniaElectricity.getPrefsManager().getOfflineBillValue() + amount &&
-                MiniaElectricity.getPrefsManager().getMaxOfflineHours() > offlineDiffHours) {
+
             if (offline) {
-                transData.setPaymentType(TransData.PaymentType.OFFLINE_CASH.getValue());
-                transData.setStatus(TransData.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue());
+
+                if (MiniaElectricity.getPrefsManager().getMaxOfflineBillCount() >= MiniaElectricity.getPrefsManager().getOfflineBillCount() + billsCount &&
+                        MiniaElectricity.getPrefsManager().getMaxOfflineBillValue() * 100 >= MiniaElectricity.getPrefsManager().getOfflineBillValue() + amount &&
+                        MiniaElectricity.getPrefsManager().getMaxOfflineHours() > offlineDiffHours) {
+
+                    transData.setPaymentType(TransData.PaymentType.OFFLINE_CASH.getValue());
+                    transData.setStatus(TransData.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue());
                 /*if (!DBHelper.getInstance(cntxt).updateTransData(transData)) {
                     Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
                     DBHelper.getInstance(cntxt).deleteTransData(transData);
                     BillPaymentActivity.this.finish();
                 }*/
-                sendCashDRM(false);
-                if (!DBHelper.getInstance(cntxt).addTransData(transData)) {
-                    Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
-                    this.finish();
-                } else {
-                    deleteBills();
-                    MiniaElectricity.getPrefsManager().setOfflineBillCount(MiniaElectricity.getPrefsManager().getOfflineBillCount() + billsCount);
-                    MiniaElectricity.getPrefsManager().setOfflineBillValue(MiniaElectricity.getPrefsManager().getOfflineBillValue() + finalAmount);
-                    MiniaElectricity.getPrefsManager().setPaidOfflineBillsCount(MiniaElectricity.getPrefsManager().getPaidOfflineBillsCount() + billsCount);
-                    MiniaElectricity.getPrefsManager().setPaidOfflineBillsValue(MiniaElectricity.getPrefsManager().getPaidOfflineBillsValue() + finalAmount);
-                    DBHelper.getInstance(cntxt).addReport(new Report(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
-                    // DBHelper.getInstance(cntxt).updateTransData(transData);
-                    new PrintReceipt(cntxt, transBills, new PrintListener() {
-                        @Override
-                        public void onFinish() {
-                            //sendCashDRM(false);
-                            transData.setPrintCount(1);
-                            DBHelper.getInstance(cntxt).updateTransData(transData);
-                            finish();
-                        }
+                    sendCashDRM(false);
+                    if (!DBHelper.getInstance(cntxt).addTransData(transData)) {
+                        Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
+                        this.finish();
+                    } else {
+                        deleteBills();
+                        MiniaElectricity.getPrefsManager().setOfflineBillCount(MiniaElectricity.getPrefsManager().getOfflineBillCount() + billsCount);
+                        MiniaElectricity.getPrefsManager().setOfflineBillValue(MiniaElectricity.getPrefsManager().getOfflineBillValue() + finalAmount);
+                        MiniaElectricity.getPrefsManager().setPaidOfflineBillsCount(MiniaElectricity.getPrefsManager().getPaidOfflineBillsCount() + billsCount);
+                        MiniaElectricity.getPrefsManager().setPaidOfflineBillsValue(MiniaElectricity.getPrefsManager().getPaidOfflineBillsValue() + finalAmount);
+                        DBHelper.getInstance(cntxt).addReport(new Report(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                        // DBHelper.getInstance(cntxt).updateTransData(transData);
+                        new PrintReceipt(cntxt, transBills, new PrintListener() {
+                            @Override
+                            public void onFinish() {
+                                //sendCashDRM(false);
+                                transData.setPrintCount(1);
+                                DBHelper.getInstance(cntxt).updateTransData(transData);
+                                finish();
+                            }
 
-                        @Override
-                        public void onCancel() {
-                        }
-                    });
+                            @Override
+                            public void onCancel() {
+                            }
+                        });
+                    }
+
+                }else {
+                    Toast.makeText(cntxt, "لقد تجاوزت الحد الأقصى لعمليات الدفع دون مزامنة. برجاء مزامنة عمليات الدفع.", Toast.LENGTH_LONG).show();
+                    // DBHelper.getInstance(cntxt).deleteTransData(transData);
+                    finish();
                 }
+
             } else {
                 //DBHelper.getInstance(cntxt).updateTransData(transData);
                 if (!DBHelper.getInstance(cntxt).addTransData(transData)) {
@@ -477,11 +487,7 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
                             });
                 }
             }
-        } else {
-            Toast.makeText(cntxt, "لقد تجاوزت الحد الأقصى لعمليات الدفع دون مزامنة. برجاء مزامنة عمليات الدفع.", Toast.LENGTH_LONG).show();
-            // DBHelper.getInstance(cntxt).deleteTransData(transData);
-            finish();
-        }
+
     }
 
     private boolean deleteBills() {

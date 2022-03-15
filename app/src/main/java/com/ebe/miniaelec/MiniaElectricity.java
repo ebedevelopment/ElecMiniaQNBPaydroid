@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -31,6 +32,7 @@ public class MiniaElectricity extends Application {
     public static int TERMINAL_TYPE_ANDROID_POS = 2;
     public static int TERMINAL_TYPE_OTHER = -1;
     private static Handler handler;
+    private HttpLoggingInterceptor logging;
 
     @Override
     public void onCreate() {
@@ -39,7 +41,11 @@ public class MiniaElectricity extends Application {
         handler = new Handler();
         /*if (Utils.getDefaultDataSubId(MiniaElectricity.getInstance()) != 1) {
             getDal().getSys().switchSimCard(2);
+
         }*/
+
+       logging = new HttpLoggingInterceptor();
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
     }
 
     public static MiniaElectricity getInstance() {
@@ -134,6 +140,7 @@ public class MiniaElectricity extends Application {
                     .connectTimeout(30, TimeUnit.SECONDS)
                     .readTimeout(30, TimeUnit.SECONDS)
                     .writeTimeout(30, TimeUnit.SECONDS)
+                    .addInterceptor(getInstance().logging)
                     .build();
             api = new Retrofit.Builder()
                     .baseUrl(baseUrl)
@@ -145,6 +152,7 @@ public class MiniaElectricity extends Application {
                     .connectTimeout(30, TimeUnit.SECONDS)
                     .readTimeout(30, TimeUnit.SECONDS)
                     .writeTimeout(30, TimeUnit.SECONDS)
+                    .addInterceptor(getInstance().logging)
                     .build();
             api = new Retrofit.Builder()
                     .baseUrl(baseUrl)

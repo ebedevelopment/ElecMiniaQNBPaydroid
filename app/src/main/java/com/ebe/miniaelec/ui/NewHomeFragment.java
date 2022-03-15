@@ -76,6 +76,7 @@ public class NewHomeFragment extends Fragment implements View.OnClickListener {
         lv_clients = view.findViewById(R.id.clients);
         tv_search = view.findViewById(R.id.tv_search);
         ll_filters = view.findViewById(R.id.ll_filters);
+        Log.d("MaxValue", "onCreateView: "+ MiniaElectricity.getPrefsManager().getOfflineBillValue());
         et_clientID.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -106,6 +107,7 @@ public class NewHomeFragment extends Fragment implements View.OnClickListener {
                 clientId = offlineBills.get(position).getClientId();
                 if (Utils.checkConnection(getActivity())) {
                     //inquiry();
+                    Log.d("Pressed", "onItemClick: clicked ");
                     startActivityForResult(new Intent(getActivity(), FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
                 } else {
                     Intent intent = new Intent(getActivity(), BillPaymentActivity.class);

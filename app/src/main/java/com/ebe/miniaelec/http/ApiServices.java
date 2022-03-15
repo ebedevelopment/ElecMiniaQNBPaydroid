@@ -670,7 +670,9 @@ ApiServices {
                 if (response.isSuccessful()) {
                     hideDialog();
                     try {
+                        response.raw().toString();
                         listener.onSuccess(response.body().string());
+                        Log.d("ClientsData", "onResponse: " + response.body().toString());
                     } catch (IOException e) {
                         e.printStackTrace();
                         listener.onFailure(e.getMessage() + "");

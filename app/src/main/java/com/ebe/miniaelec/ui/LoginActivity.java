@@ -19,6 +19,7 @@ import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
 import com.ebe.ebeunifiedlibrary.message.BaseResponse;
 import com.ebe.ebeunifiedlibrary.message.ParamsMsg;
 import com.ebe.ebeunifiedlibrary.message.TransResponse;
+import com.ebe.ebeunifiedlibrary.sdkconstants.SdkConstants;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.database.BaseDbHelper;
@@ -120,12 +121,19 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                             break;
                         }
                     }
+                    StringBuilder warning = new StringBuilder();
                     if (allowLogin) {
                         BaseDbHelper.getInstance(this).dropTables();
                         //DBHelper.getInstance(cntxt).clearOfflineData();
                         login();
                     } else
-                        Toast.makeText(cntxt, "برجاء مزامنة فواتير المحصل السابق لتمكين تسجيل الدخول.", Toast.LENGTH_LONG).show();
+
+                        warning.append("برجاء مزامنة فواتير المحصل السابق");
+                    warning.append(MiniaElectricity.getPrefsManager().getCollectorCode());
+                    warning.append("لتمكين تسجيل الدخول.");
+
+                       Toast.makeText(cntxt, warning.toString(), Toast.LENGTH_LONG).show();
+                    //Toast.makeText(cntxt, " برجاء مزامنة فواتير المحصل السابق لتمكين تسجيل الدخول. "+"( "+MiniaElectricity.getPrefsManager().getCollectorCode()+")" , Toast.LENGTH_LONG).show();
 
                 }
 
@@ -156,14 +164,32 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                     MiniaElectricity.getPrefsManager().setSessionId(UserSessionID);
                                     if (billsStatus != 0)
                                         MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
+                                    if (billsStatus == 2)
+                                    {
+                                        BaseDbHelper.getInstance(cntxt).dropTables();
+                                    }
                                 /*startActivity(new Intent(LoginActivity.this, MainActivity.class));
                                 finish();*/
 
-                                    ParamsMsg.Request request = new ParamsMsg.Request();
+                                   ParamsMsg.Request request = new ParamsMsg.Request();
                                     transAPI = TransAPIFactory.createTransAPI();
-                                    //request.setCategory(SdkConstants.CATEGORY_VOID);
+                                    request.setCategory(SdkConstants.CATEGORY_VOID);
                                     request.setPackageName(MiniaElectricity.getPrefsManager().getPackageName());
-                                    transAPI.startTrans(cntxt, request);
+                                             transAPI.startTrans(cntxt, request);
+
+//                                    MiniaElectricity.getPrefsManager().setLoggedStatus(true);
+//                                    MiniaElectricity.getPrefsManager().setTerminalId("");
+//                                    MiniaElectricity.getPrefsManager().setMerchantId("");
+//                                    MiniaElectricity.getPrefsManager().setFixedFees(0);
+//                                    MiniaElectricity.getPrefsManager().setPercentFees(0);
+//                                    MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+//                                            .format(new Date(System.currentTimeMillis())));
+//                                    Intent intent = new Intent(cntxt, MainActivity.class);
+//                                    Bundle bundle = new Bundle();
+//                                    bundle.putBoolean("after_login", true);
+//                                    intent.putExtra("params", bundle);
+//                                    startActivity(intent);
+//                                    finish();
 
                                 } else onFailure("فشل في عملية تسجيل الدخول!");
                             } catch (JSONException e) {
