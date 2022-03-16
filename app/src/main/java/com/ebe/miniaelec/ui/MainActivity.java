@@ -396,9 +396,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 finish();
             } else {
                 onNavigationItemSelected(nvNavigation.getMenu().getItem(0));
+                int flag = MiniaElectricity.getPrefsManager().getOfflineBillStatus();
+                Log.d("Flag", "onActivityResult:  " +flag);
                 if ((!isAfterLogin && MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1) ||
-                        (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || DBHelper.getInstance(cntxt).offlineClientsCount() == 0)) {
+                        (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || (DBHelper.getInstance(cntxt).offlineClientsCount() == 0 && MiniaElectricity.getPrefsManager().getOfflineBillStatus() != 2 ))) {
                     getClientsData();
+                } if (flag ==2)
+                {
+                    BaseDbHelper.getInstance(cntxt).dropTables();
                 }
             }
         } else {
