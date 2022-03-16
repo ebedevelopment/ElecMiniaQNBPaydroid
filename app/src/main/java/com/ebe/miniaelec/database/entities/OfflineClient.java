@@ -41,6 +41,10 @@ public class OfflineClient {
         ModelBillInquiryV = modelBillInquiryV;
     }
 
+    public int getId() {
+        return id;
+    }
+
     private String ClientMobileNo;
 
     private ArrayList<BillData> ModelBillInquiryV;

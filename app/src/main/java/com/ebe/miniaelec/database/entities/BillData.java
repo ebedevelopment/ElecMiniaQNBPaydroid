@@ -24,6 +24,7 @@ public class BillData {
     private int rawNum;
 
 
+
     private String sectorName;
 
 
@@ -91,6 +92,9 @@ public class BillData {
         return client;
     }
 
+    public int getId() {
+        return id;
+    }
     public void setClient(OfflineClient client) {
         this.client = client;
     }
