@@ -9,7 +9,7 @@ import com.ebe.miniaelec.model.BillData;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
+@Entity(tableName = "OfflineClient")
 public class OfflineClient {
 
     @PrimaryKey(autoGenerate = true)

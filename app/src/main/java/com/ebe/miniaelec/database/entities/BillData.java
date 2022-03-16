@@ -8,7 +8,7 @@ import com.ebe.miniaelec.model.OfflineClient;
 import com.google.gson.annotations.SerializedName;
 import com.j256.ormlite.field.DatabaseField;
 
-@Entity
+@Entity(tableName = "BillData")
 public class BillData {
 
     @PrimaryKey(autoGenerate = true)

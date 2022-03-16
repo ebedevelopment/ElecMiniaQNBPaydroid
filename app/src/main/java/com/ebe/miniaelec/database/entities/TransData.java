@@ -5,7 +5,7 @@ import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 import java.util.ArrayList;
 
-@Entity(tableName = "transdata")
+@Entity(tableName = "TransData")
 public class TransData {
 
     @PrimaryKey(autoGenerate = true)
