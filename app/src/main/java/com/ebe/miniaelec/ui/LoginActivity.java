@@ -6,13 +6,15 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.ebe.ebeunifiedlibrary.factory.ITransAPI;
 import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
@@ -38,7 +40,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import dmax.dialog.SpotsDialog;
-import io.reactivex.functions.Action;
+import pub.devrel.easypermissions.EasyPermissions;
 
 //import android.util.Log;
 
@@ -48,6 +50,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private EditText et_collector_code, et_password;
     private SpotsDialog progressDialog;
     public ITransAPI transAPI;
+    private static final int APP_PERMISSIONS = 5;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,14 +73,16 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.READ_PHONE_STATE};
 
-        Utils.callPermissions(this, permissions,
-                new Action() {
-                    @Override
-                    public void run() throws Exception {
+        requestPermissions(permissions);
 
-                    }
-                }, getString(R.string.enable_required_permossions)
-        );
+//        Utils.callPermissions(this, permissions,
+//                new Action() {
+//                    @Override
+//                    public void run() throws Exception {
+//
+//                    }
+//                }, getString(R.string.enable_required_permossions)
+//        );
         progressDialog = new SpotsDialog(cntxt, R.style.ProcessingProgress);
         progressDialog.setCancelable(false);
         transAPI = TransAPIFactory.createTransAPI();
@@ -241,5 +246,26 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             Toast.makeText(cntxt, "فشل في تحميل البيانات برجاء المحاولة مرة اخرى", Toast.LENGTH_LONG).show();
         }
 
+    }
+
+    void requestPermissions(String[] perms)
+    {
+
+        if (EasyPermissions.hasPermissions(this, perms)) {
+            // Already have permission, do the thing
+            // ...
+        } else {
+            // Do not have permissions, request them now
+            EasyPermissions.requestPermissions(this, getString(R.string.enable_required_permossions),
+                    APP_PERMISSIONS, perms);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        // Forward results to EasyPermissions
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
     }
 }

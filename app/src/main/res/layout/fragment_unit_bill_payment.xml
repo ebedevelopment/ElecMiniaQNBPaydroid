@@ -160,7 +160,7 @@
                 android:textColor="@color/colorBlack"
                 android:textStyle="bold" />
 
-            <android.support.design.widget.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/activity_small_margin"
@@ -173,7 +173,7 @@
                     android:layout_height="wrap_content"
                     android:hint="@string/client_mobile_no"
                     android:inputType="phone" />
-            </android.support.design.widget.TextInputLayout>
+            </com.google.android.material.textfield.TextInputLayout>
 
 
             <LinearLayout

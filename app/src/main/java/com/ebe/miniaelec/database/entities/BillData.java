@@ -1,12 +1,9 @@
 package com.ebe.miniaelec.database.entities;
 
 
+import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
-
-import com.ebe.miniaelec.model.OfflineClient;
-import com.google.gson.annotations.SerializedName;
-import com.j256.ormlite.field.DatabaseField;
 
 @Entity(tableName = "BillData")
 public class BillData {
@@ -14,11 +11,12 @@ public class BillData {
     @PrimaryKey(autoGenerate = true)
     private int id = 0;
 
+    @Embedded
     OfflineClient client;
 
     String clientId;
 
-    private String BillUnique;
+    private String billUnique;
 
 
     private int rawNum;
@@ -108,11 +106,11 @@ public class BillData {
     }
 
     public String getBillUnique() {
-        return BillUnique;
+        return billUnique;
     }
 
     public void setBillUnique(String billUnique) {
-        BillUnique = billUnique;
+        billUnique = billUnique;
     }
 
     public int getRawNum() {

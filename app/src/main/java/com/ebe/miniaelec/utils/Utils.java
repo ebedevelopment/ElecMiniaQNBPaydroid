@@ -1,6 +1,5 @@
 package com.ebe.miniaelec.utils;
 
-import android.app.Activity;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -11,7 +10,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.Toast;
 
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
@@ -23,7 +21,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.pax.dal.entity.ENavigationKey;
 import com.pax.dal.exceptions.PhoneDevException;
-import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -37,13 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
-
-import io.reactivex.Observable;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.functions.Action;
-import io.reactivex.functions.Consumer;
 
 public class Utils {
     public static final String DATE_TIME_PATTERN = "ddMMyyyyHHmmss";
@@ -177,26 +168,26 @@ public class Utils {
         return elapsedDays * 24 + elapsedHours;
     }
 
-    public static void callPermissions(@NonNull final Activity activity, String[] permission, @NonNull Action action, final String failedMsg) {
-        RxPermissions rxPermissions = new RxPermissions(activity);
-        List<Observable<Boolean>> permissionList = new ArrayList<>();
-        for (String s : permission) {
-            permissionList.add(rxPermissions.request(s));
-        }
-        Observable.concat(permissionList)
-                .subscribe(new Consumer<Boolean>() {
-                    @Override
-                    public void accept(Boolean granted) throws Exception {
-                        if (!granted) {
-                            Toast.makeText(activity, failedMsg, Toast.LENGTH_LONG).show();
-                        }
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                    }
-                }, action);
-    }
+//    public static void callPermissions(@NonNull final Activity activity, String[] permission, @NonNull Action action, final String failedMsg) {
+//        RxPermissions rxPermissions = new RxPermissions(activity);
+//        List<Observable<Boolean>> permissionList = new ArrayList<>();
+//        for (String s : permission) {
+//            permissionList.add(rxPermissions.request(s));
+//        }
+//        Observable.concat(permissionList)
+//                .subscribe(new Consumer<Boolean>() {
+//                    @Override
+//                    public void accept(Boolean granted) throws Exception {
+//                        if (!granted) {
+//                            Toast.makeText(activity, failedMsg, Toast.LENGTH_LONG).show();
+//                        }
+//                    }
+//                }, new Consumer<Throwable>() {
+//                    @Override
+//                    public void accept(Throwable throwable) throws Exception {
+//                    }
+//                }, action);
+//    }
 
     public static void slideDown(Context ctx, View v) {
 

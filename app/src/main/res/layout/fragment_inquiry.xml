@@ -19,7 +19,7 @@
             android:gravity="center"
             android:id="@+id/hint"
             android:layout_height="wrap_content" />
-        <android.support.design.widget.TextInputLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layoutDirection="ltr"
@@ -33,7 +33,7 @@
                 android:maxLength="16"
                 android:text="0204131304010200"
                 android:inputType="number" />
-        </android.support.design.widget.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
         <Button
             android:id="@+id/inquiry"

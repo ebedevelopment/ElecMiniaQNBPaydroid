@@ -4,7 +4,6 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-import com.ebe.miniaelec.model.BillData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,8 +13,15 @@ public class OfflineClient {
 
     @PrimaryKey(autoGenerate = true)
     private int id = 0;
+
+
+
     @ColumnInfo(name = "client_id")
     private String SerialNo;
+
+    private String ClientMobileNo;
+
+    private ArrayList<BillData> ModelBillInquiryV;
 
     public String getSerialNo() {
         return SerialNo;
@@ -44,8 +50,11 @@ public class OfflineClient {
     public int getId() {
         return id;
     }
+    public void setId(int id) {
+        this.id = id;
+    }
 
-    private String ClientMobileNo;
 
-    private ArrayList<BillData> ModelBillInquiryV;
+
+
 }

@@ -99,6 +99,10 @@ public class TransData {
         return id;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public int getReferenceNo() {
         return referenceNo;
     }

@@ -14,6 +14,7 @@ public class Report {
 
     private String transDate;
 
+
     private String transTime;
 
     private String bankTransactionID;
@@ -36,6 +37,10 @@ public class Report {
         this.billsCount = billsCount;
         this.paymentType = paymentType;
     }
+    public void setId(int id) {
+        this.id = id;
+    }
+
 
     public int getId() {
         return id;

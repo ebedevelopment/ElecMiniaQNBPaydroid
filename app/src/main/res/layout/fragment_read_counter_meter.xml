@@ -96,7 +96,7 @@
         android:text="@string/enter_current_meter"
         android:textColor="@color/colorPrimaryDark" />
 
-    <android.support.design.widget.TextInputLayout
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/activity_large_margin"
@@ -110,7 +110,7 @@
             android:layout_height="39dp"
             android:gravity="center"
             android:inputType="number" />
-    </android.support.design.widget.TextInputLayout>
+    </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
         android:layout_width="match_parent"
