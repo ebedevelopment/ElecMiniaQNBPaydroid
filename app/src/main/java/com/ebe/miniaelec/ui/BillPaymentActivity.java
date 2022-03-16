@@ -364,10 +364,13 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        if (MiniaElectricity.getPrefsManager().getMaxOfflineBillCount() >= MiniaElectricity.getPrefsManager().getOfflineBillCount() + billsCount &&
-                MiniaElectricity.getPrefsManager().getMaxOfflineBillValue() * 100 >= MiniaElectricity.getPrefsManager().getOfflineBillValue() + amount &&
-                MiniaElectricity.getPrefsManager().getMaxOfflineHours() > offlineDiffHours) {
-            if (offline) {
+
+        if (offline) {
+
+            if (MiniaElectricity.getPrefsManager().getMaxOfflineBillCount() >= MiniaElectricity.getPrefsManager().getOfflineBillCount() + billsCount &&
+                    MiniaElectricity.getPrefsManager().getMaxOfflineBillValue() * 100 >= MiniaElectricity.getPrefsManager().getOfflineBillValue() + amount &&
+                    MiniaElectricity.getPrefsManager().getMaxOfflineHours() > offlineDiffHours) {
+
                 transData.setPaymentType(TransData.PaymentType.OFFLINE_CASH.getValue());
                 transData.setStatus(TransData.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue());
                 /*if (!DBHelper.getInstance(cntxt).updateTransData(transData)) {
@@ -401,87 +404,90 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
                         }
                     });
                 }
-            } else {
-                //DBHelper.getInstance(cntxt).updateTransData(transData);
-                if (!DBHelper.getInstance(cntxt).addTransData(transData)) {
-                    Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
-                    this.finish();
-                } else {
-                    JsonArray ModelBillPaymentV = new JsonArray();
-                    for (TransBill b :
-                            transBills) {
-                        JsonObject j = new JsonObject();
-                        j.addProperty("RowNum", b.getRawNum());
-                        j.addProperty("BillDate", b.getBillDate());
-                        j.addProperty("BillValue", b.getBillValue());
-                        j.addProperty("CommissionValue", b.getCommissionValue());
-                        j.addProperty("CommissionValueCreditCard", "0");
 
-                        ModelBillPaymentV.add(j);
-                    }
-                    new ApiServices(cntxt, false).billPayment(transData.getInquiryID(), transData.getPaymentType(),
-                            transData.getClientMobileNo(), transData.getClientID(), ModelBillPaymentV, transData.getTransDateTime(),
-                            transData.getStan(), transData.getBankTransactionID(),
-                            "0", "0", new RequestListener() {
-                                @Override
-                                public void onSuccess(String response) {
-                                    try {
-                                        JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
-                                        String Error = responseBody.optString("Error").trim();
-                                        //Log.e("requestCashPayment", response);
-                                        if (Error != null && !Error.isEmpty()) {
-                                            if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
-                                                for (TransBill b :
-                                                        transBills) {
-                                                    DBHelper.getInstance(cntxt).deleteTransBill(b.getBillUnique());
-                                                }
-                                                DBHelper.getInstance(cntxt).deleteTransData(transData);
-                                                MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                                startActivity(new Intent(BillPaymentActivity.this, LoginActivity.class));
-                                                BillPaymentActivity.this.finish();
-                                            } else onFailure("فشل في عملية الدفع!\n" + Error);
-                                        } else {
-                                            transData.setStatus(TransData.STATUS.PAID_PENDING_DRM_REQ.getValue());
-                                            DBHelper.getInstance(cntxt).updateTransData(transData);
-                                            MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(MiniaElectricity.getPrefsManager().getPaidOnlineBillsCount() + billsCount);
-                                            MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(MiniaElectricity.getPrefsManager().getPaidOnlineBillsValue() + finalAmount);
-                                            DBHelper.getInstance(cntxt).addReport(new Report(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
-                                            deleteBills();
-                                            new PrintReceipt(cntxt, transBills, new PrintListener() {
-                                                @Override
-                                                public void onFinish() {
-                                                    sendCashDRM(false);
-                                                }
-
-                                                @Override
-                                                public void onCancel() {
-
-                                                }
-                                            });
-                                            //printReceipt();
-
-                                            // cancelPaymentRequest(clientID + tv_billDate.getText().toString().trim());
-                                        }
-                                    } catch (JSONException e) {
-                                        onFailure("فشل في عملية الدفع!\n");
-                                        e.printStackTrace();
-                                        //  onFailure(e.getMessage());
-                                    }
-                                }
-
-                                @Override
-                                public void onFailure(String failureMsg) {
-                                    Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
-                                    cancelPaymentRequest();
-                                }
-                            });
-                }
+            }else {
+                Toast.makeText(cntxt, "لقد تجاوزت الحد الأقصى لعمليات الدفع دون مزامنة. برجاء مزامنة عمليات الدفع.", Toast.LENGTH_LONG).show();
+                // DBHelper.getInstance(cntxt).deleteTransData(transData);
+                finish();
             }
+
         } else {
-            Toast.makeText(cntxt, "لقد تجاوزت الحد الأقصى لعمليات الدفع دون مزامنة. برجاء مزامنة عمليات الدفع.", Toast.LENGTH_LONG).show();
-            // DBHelper.getInstance(cntxt).deleteTransData(transData);
-            finish();
+            //DBHelper.getInstance(cntxt).updateTransData(transData);
+            if (!DBHelper.getInstance(cntxt).addTransData(transData)) {
+                Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
+                this.finish();
+            } else {
+                JsonArray ModelBillPaymentV = new JsonArray();
+                for (TransBill b :
+                        transBills) {
+                    JsonObject j = new JsonObject();
+                    j.addProperty("RowNum", b.getRawNum());
+                    j.addProperty("BillDate", b.getBillDate());
+                    j.addProperty("BillValue", b.getBillValue());
+                    j.addProperty("CommissionValue", b.getCommissionValue());
+                    j.addProperty("CommissionValueCreditCard", "0");
+
+                    ModelBillPaymentV.add(j);
+                }
+                new ApiServices(cntxt, false).billPayment(transData.getInquiryID(), transData.getPaymentType(),
+                        transData.getClientMobileNo(), transData.getClientID(), ModelBillPaymentV, transData.getTransDateTime(),
+                        transData.getStan(), transData.getBankTransactionID(),
+                        "0", "0", new RequestListener() {
+                            @Override
+                            public void onSuccess(String response) {
+                                try {
+                                    JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                                    String Error = responseBody.optString("Error").trim();
+                                    //Log.e("requestCashPayment", response);
+                                    if (Error != null && !Error.isEmpty()) {
+                                        if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
+                                            for (TransBill b :
+                                                    transBills) {
+                                                DBHelper.getInstance(cntxt).deleteTransBill(b.getBillUnique());
+                                            }
+                                            DBHelper.getInstance(cntxt).deleteTransData(transData);
+                                            MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                                            startActivity(new Intent(BillPaymentActivity.this, LoginActivity.class));
+                                            BillPaymentActivity.this.finish();
+                                        } else onFailure("فشل في عملية الدفع!\n" + Error);
+                                    } else {
+                                        transData.setStatus(TransData.STATUS.PAID_PENDING_DRM_REQ.getValue());
+                                        DBHelper.getInstance(cntxt).updateTransData(transData);
+                                        MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(MiniaElectricity.getPrefsManager().getPaidOnlineBillsCount() + billsCount);
+                                        MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(MiniaElectricity.getPrefsManager().getPaidOnlineBillsValue() + finalAmount);
+                                        DBHelper.getInstance(cntxt).addReport(new Report(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                                        deleteBills();
+                                        new PrintReceipt(cntxt, transBills, new PrintListener() {
+                                            @Override
+                                            public void onFinish() {
+                                                sendCashDRM(false);
+                                            }
+
+                                            @Override
+                                            public void onCancel() {
+
+                                            }
+                                        });
+                                        //printReceipt();
+
+                                        // cancelPaymentRequest(clientID + tv_billDate.getText().toString().trim());
+                                    }
+                                } catch (JSONException e) {
+                                    onFailure("فشل في عملية الدفع!\n");
+                                    e.printStackTrace();
+                                    //  onFailure(e.getMessage());
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(String failureMsg) {
+                                Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                                cancelPaymentRequest();
+                            }
+                        });
+            }
         }
+
     }
 
     private boolean deleteBills() {

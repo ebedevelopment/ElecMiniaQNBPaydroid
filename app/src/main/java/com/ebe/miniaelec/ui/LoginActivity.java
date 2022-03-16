@@ -119,13 +119,21 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                             allowLogin = false;
                             break;
                         }
+
+
                     }
+                    StringBuilder warning = new StringBuilder();
                     if (allowLogin) {
                         BaseDbHelper.getInstance(this).dropTables();
                         //DBHelper.getInstance(cntxt).clearOfflineData();
                         login();
-                    } else
-                        Toast.makeText(cntxt, "برجاء مزامنة فواتير المحصل السابق لتمكين تسجيل الدخول.", Toast.LENGTH_LONG).show();
+                    } else{
+                        warning.append("برجاء مزامنة فواتير المحصل السابق ");
+                        warning.append(MiniaElectricity.getPrefsManager().getCollectorCode());
+                        warning.append("لتمكين تسجيل الدخول.");
+                        Toast.makeText(cntxt, warning.toString(), Toast.LENGTH_LONG).show();
+                    }
+
 
                 }
 
@@ -156,6 +164,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                     MiniaElectricity.getPrefsManager().setSessionId(UserSessionID);
                                     if (billsStatus != 0)
                                         MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
+
+                                    if (billsStatus == 2)
+                                    {
+                                        BaseDbHelper.getInstance(cntxt).dropTables();
+                                    }
                                 /*startActivity(new Intent(LoginActivity.this, MainActivity.class));
                                 finish();*/
 
