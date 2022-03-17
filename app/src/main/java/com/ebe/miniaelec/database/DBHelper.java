@@ -280,6 +280,7 @@ public class DBHelper {
         return dao.queryForAll();
     }
 
+    //here
     public List<BillData> getAllOfflineBills() {
         RuntimeExceptionDao<BillData, Integer> dao = getClientBillsDataDao();
         return dao.queryForAll();

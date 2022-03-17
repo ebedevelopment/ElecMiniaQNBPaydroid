@@ -8,7 +8,6 @@ import androidx.room.Query;
 import androidx.room.Update;
 
 import com.ebe.miniaelec.database.entities.BillDataEntity;
-import com.ebe.miniaelec.model.BillData;
 
 import java.util.List;
 
@@ -46,6 +45,27 @@ public interface BillDataDao {
     @Query("Select DISTINCT faryCode From BillDataEntity Where mntkaCode = :mntka and dayCode = :day and mainCode = :main")
     Flowable<List<String>> getDistinctFaryOfMntkaAndDayAndMain(String mntka, String day, String main);
 
-    //@Query()
-    Flowable<List<BillData>> getDistinctBills();
+    @Query("Select * From BillDataEntity Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc  ")
+    Flowable<List<BillDataEntity>> getDistinctBills();
+
+
+    @Query("Select * From BillDataEntity Where mntkaCode = :mntka Group by faryCode ,clientName, mainCode,clientId")
+    Flowable<List<BillDataEntity>> getDistinctBillsOfMntka(String mntka);
+
+
+    @Query("Select * From BillDataEntity Where mntkaCode =:mntka and dayCode =:day Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc")
+    Flowable<List<BillDataEntity>> getDistinctBillsByMntkaAndDay(String mntka, String day);
+
+    @Query("Select * From BillDataEntity Where mntkaCode =:mntka and dayCode =:day and mainCode =:main Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc")
+    Flowable<List<BillDataEntity>> getDistinctBillsByMntkaDayAndMain(String mntka, String day, String main);
+
+    @Query("Select * From BillDataEntity Where mntkaCode =:mntka and dayCode =:day and mainCode =:main and faryCode = :fary Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc")
+    Flowable<List<BillDataEntity>> getDistinctBillsByMntkaDayMainAndFary(String mntka, String day, String main, String fary);
+
+
+    @Query("Select * From BillDataEntity Where clientName = :clientName Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc")
+    Flowable<List<BillDataEntity>> getDistinctBillsByClientName(String clientName);
+
+    @Query("Delete From BillDataEntity")
+    void clearBills();
 }
