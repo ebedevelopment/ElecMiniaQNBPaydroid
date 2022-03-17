@@ -1,30 +1,29 @@
 package com.ebe.miniaelec.database.entities;
 
-
-import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "BillData")
-public class BillData {
+import com.ebe.miniaelec.model.BillData;
+import com.ebe.miniaelec.model.TransData;
 
+@Entity
+public class TransBillEntity {
     @PrimaryKey(autoGenerate = true)
     private int id = 0;
 
-    @Embedded
-    OfflineClient client;
+    int transDataId;
 
-    String clientId;
 
-    private String billUnique;
+    String bankTransactionID;
+
+
+
+    private String BillUnique;
 
 
     private int rawNum;
 
-
-
     private String sectorName;
-
 
     private String branchName;
 
@@ -49,6 +48,7 @@ public class BillData {
     private double commissionValue;
 
     private String clientName;
+
     private String billDate;
 
     private double billValue;
@@ -62,12 +62,35 @@ public class BillData {
 
     private String faryCode;
 
-    public BillData() {
+    public TransBillEntity() {
     }
 
-    public BillData(int rawNum, String sectorName, String branchName, String clientAddress, String clientActivity,
-                    String clientPlace, String currentRead, String previousRead, String consumption, String installments,
-                    String fees, String payments, double commissionValue, String clientName, String billDate, double billValue) {
+    public TransBillEntity(BillData data) {
+        BillUnique = data.getBillUnique();
+        this.rawNum = data.getRawNum();
+        this.sectorName = data.getSectorName();
+        this.branchName = data.getBranchName();
+        this.clientAddress = data.getClientAddress();
+        this.clientActivity = data.getClientActivity();
+        this.clientPlace = data.getClientPlace();
+        this.currentRead = data.getCurrentRead();
+        this.previousRead = data.getPreviousRead();
+        this.consumption = data.getConsumption();
+        this.installments = data.getInstallments();
+        this.fees = data.getFees();
+        this.payments = data.getPayments();
+        this.commissionValue = data.getCommissionValue();
+        this.clientName = data.getClientName();
+        this.billDate = data.getBillDate();
+        this.billValue = data.getBillValue();
+        this.mntkaCode = data.getMntkaCode();
+        this.dayCode = data.getDayCode();
+        this.mainCode = data.getMainCode();
+        this.faryCode = data.getFaryCode();
+    }
+
+    public TransBillEntity(String billUnique, int rawNum, String sectorName, String branchName, String clientAddress, String clientActivity, String clientPlace, String currentRead, String previousRead, String consumption, String installments, String fees, String payments, double commissionValue, String clientName, String billDate, double billValue, String mntkaCode, String dayCode, String mainCode, String faryCode) {
+        BillUnique = billUnique;
         this.rawNum = rawNum;
         this.sectorName = sectorName;
         this.branchName = branchName;
@@ -84,33 +107,45 @@ public class BillData {
         this.clientName = clientName;
         this.billDate = billDate;
         this.billValue = billValue;
+        this.mntkaCode = mntkaCode;
+        this.dayCode = dayCode;
+        this.mainCode = mainCode;
+        this.faryCode = faryCode;
     }
 
-    public OfflineClient getClient() {
-        return client;
+    public TransBillEntity(int transDataId, String bankTransactionID, String billUnique, int rawNum, double commissionValue, String billDate, double billValue, String clientName) {
+        this.transDataId = transDataId;
+        this.bankTransactionID = bankTransactionID;
+        BillUnique = billUnique;
+        this.rawNum = rawNum;
+        this.commissionValue = commissionValue;
+        this.billDate = billDate;
+        this.billValue = billValue;
+        this.clientName = clientName;
     }
 
-    public int getId() {
-        return id;
-    }
-    public void setClient(OfflineClient client) {
-        this.client = client;
+    public int getTransDataId() {
+        return transDataId;
     }
 
-    public String getClientId() {
-        return clientId;
+    public void setTransDataId(int transDataId) {
+        this.transDataId = transDataId;
     }
 
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
+    public String getBankTransactionID() {
+        return bankTransactionID;
+    }
+
+    public void setBankTransactionID(String bankTransactionID) {
+        this.bankTransactionID = bankTransactionID;
     }
 
     public String getBillUnique() {
-        return billUnique;
+        return BillUnique;
     }
 
     public void setBillUnique(String billUnique) {
-        billUnique = billUnique;
+        BillUnique = billUnique;
     }
 
     public int getRawNum() {
@@ -268,6 +303,14 @@ public class BillData {
     public String getFaryCode() {
         return faryCode;
     }
+
+    public int getId() {
+        return id;
+    }
+    public void setId(int id) {
+        this.id = id;
+    }
+
 
     public void setFaryCode(String faryCode) {
         this.faryCode = faryCode;

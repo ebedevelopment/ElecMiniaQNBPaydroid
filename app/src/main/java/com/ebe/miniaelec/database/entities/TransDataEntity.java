@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey;
 import java.util.ArrayList;
 
 @Entity(tableName = "TransData")
-public class TransData {
+public class TransDataEntity {
 
     @PrimaryKey(autoGenerate = true)
     private int id = 0;
@@ -29,7 +29,6 @@ public class TransData {
 
     private String bankTransactionID;
 
-    private ArrayList<TransBill> transBills;
 
     private String drmData;
 
@@ -78,22 +77,17 @@ public class TransData {
         }
     }
 
-    public TransData() {
+    public TransDataEntity() {
     }
 
-    public TransData(int referenceNo, String clientID, String inquiryID, int status) {
+    public TransDataEntity(int referenceNo, String clientID, String inquiryID, int status) {
         this.referenceNo = referenceNo;
         this.clientID = clientID;
         this.inquiryID = inquiryID;
         this.status = status;
     }
 
-    public ArrayList<TransBill> getTransBills() {
-        if (transBills == null) {
-            return new ArrayList<>();
-        } else
-            return new ArrayList<>(transBills);
-    }
+
 
     public int getId() {
         return id;
@@ -175,9 +169,6 @@ public class TransData {
         this.bankTransactionID = bankTransactionID;
     }
 
-    public void setTransBills(ArrayList<TransBill> transBills) {
-        this.transBills = transBills;
-    }
 
     public String getDrmData() {
         return drmData;

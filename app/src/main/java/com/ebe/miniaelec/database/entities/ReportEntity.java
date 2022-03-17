@@ -5,7 +5,7 @@ import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "Reports")
-public class Report {
+public class ReportEntity {
 
     @PrimaryKey(autoGenerate = true)
     private int id = 0;
@@ -25,10 +25,10 @@ public class Report {
 
     private int paymentType;
 
-    public Report() {
+    public ReportEntity() {
     }
 
-    public Report(String clientID, String transDate,long totalAmount, int billsCount, int paymentType ,String transTime, String bankTransactionID) {
+    public ReportEntity(String clientID, String transDate, long totalAmount, int billsCount, int paymentType , String transTime, String bankTransactionID) {
         this.clientID = clientID;
         this.transDate = transDate;
         this.transTime = transTime;

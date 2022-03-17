@@ -10,13 +10,13 @@ import com.ebe.miniaelec.database.daos.BillDataDao;
 import com.ebe.miniaelec.database.daos.OfflineClientsDao;
 import com.ebe.miniaelec.database.daos.TransBillDao;
 import com.ebe.miniaelec.database.daos.TransDataDao;
-import com.ebe.miniaelec.database.entities.BillData;
-import com.ebe.miniaelec.database.entities.OfflineClient;
-import com.ebe.miniaelec.database.entities.Report;
-import com.ebe.miniaelec.database.entities.TransBill;
-import com.ebe.miniaelec.database.entities.TransData;
+import com.ebe.miniaelec.database.entities.BillDataEntity;
+import com.ebe.miniaelec.database.entities.OfflineClientEntity;
+import com.ebe.miniaelec.database.entities.ReportEntity;
+import com.ebe.miniaelec.database.entities.TransBillEntity;
+import com.ebe.miniaelec.database.entities.TransDataEntity;
 
-@Database(entities = {BillData.class, OfflineClient.class, Report.class, TransBill.class, TransData.class}, version = 0)
+@Database(entities = {BillDataEntity.class, OfflineClientEntity.class, ReportEntity.class, TransBillEntity.class, TransDataEntity.class}, version = 0)
 public abstract class AppDataBase extends RoomDatabase {
 
 

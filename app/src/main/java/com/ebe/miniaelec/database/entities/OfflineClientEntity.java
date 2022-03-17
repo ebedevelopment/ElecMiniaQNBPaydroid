@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity(tableName = "OfflineClient")
-public class OfflineClient {
+public class OfflineClientEntity {
 
     @PrimaryKey(autoGenerate = true)
     private int id = 0;
@@ -21,7 +21,6 @@ public class OfflineClient {
 
     private String ClientMobileNo;
 
-    private ArrayList<BillData> ModelBillInquiryV;
 
     public String getSerialNo() {
         return SerialNo;
@@ -39,13 +38,6 @@ public class OfflineClient {
         ClientMobileNo = clientMobileNo;
     }
 
-    public List<BillData> getModelBillInquiryV() {
-        return ModelBillInquiryV;
-    }
-
-    public void setModelBillInquiryV(ArrayList<BillData> modelBillInquiryV) {
-        ModelBillInquiryV = modelBillInquiryV;
-    }
 
     public int getId() {
         return id;
