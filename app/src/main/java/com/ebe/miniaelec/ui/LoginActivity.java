@@ -127,7 +127,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         BaseDbHelper.getInstance(this).dropTables();
                         //DBHelper.getInstance(cntxt).clearOfflineData();
                         login();
-                    } else{
+                    } else {
                         warning.append("برجاء مزامنة فواتير المحصل السابق ");
                         warning.append(MiniaElectricity.getPrefsManager().getCollectorCode());
                         warning.append("لتمكين تسجيل الدخول.");
@@ -162,11 +162,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                     MiniaElectricity.getPrefsManager().setCollectorCode(et_collector_code.getText().toString().trim());
                                     MiniaElectricity.getPrefsManager().setPassword(et_password.getText().toString().trim());
                                     MiniaElectricity.getPrefsManager().setSessionId(UserSessionID);
-                                    if (billsStatus != 0)
-                                        MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
+                                    MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
 
-                                    if (billsStatus == 2)
-                                    {
+                                    if (billsStatus == 2) {
                                         BaseDbHelper.getInstance(cntxt).dropTables();
                                     }
                                 /*startActivity(new Intent(LoginActivity.this, MainActivity.class));

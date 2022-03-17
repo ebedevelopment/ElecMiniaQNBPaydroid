@@ -174,7 +174,7 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                                         .format(new Date(System.currentTimeMillis())));
                                 MiniaElectricity.getPrefsManager().setOfflineBillValue(0);
                                 MiniaElectricity.getPrefsManager().setOfflineBillCount(0);
-                                if (billsStatus != 0)
+                               // if (billsStatus != 0)
                                     MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
                                 if (billsStatus == 2)
                                 {
@@ -189,7 +189,7 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                                 }
 
                                 offlineTransData.clear();
-                                onFailure(null);
+                                handlePendingBills();
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();

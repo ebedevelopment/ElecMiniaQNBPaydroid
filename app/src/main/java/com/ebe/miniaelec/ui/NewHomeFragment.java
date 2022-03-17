@@ -98,6 +98,7 @@ public class NewHomeFragment extends Fragment implements View.OnClickListener {
         //offlineClients = new ArrayList<>(DBHelper.getInstance(getActivity()).getAllClients());
         offlineBills = new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBills());
         offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
+        offlineClientsAdapter.notifyDataSetChanged();
         lv_clients.setAdapter(offlineClientsAdapter);
         lv_clients.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -435,7 +436,22 @@ public class NewHomeFragment extends Fragment implements View.OnClickListener {
             if (!MiniaElectricity.getPrefsManager().isLoggedIn()) {
                 getActivity().finish();
             } else
+            {
+                if (MiniaElectricity.getPrefsManager().getOfflineBillStatus()==2)
+                {
+                    clientId = "";
+                    selectedClient = 0;
+                    offlineBills.clear();
+                    offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
+                    lv_clients.setAdapter(offlineClientsAdapter);
+
+
+                }
+
+
                 inquiry();
+            }
+
         }
     }
 }

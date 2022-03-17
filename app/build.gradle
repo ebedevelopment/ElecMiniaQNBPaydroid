@@ -6,8 +6,8 @@ android {
         applicationId "com.ebe.miniaelec"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 26 // next test version 25, production 23
-        versionName "1.0.26"
+        versionCode 27 // next test version 25, production 23
+        versionName "1.0.27"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
