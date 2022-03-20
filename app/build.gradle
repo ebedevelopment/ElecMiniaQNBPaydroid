@@ -1,32 +1,53 @@
 apply plugin: 'com.android.application'
 
+def static releaseTime() {
+    return new Date().format("yyyyMMdd", TimeZone.getTimeZone("UTC"))
+}
+
 android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.ebe.miniaelec"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 27 // next test version 25, production 23
-        versionName "1.0.27"
+        versionCode 28 // next test version 25, production 23
+        versionName String.format("1.0.%02d", versionCode) + "." + releaseTime()
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            applicationVariants.all { variant ->
+                variant.outputs.all { output ->
+                    if (outputFileName != null && outputFile.name.endsWith('.apk')) {
+                        def type = ""
+                        if (variant.buildType.name == 'debug') {
+                            type = "_debug"
+                        }
+                        def fileName = "MiniaElec_V${defaultConfig.versionName}${type}.apk"
+                        outputFileName = fileName
+                    }
+                }
+            }
         }
     }
     sourceSets.main {
         jni.srcDirs = []
         jniLibs.srcDir "src/main/libs"
     }
+
+//    buildFeatures {
+//        dataBinding true
+//    }
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support:support-v4:28.0.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation 'com.android.support.constraint:constraint-layout:2.0.4'
     implementation 'com.android.support:design:28.0.0'
     implementation files('libs/GLPage_V1.03.00_20181030.jar')
     implementation files('libs/NeptuneLiteApi_V3.21.00_20210120.jar')
