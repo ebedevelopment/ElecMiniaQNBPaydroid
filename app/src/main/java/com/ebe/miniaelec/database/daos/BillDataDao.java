@@ -19,7 +19,7 @@ public interface BillDataDao {
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    Long newOfflineBillAppend(BillDataEntity bill);
+    int newOfflineBillAppend(BillDataEntity bill);
 
     @Update
     void updateOfflineBill(BillDataEntity bill);
@@ -27,6 +27,12 @@ public interface BillDataDao {
 
     @Query("Delete FROM BillDataEntity WHERE billUnique = :billUnique")
     void deleteClientBill(String billUnique);
+
+    @Query("Delete From BillDataEntity Where clientId = :Id")
+    void deleteBillByClientId(String Id);
+
+    @Query("Select * From BillDataEntity Where clientId = :Id")
+    Flowable<List<BillDataEntity>> getBillsByClientId(String Id);
 
 
     @Query("Select * From BillDataEntity")
@@ -68,4 +74,6 @@ public interface BillDataDao {
 
     @Query("Delete From BillDataEntity")
     void clearBills();
+
+
 }

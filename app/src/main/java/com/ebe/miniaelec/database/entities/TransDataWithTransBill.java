@@ -2,7 +2,6 @@ package com.ebe.miniaelec.database.entities;
 
 import androidx.room.Embedded;
 import androidx.room.Relation;
-
 import java.util.List;
 
 public class TransDataWithTransBill {
