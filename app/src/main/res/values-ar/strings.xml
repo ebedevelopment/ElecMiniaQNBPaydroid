@@ -18,7 +18,6 @@
     <string name="enter_current_meter_note">برجاء كتابة القراءة كما هي على عداد الغاز والمحددة باللون الأسود!</string>
     <string name="send_current_meter">تسجيل القراءة</string>
     <string name="customer_name">اسم المشترك</string>
-    <string name="address">العنوان</string>
     <string name="current_meter">القراءة الحالية</string>
     <string name="invoice_number">رقم الإيصال</string>
     <string name="month">شهر الإصدار</string>
@@ -49,33 +48,18 @@
     <string name="home">الصفحة الرئيسية</string>
     <string name="app_version">إصدار</string>
     <string name="get_building_data">تحميل بيانات المبنى</string>
-    <string name="enter_following_data">أدخل البيانات التالية لتحميل بيانات المشتركين</string>
     <string name="start">ابدأ الآن</string>
-    <string name="select_place">اختر المنطقة</string>
     <string name="building">عمارة</string>
     <string name="block">بلوك</string>
     <string name="section">قطاع</string>
     <string name="daily">اليومية</string>
     <string name="place">المنطقة</string>
     <string name="building_data">بيانات المبنى</string>
-    <string name="view_details">عرض التفاصيل</string>
-    <string name="from_month">من شهر</string>
-    <string name="to_month">إلى شهر</string>
-    <string name="partial_collect">تحصيل جزئي</string>
-    <string name="total_collect">تحصيل كلي</string>
-    <string name="enter_reading">إدخال القراءة</string>
-    <string name="unit_details">تفاصيل الوحدة</string>
-    <string name="confirm_payment">تأكيد الدفع</string>
-    <string name="confirm">تأكيد</string>
-    <string name="choose_payment_method">اختر طريقة الدفع!</string>
     <string name="oops">عفواً</string>
     <string name="try_again">أعد المحاولة</string>
-    <string name="no_bills">لا يوجد فواتير للتحصيل</string>
     <string name="counter_number">رقم العداد</string>
     <string name="payment_months">أشهر المحاسبة</string>
-    <string name="partial_collect_amount">مبلغ التحصيل الجزئي</string>
     <string name="crn_collect">تحصيل CRN</string>
-    <string name="building_details">تفاصيل المباني</string>
     <string name="collected">ماتم تحصيله</string>
     <string name="reprint">إعادة الطباعة</string>
     <string name="logout">تسجيل الخروج</string>
@@ -101,7 +85,6 @@
     <string name="client_name">اسم العميل</string>
     <string name="pay">دفع</string>
     <string name="bill_date">تاريخ الفاتورة</string>
-    <string name="bill_value">قيمة الفاتورة</string>
     <string name="wallet">دفع بالمحفظة</string>
     <string name="client_mobile_no">تليفون العميل</string>
     <string name="enter_client_mobile_no">أدخل رقم تليفون العميل</string>
@@ -118,7 +101,6 @@
     <string name="client_name_search">بحث باسم المشترك</string>
     <string name="main_code">الحساب</string>
     <string name="reference_search">بحث بالمرجع</string>
-    <string name="select_day">اختر اليومية</string>
     <string name="enable_required_permossions">برجاء السماح للتطبيق بالوصول للأذونات المطلوبة</string>
     <string name="search">بحث</string>
     <string name="extract_data">استخراج البيانات المعلقة</string>
@@ -136,9 +118,4 @@
     <string name="remain_bills_count">عدد الفواتير المتبقية</string>
     <string name="remain_bills_amount">المبلغ المتبقي</string>
 
-    <string-array name="places">
-        <item>المنطقة الأولى</item>
-        <item>المنطقة الثانية</item>
-        <item>المنطقة الثالثة</item>
-    </string-array>
 </resources>
