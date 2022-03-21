@@ -20,7 +20,7 @@ import io.reactivex.rxjava3.core.Single;
 public interface TransDataDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    int addTransData( TransDataEntity transData);
+    Long addTransData( TransDataEntity transData);
 
     @Delete
     void deleteTransData(TransDataEntity transData);

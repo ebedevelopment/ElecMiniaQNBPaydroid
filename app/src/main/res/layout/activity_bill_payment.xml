@@ -144,6 +144,7 @@
             android:visibility="visible">
 
             <TextView
+                android:id="@+id/bill_value"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

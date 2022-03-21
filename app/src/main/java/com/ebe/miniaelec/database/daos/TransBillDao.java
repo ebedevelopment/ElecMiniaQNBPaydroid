@@ -17,7 +17,7 @@ public interface TransBillDao {
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    int newTransBillAppend(TransBillEntity transBill);
+    void newTransBillAppend(TransBillEntity transBill);
 
     @Query("Delete From TransBillEntity Where BillUnique = :BillUnique")
     void deleteTransBill(String BillUnique);

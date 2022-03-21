@@ -19,7 +19,7 @@ public interface BillDataDao {
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    int newOfflineBillAppend(BillDataEntity bill);
+    void newOfflineBillAppend(BillDataEntity bill);
 
     @Update
     void updateOfflineBill(BillDataEntity bill);

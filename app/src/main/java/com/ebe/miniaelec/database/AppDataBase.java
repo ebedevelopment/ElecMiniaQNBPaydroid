@@ -8,6 +8,7 @@ import androidx.room.RoomDatabase;
 
 import com.ebe.miniaelec.database.daos.BillDataDao;
 import com.ebe.miniaelec.database.daos.OfflineClientsDao;
+import com.ebe.miniaelec.database.daos.ReportEntityDao;
 import com.ebe.miniaelec.database.daos.TransBillDao;
 import com.ebe.miniaelec.database.daos.TransDataDao;
 import com.ebe.miniaelec.database.entities.BillDataEntity;
@@ -24,12 +25,11 @@ public abstract class AppDataBase extends RoomDatabase {
 
     public abstract BillDataDao billDataDaoDao();
     public abstract OfflineClientsDao offlineClientsDao();
-    abstract TransBillDao transBillDao();
-    abstract TransDataDao transDataDao();
+   public abstract TransBillDao transBillDao();
+   public abstract TransDataDao transDataDao();
+    public abstract ReportEntityDao reportEntityDaoDao();
 
-    private AppDataBase(){
 
-    };
 
     public static AppDataBase getInstance(Context cntxt)
     {

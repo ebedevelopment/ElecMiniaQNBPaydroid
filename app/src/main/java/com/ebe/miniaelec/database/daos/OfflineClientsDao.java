@@ -21,7 +21,7 @@ public interface OfflineClientsDao {
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    int addOfflineClient( OfflineClientEntity client);
+    void addOfflineClient( OfflineClientEntity client);
 
     @Query("Select Count(*) From OfflineClient")
     long offlineClientsCount();

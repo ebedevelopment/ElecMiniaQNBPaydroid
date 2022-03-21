@@ -17,7 +17,7 @@ public interface ReportEntityDao {
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    int addReport(ReportEntity report);
+    void addReport(ReportEntity report);
 
     @Query("Select DISTINCT transDate From Reports")
     Flowable<List<String>> getDistinctCollectedDates();
