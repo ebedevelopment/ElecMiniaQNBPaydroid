@@ -37,6 +37,7 @@ import android.widget.Toast;
 
 import com.ebe.ebeunifiedlibrary.factory.ITransAPI;
 import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
+import com.ebe.ebeunifiedlibrary.message.BaseResponse;
 import com.ebe.ebeunifiedlibrary.message.QRSaleMsg;
 import com.ebe.ebeunifiedlibrary.message.SaleMsg;
 import com.ebe.ebeunifiedlibrary.message.TransResponse;
@@ -151,11 +152,12 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
     }
     private void setBillData() {
-        Bundle bundle = getIntent().getBundleExtra("params");
+        //Bundle bundle = getIntent().getBundleExtra("params");
         long RECEIPT_NO = MiniaElectricity.getPrefsManager().getReceiptNo();
         MiniaElectricity.getPrefsManager().setReceiptNo(RECEIPT_NO + 1);
-        offline = bundle.getBoolean("offline");
-        String clientId = bundle.getString("clientID");
+        assert getArguments() != null;
+        offline = getArguments().getBoolean("offline");
+        String clientId = getArguments().getString("clientID");
         String inquiryId = "";
         if (offline) {
             inquiryId = MiniaElectricity.getPrefsManager().getInquiryID();
@@ -168,7 +170,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
             phoneNumber = offlineClient.getClientMobileNo();
             billDetails = offlineClient.getModelBillInquiryV();
         } else {
-            String response = bundle.getString("response");
+            String response = getArguments().getString("response");
             // OfflineClient client = (OfflineClient) bundle.getSerializable("response");
             try {
                 JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
@@ -432,8 +434,8 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                             }
                                             DBHelper.getInstance(cntxt).deleteTransData(transData);
                                             MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                            startActivityForResult(new Intent(requireActivity(), LoginActivity.class));
-                                            BillPaymentActivity.this.finish();
+                                            startActivity(new Intent(requireActivity(), LoginActivity.class));
+                                            navController.popBackStack();
                                         } else onFailure("فشل في عملية الدفع!\n" + Error);
                                     } else {
                                         transData.setStatus(TransData.STATUS.PAID_PENDING_DRM_REQ.getValue());
@@ -476,19 +478,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
     }
 
     private boolean deleteBills() {
-        /*if (offline)
-            DBHelper.getInstance(cntxt).deleteOfflineClientBills(transBills);
-        else {
-            for (TransBill b :
-                    transBills) {
-                DBHelper.getInstance(cntxt).deleteClientBillByDate(transData.getClientID(), b.getBillDate());
-            }
-        }*/
-//        if (!DBHelper.getInstance(cntxt).addTransData(transData)) {
-//            Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
-//            return false;
-//            //this.finish();
-//        } else {
+
         for (TransBill b :
                 transBills) {
             DBHelper.getInstance(cntxt).deleteClientBill(b.getBillUnique());
@@ -531,11 +521,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
     }
 
     private void requestQRPayment() {
-       /* transData.setTransDate(new SimpleDateFormat("dd/MM/yyyy", Locale.US)
-                .format(new Date(System.currentTimeMillis())));
-        transData.setTransTime(new SimpleDateFormat("HH:mm", Locale.US)
-                .format(new Date(System.currentTimeMillis())));*/
-        //DBHelper.getInstance(cntxt).updateTransData(transData);
+
         QRSaleMsg.Request request = new QRSaleMsg.Request();
         long amount = 0;
         for (TransBill b :
@@ -600,8 +586,8 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                             if (Error != null && !Error.isEmpty()) {
                                 if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
                                     MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                    startActivity(new Intent(BillPaymentActivity.this, LoginActivity.class));
-                                    BillPaymentActivity.this.finish();
+                                    startActivity(new Intent(requireActivity(), LoginActivity.class));
+                                    navController.popBackStack();
                                 } else onFailure("فشل في عملية الدفع!\n" + Error);
 
                             } else {
@@ -621,15 +607,13 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                 new PrintReceipt(cntxt, transBills, new PrintListener() {
                                     @Override
                                     public void onFinish() {
-                                        /*transData.setStatus(TransData.STATUS.PAID_PENDING_DRM_REQ.getValue());
-                                        DBHelper.getInstance(cntxt).updateTransData(transData);
-                                        sendDRM(transResponse);*/
+
                                         for (TransBill b :
                                                 transBills) {
                                             DBHelper.getInstance(cntxt).deleteTransBill(b.getBillUnique());
                                         }
                                         DBHelper.getInstance(cntxt).deleteTransData(transData);
-                                        BillPaymentActivity.this.finish();
+                                        navController.popBackStack();
                                     }
 
                                     @Override
@@ -667,12 +651,11 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                             transData.setStatus(TransData.STATUS.DELETED_PENDING_DRM_REQ.getValue());
                             DBHelper.getInstance(cntxt).updateTransData(transData);
                             sendCashDRM(true);
-                            // DBHelper.getInstance(cntxt).deleteBillData(billData);
+
                         } else {
                             transData.setStatus(TransData.STATUS.DELETED_PENDING_VOID_REQ.getValue());
                             aVoidReq();
-                            //DBHelper.getInstance(cntxt).deleteBillData(billData);
-                            // send void request to QNB payment App
+
                         }
                     }
 
@@ -772,7 +755,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                             }
                             //added for test should not be added here
                             //transData.setStatus(TransData.STATUS.PENDING_CASH_PAYMENT_REQ.getValue());
-                            BillPaymentActivity.this.finish();
+                            navController.popBackStack();
                         } catch (JSONException e) {
                             e.printStackTrace();
                             onFailure(e.getMessage() + "");
@@ -782,7 +765,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                     @Override
                     public void onFailure(String failureMsg) {
                         Log.i("failureMsg", failureMsg);
-                        finish();
+                        navController.popBackStack();
                     }
                 });
             }
@@ -798,7 +781,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = requireActivity().getWindow();
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-            window.setStatusBarColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
+            window.setStatusBarColor(ContextCompat.getColor(requireContext(), R.color.colorPrimaryDark));
         }
     }
 
@@ -813,6 +796,107 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
     @Override
     public void onClick(View v) {
+        int id = v.getId();
+        if (id == R.id.pay) {
+            if (ll_phone_number.getVisibility() == View.VISIBLE && (et_clientMobileNo.getText().toString().trim().isEmpty() ||
+                    et_clientMobileNo.getText().toString().trim().length() < 11 ||
+                    et_clientMobileNo.getText().toString().trim().length() > 16)) {
+                Toast.makeText(cntxt, "برجاء كتابة رقم تليفون العميل بشكل صحيح", Toast.LENGTH_LONG).show();
+            } else {
+                transBills = new ArrayList<>();
+                for (int i = 0; i < cb_bills.length; i++) {
+                    if (cb_bills[i].isChecked()) {
+                        transBills.add(new TransBill(billDetails.get(i)));
+                    } else break;
+                }
+                if (transBills.size() == 0) {
+                    Toast.makeText(cntxt, "يرجى اختيار الفواتير المطلوب سدادها!", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                //b_pay.setVisibility(View.GONE);
+//                transData.setTransBills(transBills);
+                if (ll_phone_number.getVisibility() == View.VISIBLE) {
+                    transData.setClientMobileNo(et_clientMobileNo.getText().toString());
+                } else transData.setClientMobileNo(phoneNumber);
+                //DBHelper.getInstance(cntxt).updateTransData(transData);
+                //ll_paymentMethods.setVisibility(View.GONE);
+                //ll_phone_number.setVisibility(View.GONE);
+                if (paymentTypes.getSelectedItemPosition() == 1 && !offline) { // 1 card payment
+                    transData.setPaymentType(TransData.PaymentType.CARD.getValue());
+                    transData.setStatus(TransData.STATUS.PENDING_SALE_REQ.getValue());
+                    // requestCardPayment();
+                    confirmPayment();
+                } else if (paymentTypes.getSelectedItemPosition() == 0) { // 0 cash payment
+                    transData.setPaymentType(TransData.PaymentType.CASH.getValue());
+                    transData.setStatus(TransData.STATUS.PENDING_CASH_PAYMENT_REQ.getValue());
+                    //requestCashPayment();
+                    confirmPayment();
+                } else if (paymentTypes.getSelectedItemPosition() == 2 && !offline) { // 2 wallet payment
+//                    transData.setPaymentType(TransData.PaymentType.WALLET.getValue());
+//                    transData.setStatus(TransData.STATUS.PENDING_QR_SALE_REQ.getValue());
+                    //requestCashPayment();
+//                    confirmPayment();
+                    Toast.makeText(cntxt, "هذه الخدمة ستكون متوفرة قريباً", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        BaseResponse baseResponse = transAPI.onResult(requestCode, resultCode, data);
+
+        if (baseResponse == null) {
+            Log.e("onActivityResult", "null");
+            aVoidReq();
+        }
+        boolean isTransResponse = baseResponse instanceof TransResponse;
+        if (isTransResponse) {
+            final TransResponse transResponse = (TransResponse) baseResponse;
+            // Log.e("response", "//" + transResponse.toString());
+            if (transData.getStatus() == TransData.STATUS.DELETED_PENDING_VOID_REQ.getValue()) {
+                if (transResponse.getRspCode() == 0 || transResponse.getRspCode() == -15
+                        || transResponse.getRspCode() == -16 || transResponse.getRspCode() == -17 || transResponse.getRspCode() == -18) {
+                    transData.setStatus(TransData.STATUS.COMPLETED.getValue());
+                    // DBHelper.getInstance(cntxt).updateTransData(transData);
+                }
+                //DBHelper.getInstance(cntxt).deleteTransData(transData);
+                navController.popBackStack();
+            } else if (transData.getStatus() == TransData.STATUS.PENDING_SALE_REQ.getValue()) {
+                if (transResponse.getRspCode() == 0) {
+                    cardPayment(transResponse);
+                } else {
+                    transData.setStatus(TransData.STATUS.COMPLETED.getValue());
+                    //DBHelper.getInstance(cntxt).deleteTransData(transData);
+                    Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+                    // DBHelper.getInstance(cntxt).updateTransData(transData);
+                    navController.popBackStack();
+                }
+            }
+        } else {
+            if (transData.getStatus() == TransData.STATUS.DELETED_PENDING_VOID_REQ.getValue()) {
+                if (baseResponse.getRspCode() == 0 || baseResponse.getRspCode() == -15
+                        || baseResponse.getRspCode() == -16 || baseResponse.getRspCode() == -17 || baseResponse.getRspCode() == -18) {
+                    transData.setStatus(TransData.STATUS.COMPLETED.getValue());
+                    //DBHelper.getInstance(cntxt).deleteTransData(transData);
+                    //DBHelper.getInstance(cntxt).updateTransData(transData);
+                }
+                navController.popBackStack();
+            } else if (transData.getStatus() == TransData.STATUS.PENDING_SALE_REQ.getValue()) {
+                //DBHelper.getInstance(cntxt).deleteTransData(transData);
+                Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+                navController.popBackStack();
+            } else if (transData.getStatus() == TransData.STATUS.PENDING_QR_SALE_REQ.getValue()) {
+                if (baseResponse.getRspCode() == 0) {
+
+                } else {
+                    //DBHelper.getInstance(cntxt).deleteTransData(transData);
+                    Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+                    navController.popBackStack();
+                }
+            }
+            Log.e("onActivityResult", "BaseResponse");
+        }
     }
 }
