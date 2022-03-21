@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/mainFragment">
+
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.ebe.miniaelec.ui.MainFragment"
+        android:label="fragment_main"
+        tools:layout="@layout/fragment_main" >
+        <action
+            android:id="@+id/action_mainFragment_to_billPaymentFragment"
+            app:destination="@id/billPaymentFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/billPaymentFragment"
+        android:name="com.ebe.miniaelec.ui.BillPaymentFragment"
+        android:label="fragment_bill_payment"
+        tools:layout="@layout/fragment_bill_payment" />
+    <fragment
+        android:id="@+id/onlineReportsFragment"
+        android:name="com.ebe.miniaelec.ui.OnlineReportsFragment"
+        android:label="fragment_online_reports"
+        tools:layout="@layout/fragment_online_reports" />
+    <fragment
+        android:id="@+id/reprintFragment"
+        android:name="com.ebe.miniaelec.ui.ReprintFragment"
+        android:label="fragment_reprint"
+        tools:layout="@layout/fragment_reprint" />
+    <fragment
+        android:id="@+id/detailedCollectedBillsFragment"
+        android:name="com.ebe.miniaelec.ui.DetailedCollectedBillsFragment"
+        android:label="fragment_detailed_collected_bills"
+        tools:layout="@layout/fragment_detailed_collected_bills" />
+    <fragment
+        android:id="@+id/totalsFetchedBillsFragment"
+        android:name="com.ebe.miniaelec.ui.TotalsFetchedBillsFragment"
+        android:label="fragment_totals_fetched_bills"
+        tools:layout="@layout/fragment_totals_fetched_bills" />
+    <fragment
+        android:id="@+id/totalCollectedBillsFragment"
+        android:name="com.ebe.miniaelec.ui.TotalCollectedBillsFragment"
+        android:label="fragment_total_collected_bills"
+        tools:layout="@layout/fragment_total_collected_bills" />
+</navigation>

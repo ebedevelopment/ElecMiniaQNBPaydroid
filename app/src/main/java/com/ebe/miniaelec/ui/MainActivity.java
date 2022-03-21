@@ -17,6 +17,11 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
+
 import android.text.InputType;
 import android.util.Log;
 import android.view.MenuItem;
@@ -60,6 +65,8 @@ import java.util.TimeZone;
 
 import dmax.dialog.SpotsDialog;
 
+
+
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private static Toolbar toolbar;
@@ -71,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public ITransAPI transAPI;
     static int FINISH_PENDING_TRANS_START = 999;
     private boolean isAfterLogin;
+    public NavController navController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,22 +90,34 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 getBaseContext().getResources().getDisplayMetrics());
         setContentView(R.layout.activity_main);
 
+        NavHostFragment navHostFragment =
+                (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.content);
+        assert navHostFragment != null;
+         navController = navHostFragment.getNavController();
+
         cntxt = this;
         toolbar = findViewById(R.id.toolbar);
         title = findViewById(R.id.title);
         setSupportActionBar(toolbar);
+
         setStatusBarColor();
+
 //        MiniaElectricity.getPrefsManager().setMaxOfflineHours(48);
 
         dlDrawer = findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, dlDrawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        dlDrawer.addDrawerListener(toggle);
-        toggle.syncState();
+        AppBarConfiguration appBarConfiguration =
+                new AppBarConfiguration.Builder(navController.getGraph())
+                        .setDrawerLayout(dlDrawer)
+                        .build();
+//        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+//                this, dlDrawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+//        dlDrawer.addDrawerListener(toggle);
+//        toggle.syncState();
 
         nvNavigation = findViewById(R.id.nav_view);
-        nvNavigation.getMenu().getItem(0).setChecked(true);
-        nvNavigation.setNavigationItemSelectedListener(this);
+        NavigationUI.setupWithNavController(nvNavigation, navController);
+        //nvNavigation.getMenu().getItem(0).setChecked(true);
+       // nvNavigation.setNavigationItemSelectedListener(this);
         nvNavigation.getMenu().findItem(R.id.app_version).setTitle(getString(R.string.app_version) + " " + BuildConfig.VERSION_NAME);
         transAPI = TransAPIFactory.createTransAPI();
         Bundle bundle = getIntent().getBundleExtra("params");
@@ -114,7 +134,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
+
     public static void fragmentTransaction(Fragment fragment, String tag) {
+
+
         cntxt.getFragmentManager().beginTransaction().setCustomAnimations(
                 R.animator.card_flip_right_in,
                 R.animator.card_flip_right_out,
@@ -128,6 +151,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 R.animator.card_flip_right_out,
                 R.animator.card_flip_left_in,
                 R.animator.card_flip_left_out).replace(R.id.content, fragment).addToBackStack("").commit();
+
     }
 
     public static void setToolbarVisibility(int visibility) {
@@ -154,10 +178,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void onBackPressed() {
         switch (BACK_ACTION) {
             case 1:
-                fragmentTransaction(new NewHomeFragment(), null);
+               // fragmentTransaction(new NewHomeFragment(), null);
+                navController.navigate(R.id.mainFragment);
                 break;
             case 2:
-                getFragmentManager().popBackStack();
+               // getFragmentManager().popBackStack();
+                navController.popBackStack();
                 break;
             default:
                 //super.onBackPressed();
@@ -183,7 +209,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         }
                     } else if (!InquiryID.isEmpty()) {
                         MiniaElectricity.getPrefsManager().setInquiryID(InquiryID);
-                        new InsertInDB(responseBody).execute();
+                        //new InsertInDB(responseBody).execute();
                     } else onFailure("فشل في تحميل بيانات المشتركين!");
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -215,23 +241,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     //getClientsData();
                 else Toast.makeText(cntxt, "لا يوجد فواتير جديدة", Toast.LENGTH_LONG).show();
                 break;
-            case R.id.nav_reports:
-                Intent intent = new Intent(getBaseContext(), WebViewActivity.class);
-                intent.putExtra("url", "http://10.224.246.181:3000/");
-                startActivity(intent);
-                break;
-            case R.id.nav_total_collected:
-                fragmentTransaction(new TotalCollectedFragment(), null);
-                break;
-            case R.id.nav_collected_detailed:
-                fragmentTransaction(new DetailedCollectedFragment(), null);
-                break;
-            case R.id.nav_total_bills:
-                fragmentTransaction(new TotalBillsFragment(), null);
-                break;
-            case R.id.nav_re_print:
-                startActivity(new Intent(MainActivity.this, RePrintActivity.class));
-                break;
+
             case R.id.nav_settle:
                 SettleMsg.Request request = new SettleMsg.Request();
                 request.setCategory(SdkConstants.CATEGORY_SETTLE);
@@ -377,7 +387,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 alertDialog.show();
                 break;
             default:
-                fragmentTransaction(new NewHomeFragment(), null);
+                //fragmentTransaction(new NewHomeFragment(), null);
+                navController.navigate(R.id.mainFragment);
                 break;
         }
 
@@ -437,7 +448,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    public static class InsertInDB extends AsyncTask<Void, Integer, Void> {
+    public  class InsertInDB extends AsyncTask<Void, Integer, Void> {
 
         private SpotsDialog progressDialog;
         private final JSONObject responseBody;
@@ -509,7 +520,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
             //ArrayList<OfflineClient> offlineClients = new ArrayList<>();
             progressDialog.dismiss();
-            fragmentTransaction(new NewHomeFragment(), null);
+            //fragmentTransaction(new NewHomeFragment(), null);
+            navController.navigate(R.id.mainFragment);
+
+
             // cntxt.startActivityForResult(new Intent(cntxt, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
 
         }

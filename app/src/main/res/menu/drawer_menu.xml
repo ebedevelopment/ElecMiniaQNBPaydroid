@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:title="@string/home" />
+    <item android:title="@string/home"
+        android:id="@+id/mainFragment"/>
     <item
-        android:id="@+id/nav_reports"
+        android:id="@+id/onlineReportsFragment"
         android:title="@string/reports" />
     <item
-        android:id="@+id/nav_re_print"
+        android:id="@+id/reprintFragment"
         android:title="@string/reprint" />
     <item
         android:id="@+id/nav_settle"
@@ -14,13 +15,13 @@
         android:id="@+id/nav_check_collected"
         android:title="@string/check_collect" />
     <item
-        android:id="@+id/nav_total_bills"
+        android:id="@+id/totalsFetchedBillsFragment"
         android:title="@string/total_bills" />
     <item
-        android:id="@+id/nav_total_collected"
+        android:id="@+id/totalCollectedBillsFragment"
         android:title="@string/total_collected" />
     <item
-        android:id="@+id/nav_collected_detailed"
+        android:id="@+id/detailedCollectedBillsFragment"
         android:title="@string/collected_detailed" />
     <item
         android:id="@+id/exit"

@@ -1,30 +1,17 @@
 package com.ebe.miniaelec.http;
 
 import android.content.Context;
-import androidx.annotation.NonNull;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.ebe.miniaelec.BuildConfig;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.http.api.API;
-import com.ebe.miniaelec.model.Bill;
-import com.ebe.miniaelec.transactions.PaymentFragment;
-import com.ebe.miniaelec.transactions.ReadCounterMeterFragment;
-import com.ebe.miniaelec.ui.HomeFragment;
-import com.ebe.miniaelec.ui.MainActivity;
 import com.ebe.miniaelec.utils.Utils;
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,151 +47,8 @@ ApiServices {
 
     }
 
-    public void getCustomerBillsData(final String customerNumber) {
-        showDialog();
 
-        Call<ResponseBody> call = APi.getCustomerBillsData(customerNumber);
-        call.enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                hideDialog();
-                if (response.isSuccessful()) {
-                    try {
-                        String responseString = response.body() != null ? response.body().string() : "";
-                        JSONObject responseBody = new JSONObject(responseString.subSequence(responseString.indexOf("{"), responseString.length()).toString());
-                        //Log.i("responseBody", responseString);
-                        if (responseBody.optInt("responseCode") == 0) {
-                            JSONObject data = responseBody.optJSONObject("data");
-                            JSONArray bills = data.optJSONArray("bills");
-                            ArrayList<Bill> billArrayList = new ArrayList<>();
-                            for (int i = 0; i < bills.length(); i++) {
-                                billArrayList.add(new Gson().fromJson(bills.get(i).toString(), Bill.class));
-                            }
-                            PaymentFragment.setBillData(data.optString("customerNo"), data.optString("customerName"), data.optString("areaName"), billArrayList);
-                        } else {
-                            Toast.makeText(MiniaElectricity.getInstance(), responseBody.optString("message"), Toast.LENGTH_LONG).show();
-                            MainActivity.fragmentTransaction(new HomeFragment(), null);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        MainActivity.fragmentTransaction(new HomeFragment(), null);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        MainActivity.fragmentTransaction(new HomeFragment(), null);
-                    }
-                } else {
-                    Log.i("responseError", response.message());
-                    MainActivity.fragmentTransaction(new HomeFragment(), null);
 
-                    //ShowPopUpDialog.ShowDialogError(context);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
-                hideDialog();
-
-                Log.i("responseFailure", t.getMessage() + "");
-                MainActivity.fragmentTransaction(new HomeFragment(), null);
-
-            }
-
-        });
-    }
-
-    public void getBuildingBillsData(final String buildingNo) {
-        showDialog();
-
-        Call<ResponseBody> call = APi.getBuildingBillsData(buildingNo);
-        call.enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                hideDialog();
-                if (response.isSuccessful()) {
-                    try {
-                        String responseString = response.body() != null ? response.body().string() : "";
-                        JSONObject responseBody = new JSONObject(responseString.subSequence(responseString.indexOf("{"), responseString.length()).toString());
-                        //Log.i("responseString", responseString);
-                        if (responseBody.optInt("responseCode") == 0) {
-                            JSONObject data = responseBody.optJSONObject("data");
-                            JSONArray bills = data.optJSONArray("bills");
-                            ArrayList<Bill> billArrayList = new ArrayList<>();
-                            for (int i = 0; i < bills.length(); i++) {
-                                billArrayList.add(new Gson().fromJson(bills.get(i).toString(), Bill.class));
-                            }
-                            //BuildingBillsFragment.setBillData( data.optString("buildingNo"), billArrayList);
-                        } else {
-                            Toast.makeText(MiniaElectricity.getInstance(), responseBody.optString("message"), Toast.LENGTH_LONG).show();
-                            MainActivity.fragmentTransaction(new HomeFragment(), null);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        MainActivity.fragmentTransaction(new HomeFragment(), null);
-                    } catch (JSONException e) {
-                        MainActivity.fragmentTransaction(new HomeFragment(), null);
-                        e.printStackTrace();
-                    }
-                } else {
-                    Log.i("responseError", response.message());
-                    MainActivity.fragmentTransaction(new HomeFragment(), null);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
-                hideDialog();
-                MainActivity.fragmentTransaction(new HomeFragment(), null);
-                Log.i("responseFailure", t.getMessage() + "");
-            }
-
-        });
-    }
-
-    public void getMeterReadData(final String customerNumber) {
-        showDialog();
-
-        Call<ResponseBody> call = APi.getMeterReadData(customerNumber);
-        call.enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                hideDialog();
-                if (response.isSuccessful()) {
-                    try {
-                        String responseString = response.body() != null ? response.body().string() : "";
-                        JSONObject responseBody = new JSONObject(responseString.subSequence(responseString.indexOf("{"), responseString.length()).toString());
-                        //Log.i("responseString", responseString);
-                        if (responseBody.optInt("responseCode") == 0) {
-                            JSONObject data = responseBody.optJSONObject("data");
-                            ReadCounterMeterFragment.setValidationData(data.optInt("closeDate"), data.optInt("lastMeterValue"),
-                                    data.optString("customerNo"));
-                        } else {
-                            Toast.makeText(MiniaElectricity.getInstance(), responseBody.optString("message"), Toast.LENGTH_LONG).show();
-                            MainActivity.fragmentTransaction(new HomeFragment(), null);
-                        }
-                    } catch (IOException e) {
-                        MainActivity.fragmentTransaction(new HomeFragment(), null);
-                        e.printStackTrace();
-                    } catch (JSONException e) {
-                        MainActivity.fragmentTransaction(new HomeFragment(), null);
-                        e.printStackTrace();
-                    }
-                } else {
-                    MainActivity.fragmentTransaction(new HomeFragment(), null);
-                    Log.i("responseError", response.message());
-                    //ShowPopUpDialog.ShowDialogError(context);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
-                hideDialog();
-                Log.i("responseFailure", t.getMessage() + "");
-                MainActivity.fragmentTransaction(new HomeFragment(), null);
-
-            }
-
-        });
-    }
 
     public void sendDRM(final JsonObject paraObj, final RequestListener listener) {
         showDialog();
@@ -243,63 +87,7 @@ ApiServices {
         });
     }
 
-    public void updateMeterReadData(final String customerNumber, String currentMeterValue) {
-        showDialog();
-        JSONObject paramObject = new JSONObject();
-        try {
-            paramObject.put("CustomerNo", customerNumber);
-            paramObject.put("CurrentMeterValue", Integer.parseInt(currentMeterValue));
-            // Log.i("paramsObject", paramObject.toString());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        JsonObject paraObj = new JsonObject();
-        paraObj.addProperty("CustomerNo", customerNumber);
-        paraObj.addProperty("CurrentMeterValue", Integer.parseInt(currentMeterValue));
-        Call<ResponseBody> call = APi.updateMeterReadData(paraObj);
-        //  Log.i("call", call.request().toString());
 
-        call.enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                hideDialog();
-                Log.i("responseString", new Gson().toJson(response));
-
-                if (response.isSuccessful()) {
-                    try {
-                        String responseString = response.body() != null ? response.body().string() : "";
-                        JSONObject responseBody = new JSONObject(responseString.subSequence(responseString.indexOf("{"), responseString.length()).toString());
-                        // Log.i("responseString", responseString);
-                        Toast.makeText(MiniaElectricity.getInstance(), responseBody.optString("message"), Toast.LENGTH_LONG).show();
-                        MainActivity.fragmentTransaction(new HomeFragment(), null);
-                    } catch (IOException e) {
-                        MainActivity.fragmentTransaction(new HomeFragment(), null);
-                        e.printStackTrace();
-                    } catch (JSONException e) {
-                        MainActivity.fragmentTransaction(new HomeFragment(), null);
-                        e.printStackTrace();
-                    }
-                } else {
-                    MainActivity.fragmentTransaction(new HomeFragment(), null);
-                    //ShowPopUpDialog.ShowDialogError(context);
-                    try {
-                        Log.i("responseError", response.errorBody().string());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
-                hideDialog();
-                Log.i("responseFailure", t.getMessage() + "");
-                MainActivity.fragmentTransaction(new HomeFragment(), null);
-            }
-
-        });
-    }
 
     private boolean isFirst = true;
 
