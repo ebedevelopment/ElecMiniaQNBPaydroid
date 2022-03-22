@@ -10,6 +10,8 @@ import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.ebe.miniaelec.services.FinishPendingTransService;
 import com.google.android.material.navigation.NavigationView;
 import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -17,6 +19,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.Observer;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -78,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public ITransAPI transAPI;
     static int FINISH_PENDING_TRANS_START = 999;
     private boolean isAfterLogin;
-    public NavController navController;
+    public static NavController navController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         cntxt = this;
         toolbar = findViewById(R.id.toolbar);
         title = findViewById(R.id.title);
-        setSupportActionBar(toolbar);
+        //setSupportActionBar(toolbar);
 
         setStatusBarColor();
 
@@ -106,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         dlDrawer = findViewById(R.id.drawer_layout);
         AppBarConfiguration appBarConfiguration =
-                new AppBarConfiguration.Builder(navController.getGraph())
+                new AppBarConfiguration.Builder(R.id.mainFragment,R.id.totalCollectedBillsFragment,R.id.detailedCollectedBillsFragment,R.id.totalsFetchedBillsFragment)
                         .setDrawerLayout(dlDrawer)
                         .build();
 //        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -116,6 +119,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         nvNavigation = findViewById(R.id.nav_view);
         NavigationUI.setupWithNavController(nvNavigation, navController);
+        NavigationUI.setupWithNavController(
+                toolbar, navController, appBarConfiguration);
         //nvNavigation.getMenu().getItem(0).setChecked(true);
        // nvNavigation.setNavigationItemSelectedListener(this);
         nvNavigation.getMenu().findItem(R.id.app_version).setTitle(getString(R.string.app_version) + " " + BuildConfig.VERSION_NAME);
@@ -124,13 +129,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (bundle != null) {
             isAfterLogin = bundle.getBoolean("after_login");
         }
-        startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
- /*if (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || (isAfterLogin && DBHelper.getInstance(cntxt).offlineClientsCount() == 0)) {
-            getClientsData();
-        } else {
-            startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
-            //onNavigationItemSelected(nvNavigation.getMenu().getItem(0));
-        }*/
+        //startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+        startService(new Intent(this, FinishPendingTransService.class));
+
+        FinishPendingTransService.serviceState.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (!aBoolean)
+                {
+                    if (!MiniaElectricity.getPrefsManager().isLoggedIn()) {
+                        finish();
+                    } else {
+                        onNavigationItemSelected(nvNavigation.getMenu().getItem(0));
+                        if ((MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 ||
+                                (isAfterLogin && DBHelper.getInstance(cntxt).offlineClientsCount() == 0))) {
+                            getClientsData();
+                        }
+                    }
+                }
+
+            }
+        });
 
     }
 
@@ -145,20 +164,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 R.animator.card_flip_left_out).replace(R.id.content, fragment, tag).commit();
     }
 
-    public static void fragmentAddTransaction(Fragment fragment) {
-        cntxt.getFragmentManager().beginTransaction().setCustomAnimations(
-                R.animator.card_flip_right_in,
-                R.animator.card_flip_right_out,
-                R.animator.card_flip_left_in,
-                R.animator.card_flip_left_out).replace(R.id.content, fragment).addToBackStack("").commit();
 
-    }
 
     public static void setToolbarVisibility(int visibility) {
         toolbar.setVisibility(visibility);
     }
 
     public static void setTitleText(String _title) {
+
         title.setText(_title);
     }
 
@@ -191,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    public static void getClientsData() {
+    public  void getClientsData() {
         new ApiServices(cntxt, false).getClients(new RequestListener() {
             @Override
             public void onSuccess(String response) {
@@ -209,7 +222,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         }
                     } else if (!InquiryID.isEmpty()) {
                         MiniaElectricity.getPrefsManager().setInquiryID(InquiryID);
-                        //new InsertInDB(responseBody).execute();
+                        new InsertInDB(responseBody).execute();
                     } else onFailure("فشل في تحميل بيانات المشتركين!");
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -221,7 +234,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             public void onFailure(String failureMsg) {
                 Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
                 Log.e("getClients", failureMsg);
-                cntxt.startActivityForResult(new Intent(cntxt, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+
+                startService(new Intent(MainActivity.this, FinishPendingTransService.class));
             }
         });
     }
@@ -403,15 +417,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == FINISH_PENDING_TRANS_START) {
             Log.e("onActivityResult", "MainActivity");
-            if (!MiniaElectricity.getPrefsManager().isLoggedIn()) {
-                finish();
-            } else {
-                onNavigationItemSelected(nvNavigation.getMenu().getItem(0));
-                if ((MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 ||
-                                (isAfterLogin && DBHelper.getInstance(cntxt).offlineClientsCount() == 0))) {
-                    getClientsData();
-                }
-            }
+
         } else {
             BaseResponse baseResponse = transAPI.onResult(requestCode, resultCode, data);
 
@@ -443,12 +449,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         if (!isAfterLogin && MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1) {
             // getClientsData();
-            startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+            //startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+            startService(new Intent(this, FinishPendingTransService.class));
 
         }
     }
 
-    public  class InsertInDB extends AsyncTask<Void, Integer, Void> {
+    public static class InsertInDB extends AsyncTask<Void, Integer, Void> {
 
         private SpotsDialog progressDialog;
         private final JSONObject responseBody;
@@ -529,4 +536,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
 
     }
+
+
 }

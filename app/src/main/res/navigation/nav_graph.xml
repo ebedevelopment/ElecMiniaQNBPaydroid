@@ -8,16 +8,21 @@
     <fragment
         android:id="@+id/mainFragment"
         android:name="com.ebe.miniaelec.ui.MainFragment"
-        android:label="fragment_main"
+        android:label="@string/client_inquiry"
         tools:layout="@layout/fragment_main" >
         <action
             android:id="@+id/action_mainFragment_to_billPaymentFragment"
-            app:destination="@id/billPaymentFragment" />
+            app:destination="@id/billPaymentFragment"
+            app:enterAnim="@anim/card_flip_right_in"
+            app:exitAnim="@anim/card_flip_right_out"
+            app:popEnterAnim="@anim/card_flip_left_in"
+            app:popExitAnim="@anim/card_flip_left_out"
+            app:popUpTo="@id/mainFragment" />
     </fragment>
     <fragment
         android:id="@+id/billPaymentFragment"
         android:name="com.ebe.miniaelec.ui.BillPaymentFragment"
-        android:label="fragment_bill_payment"
+        android:label="@string/pay_bills"
         tools:layout="@layout/fragment_bill_payment" />
     <fragment
         android:id="@+id/onlineReportsFragment"

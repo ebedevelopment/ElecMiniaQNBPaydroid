@@ -105,7 +105,11 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
             @Override
             public void handleOnBackPressed() {
                 if (transData != null)
-                transData.setStatus(TransData.STATUS.CANCELLED.getValue());
+                {
+                    transData.setStatus(TransData.STATUS.CANCELLED.getValue());
+                }
+                if (navController != null)
+                    navController.navigateUp();
             }
         });
     }

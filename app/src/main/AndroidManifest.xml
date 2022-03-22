@@ -48,6 +48,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.WebViewActivity" />
+
+        <service android:name=".services.FinishPendingTransService"/>
     </application>
 
 </manifest>
