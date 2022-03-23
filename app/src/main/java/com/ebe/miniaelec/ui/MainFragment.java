@@ -590,8 +590,12 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
                 if (aBoolean)
                 {
-                    inquiry();
-                    progressDialog.dismiss();
+                    if (clientId !=null && !clientId.isEmpty())
+                    {
+                        inquiry();
+                        progressDialog.dismiss();
+                    }
+
                 }
 
             }

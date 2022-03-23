@@ -242,7 +242,12 @@ public class FinishPendingTransService extends Service {
                 sendDRM(false, transData);
             } else handlePendingBills();
 
-        } else stopSelf();
+        } else
+        {
+            goToPayment.setValue(true);
+            stopSelf();
+        }
+
     }
 
     private void deletePayment(final TransData transData) {
@@ -276,11 +281,12 @@ public class FinishPendingTransService extends Service {
     }
 
     private void sendDRM(boolean isVoided, final TransData transData) {
+        Log.i("onSuccess", transData.getDrmData());
         if (transData.getDrmData() != null && !transData.getDrmData().isEmpty())
-            new ApiServices(this, true).sendDRM((JsonObject) new JsonParser().parse(transData.getDrmData()), new RequestListener() {
+        new ApiServices(this, true).sendDRM((JsonObject) new JsonParser().parse(transData.getDrmData()), new RequestListener() {
                 @Override
                 public void onSuccess(String response) {
-                    //Log.i("onSuccess", response);
+                    Log.i("onSuccess", response);
                     JSONObject responseBody = null;
                     try {
                         responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
