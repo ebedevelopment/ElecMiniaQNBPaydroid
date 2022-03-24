@@ -1,66 +1,197 @@
 package com.ebe.miniaelec.ui;
 
+import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Bundle;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.Toast;
 
+import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.DBHelper;
+import com.ebe.miniaelec.http.ApiServices;
+import com.ebe.miniaelec.http.RequestListener;
+import com.ebe.miniaelec.model.TransBill;
+import com.ebe.miniaelec.model.TransData;
+import com.ebe.miniaelec.print.PrintListener;
+import com.ebe.miniaelec.print.PrintReceipt;
+import com.google.gson.Gson;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ReprintFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class ReprintFragment extends Fragment {
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+import java.util.ArrayList;
+import java.util.Locale;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+
+public class ReprintFragment extends Fragment implements View.OnClickListener {
+
+    EditText et_clientID;
+    NavController navController;
 
     public ReprintFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment ReprintFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static ReprintFragment newInstance(String param1, String param2) {
-        ReprintFragment fragment = new ReprintFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Locale loc = MiniaElectricity.getLocal();
+        Configuration config = new Configuration();
+        config.locale = loc;
+        requireActivity().getResources().updateConfiguration(config,
+                requireActivity().getResources().getDisplayMetrics());
+
+        navController = Navigation.findNavController(requireActivity(),R.id.content);
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // navController.popBackStack(R.id.mainFragment,false);
+                navController.navigate(R.id.mainFragment);
+            }
+        });
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_reprint, container, false);
     }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        et_clientID = view.findViewById(R.id.client_id);
+        et_clientID.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s != null && s.length() == 10) {
+                    InputMethodManager inputManager = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    inputManager.hideSoftInputFromWindow(requireActivity().getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+        view.findViewById(R.id.reprint).setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.reprint) {
+            if (et_clientID.getText().toString().trim().isEmpty()) {
+                Toast.makeText(requireContext(), "أدخل رقم الاشتراك!", Toast.LENGTH_SHORT).show();
+            } else {
+                reprint();
+            }
+        }
+    }
+
+
+        private void reprint() {
+            final TransData transData = DBHelper.getInstance(requireContext()).getTransByClientId(et_clientID.getText().toString().trim());
+            if (transData != null && transData.getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue()) {
+                if (transData.getPrintCount() == 2) {
+                    Toast.makeText(requireActivity(), "تمت اعادة طباعة هذه الفاتورة من قبل!", Toast.LENGTH_SHORT).show();
+                    et_clientID.setText("");
+                    navController.popBackStack(R.id.mainFragment,false);
+                } else {
+                    transData.setPrintCount(2);
+                    DBHelper.getInstance(requireActivity()).updateTransData(transData);
+                    new PrintReceipt(requireActivity(), transData.getTransBills(), new PrintListener() {
+                        @Override
+                        public void onFinish() {
+                            et_clientID.setText("");
+                            navController.popBackStack(R.id.mainFragment,false);
+
+                        }
+
+                        @Override
+                        public void onCancel() {
+
+                        }
+                    });
+                }
+            } else
+                new ApiServices(requireContext(), false).rePrint(et_clientID.getText().toString().trim(), new RequestListener() {
+                    @Override
+                    public void onSuccess(String response) {
+                        try {
+                            JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                            String Error = responseBody.optString("Error").trim();
+                            Log.e("response", response);
+                            if (Error != null && !Error.isEmpty()) {
+                                onFailure("فشل في اعادة الطباعة!\n" + Error);
+                            } else {
+                                TransData transData = new TransData();
+                                JSONArray billsData = responseBody.optJSONArray("ModelPrintInquiryV");
+                                transData.setReferenceNo(responseBody.getInt("BankReceiptNo"));
+                                transData.setStan(String.valueOf(responseBody.getInt("BankReceiptNo")));
+                                transData.setPaymentType(responseBody.getInt("PayType"));
+                                transData.setTransDateTime(responseBody.getString("BankDateTime"));
+                                transData.setClientID(et_clientID.getText().toString().trim());
+                                transData.setStatus(TransData.STATUS.REPRINT.getValue());
+                                ArrayList<TransBill> billDetails = new ArrayList<>();
+                                for (int i = 0; i < billsData.length(); i++) {
+                                    TransBill bill = new Gson().fromJson(billsData.getJSONObject(i).toString(), TransBill.class);
+                                    billDetails.add(bill);
+                                    bill.setTransData(transData);
+                                }
+//                            transData.setTransBills((ForeignCollection<TransBill>) billDetails);
+
+                                int printCount = responseBody.getInt("PrintCount");
+                                if (printCount > 2) {
+                                    Toast.makeText(requireContext(), "تمت اعادة طباعة هذه الفاتورة من قبل!", Toast.LENGTH_SHORT).show();
+                                    navController.popBackStack(R.id.mainFragment,false);
+                                } else {
+                                    new PrintReceipt(requireContext(), billDetails, new PrintListener() {
+                                        @Override
+                                        public void onFinish() {
+                                            et_clientID.setText("");
+                                            navController.popBackStack(R.id.mainFragment,false);
+
+                                        }
+
+                                        @Override
+                                        public void onCancel() {
+
+                                        }
+                                    });
+                                }
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            onFailure(e.getMessage());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(String failureMsg) {
+                        Toast.makeText(requireContext(), failureMsg, Toast.LENGTH_SHORT).show();
+                        et_clientID.setText("");
+
+                    }
+                });
+        }
+
 }

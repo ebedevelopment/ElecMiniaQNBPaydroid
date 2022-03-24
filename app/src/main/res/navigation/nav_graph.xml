@@ -37,16 +37,16 @@
     <fragment
         android:id="@+id/detailedCollectedBillsFragment"
         android:name="com.ebe.miniaelec.ui.DetailedCollectedBillsFragment"
-        android:label="fragment_detailed_collected_bills"
+        android:label="@string/collected_detailed"
         tools:layout="@layout/fragment_detailed_collected_bills" />
     <fragment
         android:id="@+id/totalsFetchedBillsFragment"
         android:name="com.ebe.miniaelec.ui.TotalsFetchedBillsFragment"
-        android:label="fragment_totals_fetched_bills"
+        android:label="@string/total_bills"
         tools:layout="@layout/fragment_totals_fetched_bills" />
     <fragment
         android:id="@+id/totalCollectedBillsFragment"
         android:name="com.ebe.miniaelec.ui.TotalCollectedBillsFragment"
-        android:label="fragment_total_collected_bills"
+        android:label="@string/total_collected"
         tools:layout="@layout/fragment_total_collected_bills" />
 </navigation>

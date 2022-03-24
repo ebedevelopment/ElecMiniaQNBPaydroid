@@ -2,65 +2,84 @@ package com.ebe.miniaelec.ui;
 
 import android.os.Bundle;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.DBHelper;
+import com.ebe.miniaelec.model.CollectedReport;
+import com.ebe.miniaelec.model.TransData;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link TotalCollectedBillsFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import java.util.ArrayList;
+
+
 public class TotalCollectedBillsFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    ListView report_list;
+    ArrayList<CollectedReport> reports;
+    NavController navController;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
 
     public TotalCollectedBillsFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment TotalCollectedBillsFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static TotalCollectedBillsFragment newInstance(String param1, String param2) {
-        TotalCollectedBillsFragment fragment = new TotalCollectedBillsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        reports = new ArrayList<>();
+        navController = Navigation.findNavController(requireActivity(),R.id.content);
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_total_collected_bills, container, false);
+    }
+
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // navController.popBackStack(R.id.mainFragment,false);
+                navController.popBackStack(R.id.mainFragment,false);
+            }
+        });
+        report_list = view.findViewById(R.id.report_list);
+
+        ArrayList<String> dates = new ArrayList<String>();
+        dates.addAll(DBHelper.getInstance(requireActivity()).getDistinctCollectedDates());
+        for (String date :
+                dates) {
+            CollectedReport report = new CollectedReport(date);
+            report.setOnlineCashAmount(DBHelper.getInstance(requireActivity()).getTotalAmountOfPaymentTypeAndDate(date, TransData.PaymentType.CASH.getValue()));
+            report.setOnlineCashCount(DBHelper.getInstance(requireActivity()).getTotalCountOfPaymentTypeAndDate(date, TransData.PaymentType.CASH.getValue()));
+            report.setOfflineCashAmount(DBHelper.getInstance(requireActivity()).getTotalAmountOfPaymentTypeAndDate(date, TransData.PaymentType.OFFLINE_CASH.getValue()));
+            report.setOfflineCashCount(DBHelper.getInstance(requireActivity()).getTotalCountOfPaymentTypeAndDate(date, TransData.PaymentType.OFFLINE_CASH.getValue()));
+            report.setCardAmount(DBHelper.getInstance(requireActivity()).getTotalAmountOfPaymentTypeAndDate(date, TransData.PaymentType.CARD.getValue()));
+            report.setCardCount(DBHelper.getInstance(requireActivity()).getTotalCountOfPaymentTypeAndDate(date, TransData.PaymentType.CARD.getValue()));
+            report.setWalletAmount(DBHelper.getInstance(requireActivity()).getTotalAmountOfPaymentTypeAndDate(date, TransData.PaymentType.WALLET.getValue()));
+            report.setWalletCount(DBHelper.getInstance(requireActivity()).getTotalCountOfPaymentTypeAndDate(date, TransData.PaymentType.WALLET.getValue()));
+            reports.add(report);
+        }
+        AdapterTotalCollectedReport adapterBills = new AdapterTotalCollectedReport(requireActivity(), reports);
+        report_list.setAdapter(adapterBills);
+
+
+
     }
 }

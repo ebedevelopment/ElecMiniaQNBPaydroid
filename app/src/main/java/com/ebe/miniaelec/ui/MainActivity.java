@@ -123,7 +123,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 toolbar, navController, appBarConfiguration);
         //nvNavigation.getMenu().getItem(0).setChecked(true);
        // nvNavigation.setNavigationItemSelectedListener(this);
-        nvNavigation.getMenu().findItem(R.id.app_version).setTitle(getString(R.string.app_version) + " " + BuildConfig.VERSION_NAME);
+
+        addDrawerActionListener(nvNavigation);
         transAPI = TransAPIFactory.createTransAPI();
         Bundle bundle = getIntent().getBundleExtra("params");
         if (bundle != null) {
@@ -153,16 +154,198 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
+    void addDrawerActionListener(NavigationView nv)
+    {
 
-    public static void fragmentTransaction(Fragment fragment, String tag) {
+        nv.getMenu().findItem(R.id.app_version).setTitle(getString(R.string.app_version) + " " + BuildConfig.VERSION_NAME);
 
+        nv.getMenu().findItem(R.id.logout).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                finish();
+                return true;
+            }
+        });
 
-        cntxt.getFragmentManager().beginTransaction().setCustomAnimations(
-                R.animator.card_flip_right_in,
-                R.animator.card_flip_right_out,
-                R.animator.card_flip_left_in,
-                R.animator.card_flip_left_out).replace(R.id.content, fragment, tag).commit();
+        nv.getMenu().findItem(R.id.load_clients_data).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                if (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || DBHelper.getInstance(cntxt).offlineClientsCount() == 0)
+                    startService(new Intent(MainActivity.this,FinishPendingTransService.class));
+                    //getClientsData();
+                else Toast.makeText(cntxt, "لا يوجد فواتير جديدة", Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
+
+        nv.getMenu().findItem(R.id.nav_settle).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                SettleMsg.Request request = new SettleMsg.Request();
+                request.setCategory(SdkConstants.CATEGORY_SETTLE);
+                request.setPackageName(MiniaElectricity.getPrefsManager().getPackageName());
+                Bundle bundle = new Bundle();
+                request.setExtraBundle(bundle);
+                transAPI.startTrans(MainActivity.this, request);
+                return true;
+            }
+        });
+
+        nv.getMenu().findItem(R.id.exit).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(cntxt);
+                alertDialog.setTitle(cntxt.getString(R.string.exit_password));
+                final EditText input = new EditText(cntxt);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT);
+                input.setLayoutParams(params);
+                input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                alertDialog.setView(input);
+                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                String text = input.getText().toString().trim();
+                                if (text.isEmpty()) {
+                                    dialog.cancel();
+                                } else {
+                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
+                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
+                                    String[] res = simpleDateFormat.format(new Date()).split("/");
+                                    int sum = 0;
+                                    for (String str : res) {
+                                        sum += Integer.parseInt(str);
+                                    }
+                                    sum = (sum + 55) * 128;
+                                    if (String.valueOf(sum).equals(text)) {
+                                        Utils.enableStatusBar(true);
+                                        Utils.enableHomeRecentKey(true);
+                                        dialog.cancel();
+                                        finish();
+                                    } else
+                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                alertDialog.show();
+                return true;
+            }
+        });
+
+        nv.getMenu().findItem(R.id.nav_check_collected).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(cntxt);
+                alertDialog.setTitle(cntxt.getString(R.string.exit_password));
+                final EditText pwd_input = new EditText(cntxt);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT);
+                pwd_input.setLayoutParams(params);
+                pwd_input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                alertDialog.setView(pwd_input);
+                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                String text = pwd_input.getText().toString().trim();
+                                if (text.isEmpty()) {
+                                    dialog.cancel();
+                                } else {
+                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
+                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
+                                    String[] res = simpleDateFormat.format(new Date()).split("/");
+                                    int sum = 0;
+                                    for (String str : res) {
+                                        sum += Integer.parseInt(str);
+                                    }
+                                    sum = (sum + 55) * 128;
+                                    if (String.valueOf(sum).equals(text)) {
+                                        new PrintReceipt(cntxt).printTotalCollected(new PrintListener() {
+                                            @Override
+                                            public void onFinish() {
+                                                MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(0);
+                                                MiniaElectricity.getPrefsManager().setPaidOfflineBillsCount(0);
+                                                MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(0);
+                                                MiniaElectricity.getPrefsManager().setPaidOfflineBillsValue(0);
+                                            }
+
+                                            @Override
+                                            public void onCancel() {
+                                                //Do nothing
+                                            }
+                                        });
+                                    } else
+                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                alertDialog.show();
+                return true;
+            }
+        });
+
+        nv.getMenu().findItem(R.id.extract_data).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(cntxt);
+                alertDialog.setTitle(cntxt.getString(R.string.enter_password));
+                final EditText et_input = new EditText(cntxt);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT);
+                et_input.setLayoutParams(params);
+                et_input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                alertDialog.setView(et_input);
+                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                String text = et_input.getText().toString().trim();
+                                if (text.isEmpty()) {
+                                    dialog.cancel();
+                                } else {
+                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
+                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
+                                    String[] res = simpleDateFormat.format(new Date()).split("/");
+                                    int sum = 0;
+                                    for (String str : res) {
+                                        sum += Integer.parseInt(str);
+                                    }
+                                    sum = (sum + 55) * 128;
+                                    if (String.valueOf(sum).equals(text)) {
+                                        Utils.copyBillsFromDB(cntxt);
+                                    } else
+                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                alertDialog.show();
+                return true;
+            }
+        });
     }
+
+
 
 
 
@@ -189,6 +372,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public void onBackPressed() {
+
+        if (navController.getCurrentDestination()== navController.getGraph().findNode(R.id.billPaymentFragment))
+        {
+            navController.popBackStack(R.id.mainFragment,true);
+        }
         switch (BACK_ACTION) {
             case 1:
                // fragmentTransaction(new NewHomeFragment(), null);
@@ -242,6 +430,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+
+
 
         switch (menuItem.getItemId()) {
             case R.id.logout:
@@ -430,7 +620,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (!isTransResponse) {
                 if (baseResponse.getRspCode() == 0 || baseResponse.getRspCode() == -15) {
                     Toast.makeText(cntxt, "تمت التسوية بنجاح", Toast.LENGTH_LONG).show();
-                    startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+                    startService(new Intent(MainActivity.this,FinishPendingTransService.class));
                 } else Toast.makeText(cntxt, "حدث خطأ أثناء التسوية!", Toast.LENGTH_LONG).show();
 
             }

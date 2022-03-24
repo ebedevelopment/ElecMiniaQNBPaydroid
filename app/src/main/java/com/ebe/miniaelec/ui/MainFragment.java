@@ -594,6 +594,9 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                     {
                         inquiry();
                         progressDialog.dismiss();
+
+                        FinishPendingTransService.goToPayment.setValue(false);
+
                     }
 
                 }

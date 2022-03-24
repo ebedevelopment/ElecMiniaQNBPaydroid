@@ -100,7 +100,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        navController = Navigation.findNavController(requireActivity(),R.id.content);
         requireActivity().getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -109,7 +109,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                     transData.setStatus(TransData.STATUS.CANCELLED.getValue());
                 }
                 if (navController != null)
-                    navController.navigateUp();
+                    navController.popBackStack(R.id.mainFragment,true);
             }
         });
     }
