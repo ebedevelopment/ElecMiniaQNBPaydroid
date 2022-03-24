@@ -65,6 +65,7 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
             public void handleOnBackPressed() {
                 // navController.popBackStack(R.id.mainFragment,false);
                 navController.navigate(R.id.mainFragment);
+                navController.popBackStack();
             }
         });
         // Inflate the layout for this fragment

@@ -281,7 +281,7 @@ public class FinishPendingTransService extends Service {
     }
 
     private void sendDRM(boolean isVoided, final TransData transData) {
-        Log.i("onSuccess", transData.getDrmData());
+       // Log.i("onSuccess", transData.getDrmData());
         if (transData.getDrmData() != null && !transData.getDrmData().isEmpty())
         new ApiServices(this, true).sendDRM((JsonObject) new JsonParser().parse(transData.getDrmData()), new RequestListener() {
                 @Override

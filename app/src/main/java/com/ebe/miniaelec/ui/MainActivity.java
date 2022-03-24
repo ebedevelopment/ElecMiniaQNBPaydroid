@@ -372,24 +372,32 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public void onBackPressed() {
+        navController.popBackStack();
+        navController.navigate(R.id.mainFragment);
 
-        if (navController.getCurrentDestination()== navController.getGraph().findNode(R.id.billPaymentFragment))
+
+//        switch (BACK_ACTION) {
+//            case 1:
+//               // fragmentTransaction(new NewHomeFragment(), null);
+//                navController.navigate(R.id.mainFragment);
+//                break;
+//            case 2:
+//               // getFragmentManager().popBackStack();
+//                navController.popBackStack();
+//                break;
+//            default:
+//                //super.onBackPressed();
+//
+//        }
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        if (navController.getCurrentDestination()!= navController.getGraph().findNode(R.id.mainFragment))
         {
             navController.popBackStack(R.id.mainFragment,true);
         }
-        switch (BACK_ACTION) {
-            case 1:
-               // fragmentTransaction(new NewHomeFragment(), null);
-                navController.navigate(R.id.mainFragment);
-                break;
-            case 2:
-               // getFragmentManager().popBackStack();
-                navController.popBackStack();
-                break;
-            default:
-                //super.onBackPressed();
-
-        }
+        return super.onSupportNavigateUp();
     }
 
     public  void getClientsData() {
@@ -433,168 +441,168 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 
 
-        switch (menuItem.getItemId()) {
-            case R.id.logout:
-                MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                startActivity(new Intent(MainActivity.this, LoginActivity.class));
-                finish();
-                break;
-            case R.id.load_clients_data:
-                if (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || DBHelper.getInstance(cntxt).offlineClientsCount() == 0)
-                    startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
-                    //getClientsData();
-                else Toast.makeText(cntxt, "لا يوجد فواتير جديدة", Toast.LENGTH_LONG).show();
-                break;
-
-            case R.id.nav_settle:
-                SettleMsg.Request request = new SettleMsg.Request();
-                request.setCategory(SdkConstants.CATEGORY_SETTLE);
-                request.setPackageName(MiniaElectricity.getPrefsManager().getPackageName());
-                Bundle bundle = new Bundle();
-                request.setExtraBundle(bundle);
-                transAPI.startTrans(this, request);
-                break;
-            case R.id.exit:
-                AlertDialog.Builder alertDialog = new AlertDialog.Builder(cntxt);
-                alertDialog.setTitle(cntxt.getString(R.string.exit_password));
-                final EditText input = new EditText(cntxt);
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.MATCH_PARENT);
-                input.setLayoutParams(params);
-                input.setInputType(InputType.TYPE_CLASS_NUMBER);
-                alertDialog.setView(input);
-                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                String text = input.getText().toString().trim();
-                                if (text.isEmpty()) {
-                                    dialog.cancel();
-                                } else {
-                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
-                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
-                                    String[] res = simpleDateFormat.format(new Date()).split("/");
-                                    int sum = 0;
-                                    for (String str : res) {
-                                        sum += Integer.parseInt(str);
-                                    }
-                                    sum = (sum + 55) * 128;
-                                    if (String.valueOf(sum).equals(text)) {
-                                        Utils.enableStatusBar(true);
-                                        Utils.enableHomeRecentKey(true);
-                                        dialog.cancel();
-                                        finish();
-                                    } else
-                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
-                                }
-                            }
-                        });
-                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-
-                alertDialog.show();
-                break;
-            case R.id.nav_check_collected:
-                alertDialog = new AlertDialog.Builder(cntxt);
-                alertDialog.setTitle(cntxt.getString(R.string.exit_password));
-                final EditText pwd_input = new EditText(cntxt);
-                params = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.MATCH_PARENT);
-                pwd_input.setLayoutParams(params);
-                pwd_input.setInputType(InputType.TYPE_CLASS_NUMBER);
-                alertDialog.setView(pwd_input);
-                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                String text = pwd_input.getText().toString().trim();
-                                if (text.isEmpty()) {
-                                    dialog.cancel();
-                                } else {
-                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
-                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
-                                    String[] res = simpleDateFormat.format(new Date()).split("/");
-                                    int sum = 0;
-                                    for (String str : res) {
-                                        sum += Integer.parseInt(str);
-                                    }
-                                    sum = (sum + 55) * 128;
-                                    if (String.valueOf(sum).equals(text)) {
-                                        new PrintReceipt(cntxt).printTotalCollected(new PrintListener() {
-                                            @Override
-                                            public void onFinish() {
-                                                MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(0);
-                                                MiniaElectricity.getPrefsManager().setPaidOfflineBillsCount(0);
-                                                MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(0);
-                                                MiniaElectricity.getPrefsManager().setPaidOfflineBillsValue(0);
-                                            }
-
-                                            @Override
-                                            public void onCancel() {
-                                                //Do nothing
-                                            }
-                                        });
-                                    } else
-                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
-                                }
-                            }
-                        });
-                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-
-                alertDialog.show();
-                break;
-            case R.id.extract_data:
-                alertDialog = new AlertDialog.Builder(cntxt);
-                alertDialog.setTitle(cntxt.getString(R.string.enter_password));
-                final EditText et_input = new EditText(cntxt);
-                params = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.MATCH_PARENT);
-                et_input.setLayoutParams(params);
-                et_input.setInputType(InputType.TYPE_CLASS_NUMBER);
-                alertDialog.setView(et_input);
-                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                String text = et_input.getText().toString().trim();
-                                if (text.isEmpty()) {
-                                    dialog.cancel();
-                                } else {
-                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
-                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
-                                    String[] res = simpleDateFormat.format(new Date()).split("/");
-                                    int sum = 0;
-                                    for (String str : res) {
-                                        sum += Integer.parseInt(str);
-                                    }
-                                    sum = (sum + 55) * 128;
-                                    if (String.valueOf(sum).equals(text)) {
-                                        Utils.copyBillsFromDB(cntxt);
-                                    } else
-                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
-                                }
-                            }
-                        });
-                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-
-                alertDialog.show();
-                break;
-            default:
-                //fragmentTransaction(new NewHomeFragment(), null);
-                navController.navigate(R.id.mainFragment);
-                break;
-        }
+//        switch (menuItem.getItemId()) {
+//            case R.id.logout:
+//                MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+//                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+//                finish();
+//                break;
+//            case R.id.load_clients_data:
+//                if (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || DBHelper.getInstance(cntxt).offlineClientsCount() == 0)
+//                    startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+//                    //getClientsData();
+//                else Toast.makeText(cntxt, "لا يوجد فواتير جديدة", Toast.LENGTH_LONG).show();
+//                break;
+//
+//            case R.id.nav_settle:
+//                SettleMsg.Request request = new SettleMsg.Request();
+//                request.setCategory(SdkConstants.CATEGORY_SETTLE);
+//                request.setPackageName(MiniaElectricity.getPrefsManager().getPackageName());
+//                Bundle bundle = new Bundle();
+//                request.setExtraBundle(bundle);
+//                transAPI.startTrans(this, request);
+//                break;
+//            case R.id.exit:
+//                AlertDialog.Builder alertDialog = new AlertDialog.Builder(cntxt);
+//                alertDialog.setTitle(cntxt.getString(R.string.exit_password));
+//                final EditText input = new EditText(cntxt);
+//                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+//                        LinearLayout.LayoutParams.MATCH_PARENT,
+//                        LinearLayout.LayoutParams.MATCH_PARENT);
+//                input.setLayoutParams(params);
+//                input.setInputType(InputType.TYPE_CLASS_NUMBER);
+//                alertDialog.setView(input);
+//                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
+//                        new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                String text = input.getText().toString().trim();
+//                                if (text.isEmpty()) {
+//                                    dialog.cancel();
+//                                } else {
+//                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
+//                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
+//                                    String[] res = simpleDateFormat.format(new Date()).split("/");
+//                                    int sum = 0;
+//                                    for (String str : res) {
+//                                        sum += Integer.parseInt(str);
+//                                    }
+//                                    sum = (sum + 55) * 128;
+//                                    if (String.valueOf(sum).equals(text)) {
+//                                        Utils.enableStatusBar(true);
+//                                        Utils.enableHomeRecentKey(true);
+//                                        dialog.cancel();
+//                                        finish();
+//                                    } else
+//                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+//                                }
+//                            }
+//                        });
+//                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        dialog.cancel();
+//                    }
+//                });
+//
+//                alertDialog.show();
+//                break;
+//            case R.id.nav_check_collected:
+//                alertDialog = new AlertDialog.Builder(cntxt);
+//                alertDialog.setTitle(cntxt.getString(R.string.exit_password));
+//                final EditText pwd_input = new EditText(cntxt);
+//                params = new LinearLayout.LayoutParams(
+//                        LinearLayout.LayoutParams.MATCH_PARENT,
+//                        LinearLayout.LayoutParams.MATCH_PARENT);
+//                pwd_input.setLayoutParams(params);
+//                pwd_input.setInputType(InputType.TYPE_CLASS_NUMBER);
+//                alertDialog.setView(pwd_input);
+//                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
+//                        new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                String text = pwd_input.getText().toString().trim();
+//                                if (text.isEmpty()) {
+//                                    dialog.cancel();
+//                                } else {
+//                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
+//                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
+//                                    String[] res = simpleDateFormat.format(new Date()).split("/");
+//                                    int sum = 0;
+//                                    for (String str : res) {
+//                                        sum += Integer.parseInt(str);
+//                                    }
+//                                    sum = (sum + 55) * 128;
+//                                    if (String.valueOf(sum).equals(text)) {
+//                                        new PrintReceipt(cntxt).printTotalCollected(new PrintListener() {
+//                                            @Override
+//                                            public void onFinish() {
+//                                                MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(0);
+//                                                MiniaElectricity.getPrefsManager().setPaidOfflineBillsCount(0);
+//                                                MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(0);
+//                                                MiniaElectricity.getPrefsManager().setPaidOfflineBillsValue(0);
+//                                            }
+//
+//                                            @Override
+//                                            public void onCancel() {
+//                                                //Do nothing
+//                                            }
+//                                        });
+//                                    } else
+//                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+//                                }
+//                            }
+//                        });
+//                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        dialog.cancel();
+//                    }
+//                });
+//
+//                alertDialog.show();
+//                break;
+//            case R.id.extract_data:
+//                alertDialog = new AlertDialog.Builder(cntxt);
+//                alertDialog.setTitle(cntxt.getString(R.string.enter_password));
+//                final EditText et_input = new EditText(cntxt);
+//                params = new LinearLayout.LayoutParams(
+//                        LinearLayout.LayoutParams.MATCH_PARENT,
+//                        LinearLayout.LayoutParams.MATCH_PARENT);
+//                et_input.setLayoutParams(params);
+//                et_input.setInputType(InputType.TYPE_CLASS_NUMBER);
+//                alertDialog.setView(et_input);
+//                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
+//                        new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                String text = et_input.getText().toString().trim();
+//                                if (text.isEmpty()) {
+//                                    dialog.cancel();
+//                                } else {
+//                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
+//                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
+//                                    String[] res = simpleDateFormat.format(new Date()).split("/");
+//                                    int sum = 0;
+//                                    for (String str : res) {
+//                                        sum += Integer.parseInt(str);
+//                                    }
+//                                    sum = (sum + 55) * 128;
+//                                    if (String.valueOf(sum).equals(text)) {
+//                                        Utils.copyBillsFromDB(cntxt);
+//                                    } else
+//                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+//                                }
+//                            }
+//                        });
+//                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        dialog.cancel();
+//                    }
+//                });
+//
+//                alertDialog.show();
+//                break;
+//            default:
+//                //fragmentTransaction(new NewHomeFragment(), null);
+//                navController.navigate(R.id.mainFragment);
+//                break;
+//        }
 
         menuItem.setChecked(true);
         dlDrawer.closeDrawers();

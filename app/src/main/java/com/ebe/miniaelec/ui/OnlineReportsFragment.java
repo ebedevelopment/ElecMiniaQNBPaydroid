@@ -10,6 +10,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
@@ -46,8 +48,9 @@ public class OnlineReportsFragment extends Fragment {
             public void handleOnBackPressed() {
                 // navController.popBackStack(R.id.mainFragment,false);
                 if (webView.copyBackForwardList().getCurrentIndex() > 0) {
-                    webView.goBack();
-                } else navController.popBackStack(R.id.mainFragment,false);
+                   // webView.goBack();
+                    navController.navigateUp();
+                } else navController.popBackStack(R.id.mainFragment,true);
             }
         });
         return inflater.inflate(R.layout.fragment_online_reports, container, false);
@@ -57,13 +60,15 @@ public class OnlineReportsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         webView = view.findViewById(R.id.web_view);
-        //url = getIntent().getStringExtra("url");
+        url = "http://10.224.246.181:3000/";
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
         webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setUserAgentString("Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.88 Mobile Safari/537.36");
+       // webView.getSettings().setUserAgentString("Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.88 Mobile Safari/537.36");
         webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
         webView.loadUrl(url);
     }
+
+
 }

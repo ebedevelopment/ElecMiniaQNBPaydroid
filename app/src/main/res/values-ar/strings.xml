@@ -118,5 +118,8 @@
     <string name="remain_bills_count">عدد الفواتير المتبقية</string>
     <string name="remain_bills_amount">المبلغ المتبقي</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="From">من</string>
+    <string name="to">الي</string>
+    <string name="show_filtered_reports">عرض</string>
 
 </resources>
