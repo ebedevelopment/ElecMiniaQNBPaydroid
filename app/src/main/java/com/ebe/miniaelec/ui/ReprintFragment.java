@@ -60,14 +60,7 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
                 requireActivity().getResources().getDisplayMetrics());
 
         navController = Navigation.findNavController(requireActivity(),R.id.content);
-        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                // navController.popBackStack(R.id.mainFragment,false);
-                navController.navigate(R.id.mainFragment);
-                navController.popBackStack();
-            }
-        });
+
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_reprint, container, false);
     }

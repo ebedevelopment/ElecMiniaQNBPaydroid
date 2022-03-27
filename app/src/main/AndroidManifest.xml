@@ -26,18 +26,7 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-        <activity
-            android:name="com.ebe.miniaelec.ui.BillPaymentActivity"
-            android:windowSoftInputMode="adjustPan">
-        </activity>
-        <activity
-            android:name="com.ebe.miniaelec.ui.FinishPendingTransActivity"
-            android:windowSoftInputMode="adjustPan">
-        </activity>
-        <activity
-            android:name="com.ebe.miniaelec.ui.RePrintActivity"
-            android:windowSoftInputMode="adjustPan">
-        </activity>
+
         <activity
             android:name="com.ebe.miniaelec.ui.LoginActivity"
             android:windowSoftInputMode="adjustPan">
@@ -47,7 +36,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.WebViewActivity" />
+
 
         <service android:name=".services.FinishPendingTransService"/>
     </application>

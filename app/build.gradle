@@ -61,7 +61,7 @@ dependencies {
     implementation files('libs/ormlite-android-5.1.jar')
 
     //leak canary
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.8.1'
+    //debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.8.1'
 
 
     //Room

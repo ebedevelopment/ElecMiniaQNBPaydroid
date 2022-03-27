@@ -76,6 +76,7 @@ import java.util.Objects;
 public class BillPaymentFragment extends Fragment implements View.OnClickListener {
 
     FragmentManager fm;
+    JsonObject SendContent , EMVData;
     Context cntxt;
     TextView tv_clientID, tv_clientName, tv_billDate, tv_billValue, selected_bills_value;
     String phoneNumber;
@@ -447,7 +448,11 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                         MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(MiniaElectricity.getPrefsManager().getPaidOnlineBillsCount() + billsCount);
                                         MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(MiniaElectricity.getPrefsManager().getPaidOnlineBillsValue() + finalAmount);
                                         DBHelper.getInstance(cntxt).addReport(new Report(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                                        JsonObject SendContent = new JsonObject(), EMVData;
+                                        EMVData = new JsonObject();
+                                        setDrm(EMVData,SendContent,false);
                                         deleteBills();
+
                                         new PrintReceipt(cntxt, transBills, new PrintListener() {
                                             @Override
                                             public void onFinish() {
@@ -672,74 +677,13 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
     }
 
     private void sendCashDRM(boolean isVoided) {
-        JsonObject SendContent = new JsonObject(), EMVData;
+
+
+        SendContent = new JsonObject();
         EMVData = new JsonObject();
+        setDrm(EMVData,SendContent,isVoided);
         try {
-            long amount = 0;
-            for (TransBill b :
-                    transBills) {
-                amount += (b.getBillValue()) * 100
-                        + (b.getCommissionValue()) * 100;
-            }
-            EMVData.addProperty("AID", String.valueOf(amount));
-            EMVData.addProperty("ApplicationLabel", "VISA DEBIT");
-            EMVData.addProperty("CVMRes", "440302");
-            EMVData.addProperty("TSI", "F800");
-            EMVData.addProperty("TVR", "0080008000");
-            SendContent.add("EMVdata", EMVData);
 
-            SendContent.addProperty("login", "PAX_POS");
-            SendContent.addProperty("password", "PAX_pos3");
-            SendContent.addProperty("access_key", "PAX_ACCESS");
-            SendContent.addProperty("OrganizationId", 4);
-            SendContent.addProperty("TID", MiniaElectricity.getPrefsManager().getTerminalId());
-            SendContent.addProperty("MID", MiniaElectricity.getPrefsManager().getMerchantId());
-            SendContent.addProperty("Header1", "test ECR");
-            SendContent.addProperty("Header2", /*"           MAIN ADDRESS"*/MiniaElectricity.getPrefsManager().getCollectorCode());
-            //SendContent.addProperty("Header3", "MerchantAddress2");
-            SendContent.addProperty("BATCH", "000001");
-            SendContent.addProperty("STAN", transData.getStan());
-            amount = 0;
-            for (TransBill b :
-                    transBills) {
-                amount +=/* (b.getBillValue()) * 100
-                    +*/ (b.getCommissionValue()) * 100;
-            }
-            SendContent.addProperty("Amount", String.valueOf(amount));
-            SendContent.addProperty("CurrencyId", 1); // for EGP
-            SendContent.addProperty("CardName", "cash");
-            String tempString = transData.getClientMobileNo();
-            String masked = "";
-            if (tempString != null && tempString.length() > 4) {
-                masked = tempString.substring(tempString.length() - 4);
-                for (int i = 0; i < tempString.length() - 4; i++) {
-                    masked = "*".concat(masked);
-                }
-            } else masked = tempString;
-            SendContent.addProperty("PAN", masked);
-            SendContent.addProperty("ExpDate", "/"); // masked in transdata????
-            SendContent.addProperty("CardHolderName", transBills.get(0).getClientName());
-            SendContent.addProperty("TransactionTypeId", 10);
-            SendContent.addProperty("IsVoided", isVoided);
-            SendContent.addProperty("TransactionStatus", true);
-            SendContent.addProperty("ResponseCode", "00");
-            SendContent.addProperty("AuthId", Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN));//time format HHmmss
-            SendContent.addProperty("RRN", transData.getClientID());
-            SendContent.addProperty("EntryModeId", 3);
-            SendContent.addProperty("PinEntry", "Offline PIN Entered");
-            SendContent.addProperty("OnlineProcessing", "Online");
-
-            SendContent.addProperty("TrxDate", Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2)/* transData.getTransDate()*/);
-            SendContent.addProperty("TrxTime", Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2) /*transData.getTransTime()*/);
-
-            SendContent.addProperty("DCC_TRX", false);
-            SendContent.addProperty("ResponseMessage1", "TXN. ACCEPTED 00");
-            SendContent.addProperty("ResponseMessage2", "");
-            SendContent.addProperty("CardHolderPhone", transData.getClientMobileNo()); // ????????
-            SendContent.addProperty("Signature", "");
-            //Log.i("SendContent", SendContent.toString());
-            transData.setDrmData(SendContent.toString());
-            DBHelper.getInstance(cntxt).updateTransData(transData);
             if (!offline) {
                 new ApiServices(cntxt, true).sendDRM((JsonObject) new JsonParser().parse(transData.getDrmData()), new RequestListener() {
                     @Override
@@ -902,5 +846,75 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
             }
             Log.e("onActivityResult", "BaseResponse");
         }
+    }
+
+   void  setDrm(JsonObject EMVData,JsonObject SendContent,boolean isVoided)
+    {
+        long amount = 0;
+        for (TransBill b :
+                transBills) {
+            amount += (b.getBillValue()) * 100
+                    + (b.getCommissionValue()) * 100;
+        }
+        EMVData.addProperty("AID", String.valueOf(amount));
+        EMVData.addProperty("ApplicationLabel", "VISA DEBIT");
+        EMVData.addProperty("CVMRes", "440302");
+        EMVData.addProperty("TSI", "F800");
+        EMVData.addProperty("TVR", "0080008000");
+        SendContent.add("EMVdata", EMVData);
+
+        SendContent.addProperty("login", "PAX_POS");
+        SendContent.addProperty("password", "PAX_pos3");
+        SendContent.addProperty("access_key", "PAX_ACCESS");
+        SendContent.addProperty("OrganizationId", 4);
+        SendContent.addProperty("TID", MiniaElectricity.getPrefsManager().getTerminalId());
+        SendContent.addProperty("MID", MiniaElectricity.getPrefsManager().getMerchantId());
+        SendContent.addProperty("Header1", "test ECR");
+        SendContent.addProperty("Header2", /*"           MAIN ADDRESS"*/MiniaElectricity.getPrefsManager().getCollectorCode());
+        //SendContent.addProperty("Header3", "MerchantAddress2");
+        SendContent.addProperty("BATCH", "000001");
+        SendContent.addProperty("STAN", transData.getStan());
+        amount = 0;
+        for (TransBill b :
+                transBills) {
+            amount +=/* (b.getBillValue()) * 100
+                    +*/ (b.getCommissionValue()) * 100;
+        }
+        SendContent.addProperty("Amount", String.valueOf(amount));
+        SendContent.addProperty("CurrencyId", 1); // for EGP
+        SendContent.addProperty("CardName", "cash");
+        String tempString = transData.getClientMobileNo();
+        String masked = "";
+        if (tempString != null && tempString.length() > 4) {
+            masked = tempString.substring(tempString.length() - 4);
+            for (int i = 0; i < tempString.length() - 4; i++) {
+                masked = "*".concat(masked);
+            }
+        } else masked = tempString;
+        SendContent.addProperty("PAN", masked);
+        SendContent.addProperty("ExpDate", "/"); // masked in transdata????
+        SendContent.addProperty("CardHolderName", transBills.get(0).getClientName());
+        SendContent.addProperty("TransactionTypeId", 10);
+        SendContent.addProperty("IsVoided", isVoided);
+        SendContent.addProperty("TransactionStatus", true);
+        SendContent.addProperty("ResponseCode", "00");
+        SendContent.addProperty("AuthId", Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN));//time format HHmmss
+        SendContent.addProperty("RRN", transData.getClientID());
+        SendContent.addProperty("EntryModeId", 3);
+        SendContent.addProperty("PinEntry", "Offline PIN Entered");
+        SendContent.addProperty("OnlineProcessing", "Online");
+
+        SendContent.addProperty("TrxDate", Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2)/* transData.getTransDate()*/);
+        SendContent.addProperty("TrxTime", Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2) /*transData.getTransTime()*/);
+
+        SendContent.addProperty("DCC_TRX", false);
+        SendContent.addProperty("ResponseMessage1", "TXN. ACCEPTED 00");
+        SendContent.addProperty("ResponseMessage2", "");
+        SendContent.addProperty("CardHolderPhone", transData.getClientMobileNo()); // ????????
+        SendContent.addProperty("Signature", "");
+        //Log.i("SendContent", SendContent.toString());
+        transData.setDrmData(SendContent.toString());
+        DBHelper.getInstance(cntxt).updateTransData(transData);
+
     }
 }

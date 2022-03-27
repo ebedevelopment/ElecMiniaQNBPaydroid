@@ -199,7 +199,7 @@ public class PrintReceipt {
         if ("PAX".equals(Build.MANUFACTURER.toUpperCase()) || "PAX".equals(Build.BRAND.toUpperCase())) { //case of pax device
             new Thread(new Runnable() {
                 public void run() {
-                    Log.e("PrinterStatus", String.valueOf(PaxPrinter.getInstance().getStatus()));
+                   // Log.e("PrinterStatus", String.valueOf(PaxPrinter.getInstance().getStatus()));
 
                     PaxPrinter.getInstance().init();
                     PaxPrinter.getInstance().printBitmap(bitmap);

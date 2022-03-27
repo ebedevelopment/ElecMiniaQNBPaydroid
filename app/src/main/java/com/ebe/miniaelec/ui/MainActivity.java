@@ -1,7 +1,6 @@
 package com.ebe.miniaelec.ui;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -19,8 +18,12 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentOnAttachListener;
 import androidx.lifecycle.Observer;
 import androidx.navigation.NavController;
+import androidx.navigation.NavDestination;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
@@ -64,6 +67,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import dmax.dialog.SpotsDialog;
@@ -100,10 +104,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         cntxt = this;
         toolbar = findViewById(R.id.toolbar);
-        title = findViewById(R.id.title);
-        //setSupportActionBar(toolbar);
+       // title = findViewById(R.id.title);
+        setSupportActionBar(toolbar);
 
         setStatusBarColor();
+        hideToolbar();
 
 //        MiniaElectricity.getPrefsManager().setMaxOfflineHours(48);
 
@@ -124,13 +129,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         //nvNavigation.getMenu().getItem(0).setChecked(true);
        // nvNavigation.setNavigationItemSelectedListener(this);
 
+        if (navController.getCurrentDestination()== navController.getGraph().findNode(R.id.mainFragment))
+        {
+            Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.client_inquiry);
+        }
+
         addDrawerActionListener(nvNavigation);
         transAPI = TransAPIFactory.createTransAPI();
         Bundle bundle = getIntent().getBundleExtra("params");
         if (bundle != null) {
             isAfterLogin = bundle.getBoolean("after_login");
         }
-        //startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+
         startService(new Intent(this, FinishPendingTransService.class));
 
         FinishPendingTransService.serviceState.observe(this, new Observer<Boolean>() {
@@ -355,7 +365,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     public static void setTitleText(String _title) {
 
-        title.setText(_title);
+        //title.setText(_title);
     }
 
     private void setStatusBarColor() {
@@ -372,8 +382,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public void onBackPressed() {
-        navController.popBackStack();
-        navController.navigate(R.id.mainFragment);
+
+            navController.popBackStack(R.id.mainFragment,false);
+
+
 
 
 //        switch (BACK_ACTION) {
@@ -395,7 +407,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean onSupportNavigateUp() {
         if (navController.getCurrentDestination()!= navController.getGraph().findNode(R.id.mainFragment))
         {
-            navController.popBackStack(R.id.mainFragment,true);
+            navController.popBackStack(R.id.mainFragment,false);
         }
         return super.onSupportNavigateUp();
     }
@@ -439,173 +451,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
 
-
-
-//        switch (menuItem.getItemId()) {
-//            case R.id.logout:
-//                MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-//                startActivity(new Intent(MainActivity.this, LoginActivity.class));
-//                finish();
-//                break;
-//            case R.id.load_clients_data:
-//                if (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || DBHelper.getInstance(cntxt).offlineClientsCount() == 0)
-//                    startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
-//                    //getClientsData();
-//                else Toast.makeText(cntxt, "لا يوجد فواتير جديدة", Toast.LENGTH_LONG).show();
-//                break;
-//
-//            case R.id.nav_settle:
-//                SettleMsg.Request request = new SettleMsg.Request();
-//                request.setCategory(SdkConstants.CATEGORY_SETTLE);
-//                request.setPackageName(MiniaElectricity.getPrefsManager().getPackageName());
-//                Bundle bundle = new Bundle();
-//                request.setExtraBundle(bundle);
-//                transAPI.startTrans(this, request);
-//                break;
-//            case R.id.exit:
-//                AlertDialog.Builder alertDialog = new AlertDialog.Builder(cntxt);
-//                alertDialog.setTitle(cntxt.getString(R.string.exit_password));
-//                final EditText input = new EditText(cntxt);
-//                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-//                        LinearLayout.LayoutParams.MATCH_PARENT,
-//                        LinearLayout.LayoutParams.MATCH_PARENT);
-//                input.setLayoutParams(params);
-//                input.setInputType(InputType.TYPE_CLASS_NUMBER);
-//                alertDialog.setView(input);
-//                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
-//                        new DialogInterface.OnClickListener() {
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                String text = input.getText().toString().trim();
-//                                if (text.isEmpty()) {
-//                                    dialog.cancel();
-//                                } else {
-//                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
-//                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
-//                                    String[] res = simpleDateFormat.format(new Date()).split("/");
-//                                    int sum = 0;
-//                                    for (String str : res) {
-//                                        sum += Integer.parseInt(str);
-//                                    }
-//                                    sum = (sum + 55) * 128;
-//                                    if (String.valueOf(sum).equals(text)) {
-//                                        Utils.enableStatusBar(true);
-//                                        Utils.enableHomeRecentKey(true);
-//                                        dialog.cancel();
-//                                        finish();
-//                                    } else
-//                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
-//                                }
-//                            }
-//                        });
-//                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        dialog.cancel();
-//                    }
-//                });
-//
-//                alertDialog.show();
-//                break;
-//            case R.id.nav_check_collected:
-//                alertDialog = new AlertDialog.Builder(cntxt);
-//                alertDialog.setTitle(cntxt.getString(R.string.exit_password));
-//                final EditText pwd_input = new EditText(cntxt);
-//                params = new LinearLayout.LayoutParams(
-//                        LinearLayout.LayoutParams.MATCH_PARENT,
-//                        LinearLayout.LayoutParams.MATCH_PARENT);
-//                pwd_input.setLayoutParams(params);
-//                pwd_input.setInputType(InputType.TYPE_CLASS_NUMBER);
-//                alertDialog.setView(pwd_input);
-//                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
-//                        new DialogInterface.OnClickListener() {
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                String text = pwd_input.getText().toString().trim();
-//                                if (text.isEmpty()) {
-//                                    dialog.cancel();
-//                                } else {
-//                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
-//                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
-//                                    String[] res = simpleDateFormat.format(new Date()).split("/");
-//                                    int sum = 0;
-//                                    for (String str : res) {
-//                                        sum += Integer.parseInt(str);
-//                                    }
-//                                    sum = (sum + 55) * 128;
-//                                    if (String.valueOf(sum).equals(text)) {
-//                                        new PrintReceipt(cntxt).printTotalCollected(new PrintListener() {
-//                                            @Override
-//                                            public void onFinish() {
-//                                                MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(0);
-//                                                MiniaElectricity.getPrefsManager().setPaidOfflineBillsCount(0);
-//                                                MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(0);
-//                                                MiniaElectricity.getPrefsManager().setPaidOfflineBillsValue(0);
-//                                            }
-//
-//                                            @Override
-//                                            public void onCancel() {
-//                                                //Do nothing
-//                                            }
-//                                        });
-//                                    } else
-//                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
-//                                }
-//                            }
-//                        });
-//                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        dialog.cancel();
-//                    }
-//                });
-//
-//                alertDialog.show();
-//                break;
-//            case R.id.extract_data:
-//                alertDialog = new AlertDialog.Builder(cntxt);
-//                alertDialog.setTitle(cntxt.getString(R.string.enter_password));
-//                final EditText et_input = new EditText(cntxt);
-//                params = new LinearLayout.LayoutParams(
-//                        LinearLayout.LayoutParams.MATCH_PARENT,
-//                        LinearLayout.LayoutParams.MATCH_PARENT);
-//                et_input.setLayoutParams(params);
-//                et_input.setInputType(InputType.TYPE_CLASS_NUMBER);
-//                alertDialog.setView(et_input);
-//                alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
-//                        new DialogInterface.OnClickListener() {
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                String text = et_input.getText().toString().trim();
-//                                if (text.isEmpty()) {
-//                                    dialog.cancel();
-//                                } else {
-//                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yy/MM/dd", Locale.ENGLISH);
-//                                    simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT+2:00"));
-//                                    String[] res = simpleDateFormat.format(new Date()).split("/");
-//                                    int sum = 0;
-//                                    for (String str : res) {
-//                                        sum += Integer.parseInt(str);
-//                                    }
-//                                    sum = (sum + 55) * 128;
-//                                    if (String.valueOf(sum).equals(text)) {
-//                                        Utils.copyBillsFromDB(cntxt);
-//                                    } else
-//                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
-//                                }
-//                            }
-//                        });
-//                alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        dialog.cancel();
-//                    }
-//                });
-//
-//                alertDialog.show();
-//                break;
-//            default:
-//                //fragmentTransaction(new NewHomeFragment(), null);
-//                navController.navigate(R.id.mainFragment);
-//                break;
-//        }
-
         menuItem.setChecked(true);
-        dlDrawer.closeDrawers();
+        //dlDrawer.closeDrawers();
         return true;
     }
 
@@ -646,8 +493,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         }
         if (!isAfterLogin && MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1) {
-            // getClientsData();
-            //startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+
             startService(new Intent(this, FinishPendingTransService.class));
 
         }
@@ -729,10 +575,44 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             navController.navigate(R.id.mainFragment);
 
 
-            // cntxt.startActivityForResult(new Intent(cntxt, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+
 
         }
 
+    }
+
+    void hideToolbar()
+    {
+        navController.addOnDestinationChangedListener(new NavController.OnDestinationChangedListener() {
+            @Override
+            public void onDestinationChanged(@NonNull NavController navController, @NonNull NavDestination navDestination, @Nullable Bundle bundle) {
+
+                    if (getSupportActionBar() != null)
+                    {
+                        if (navDestination.getId() == R.id.onlineReportsFragment)
+                        getSupportActionBar().hide();
+                        else
+                            getSupportActionBar().show();
+                    }
+
+
+            }
+        });
+
+    }
+
+    void addMainFragmentTransition()
+    {
+        if (navController.getCurrentDestination()== navController.getGraph().findNode(R.id.mainFragment))
+        getSupportFragmentManager().addFragmentOnAttachListener(new FragmentOnAttachListener() {
+            @Override
+            public void onAttachFragment(@NonNull FragmentManager fragmentManager, @NonNull Fragment fragment) {
+                fragmentManager.beginTransaction().setCustomAnimations(R.animator.card_flip_right_in,
+                        R.animator.card_flip_right_out,
+                        R.animator.card_flip_left_in,
+                        R.animator.card_flip_left_out).commit();
+            }
+        });
     }
 
 

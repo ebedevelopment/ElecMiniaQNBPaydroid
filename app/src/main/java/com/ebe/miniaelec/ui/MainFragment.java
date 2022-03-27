@@ -23,9 +23,13 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentOnAttachListener;
 import androidx.lifecycle.Observer;
 import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
+import androidx.transition.TransitionInflater;
 
 import com.ebe.ebeunifiedlibrary.factory.ITransAPI;
 import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
@@ -111,6 +115,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+
         return inflater.inflate(R.layout.fragment_main, container, false);
     }
 
@@ -123,6 +128,9 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         tv_search = view.findViewById(R.id.tv_search);
         ll_filters = view.findViewById(R.id.ll_filters);
         navController = Navigation.findNavController(requireActivity(),R.id.content);
+        NavOptions.Builder navBuilder =  new NavOptions.Builder();
+        TransitionInflater inflater = TransitionInflater.from(requireContext());
+
         transAPI = TransAPIFactory.createTransAPI();
         progressDialog = new SpotsDialog(requireContext(), R.style.ProcessingProgress);
         progressDialog.setCancelable(false);
@@ -363,8 +371,10 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             if (!et_clientID.getText().toString().trim().isEmpty() && et_clientID.getText().toString().trim().length() == 10) {
                 // Toast.makeText(getActivity(), "أدخل رقم الاشتراك بشكل صحيح!", Toast.LENGTH_SHORT).show();
                 clientId = et_clientID.getText().toString().trim();
-                if (Utils.checkConnection(getActivity())) {
-                    startActivityForResult(new Intent(getActivity(), FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+                if (Utils.checkConnection(requireActivity())) {
+                   // startActivityForResult(new Intent(getActivity(), FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+                    requireActivity().startService(new Intent(requireContext(),FinishPendingTransService.class));
+
                 } else {
 
                     Bundle bundle = new Bundle();

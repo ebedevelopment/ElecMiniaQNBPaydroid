@@ -15,7 +15,6 @@ import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
 import com.ebe.miniaelec.model.TransBill;
 import com.ebe.miniaelec.model.TransData;
-import com.ebe.miniaelec.ui.AdapterBills;
 import com.ebe.miniaelec.utils.Utils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -31,13 +30,13 @@ import java.util.Locale;
 
 public class FinishPendingTransService extends Service {
 
-    private ArrayList<TransData> pendingTransData;
+    private static ArrayList<TransData> pendingTransData = new ArrayList<>();
     private ArrayList<TransData> offlineTransData;
     public static MutableLiveData<String> errorMsg = new MutableLiveData<String>("");
     public static MutableLiveData<TransData> aVoid = new MutableLiveData<>(null);
     public static MutableLiveData<Boolean> goToLogin = new MutableLiveData<>(false);
     public static MutableLiveData<Boolean> goToPayment = new MutableLiveData<>(false);
-    public static MutableLiveData<ArrayList<TransData>> pendingData = new MutableLiveData<ArrayList<TransData>>(new ArrayList<TransData>());
+    public static MutableLiveData<ArrayList<TransData>> pendingData = new MutableLiveData<ArrayList<TransData>>(pendingTransData);
     public static MutableLiveData<Boolean> serviceState = new MutableLiveData<>(true);
     private static int index = 0;
     public static MutableLiveData<Integer> indexState = new MutableLiveData<Integer>(index);
@@ -117,9 +116,9 @@ public class FinishPendingTransService extends Service {
     }
 
     private void setBills() {
-        ArrayList<TransData> all = new ArrayList<>(pendingTransData);
-        all.addAll(offlineTransData);
-        AdapterBills adapterBills = new AdapterBills(this, all);
+//        ArrayList<TransData> all = new ArrayList<>(pendingTransData);
+//        all.addAll(offlineTransData);
+//        AdapterBills adapterBills = new AdapterBills(this, all);
 
         if (offlineTransData.size() > 0) {
             handleOfflineBills();
@@ -221,7 +220,6 @@ public class FinishPendingTransService extends Service {
 
     private void handlePendingBills() {
         if (index < pendingTransData.size() && Utils.checkConnection(MiniaElectricity.getInstance())) {
-            pendingData.setValue(pendingTransData);
             TransData transData = pendingTransData.get(index);
             index = index + 1;
             if (TransData.STATUS.PENDING_CASH_PAYMENT_REQ.getValue() == transData.getStatus() ||
@@ -259,10 +257,15 @@ public class FinishPendingTransService extends Service {
                     public void onSuccess(String response) {
                         // whatever the response of delete req suppose it is succeeded
                         if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue()) {
-                            transData.setStatus(TransData.STATUS.DELETED_PENDING_DRM_REQ.getValue());
+                            transData.setStatus(TransData.STATUS.COMPLETED.getValue());
                             DBHelper.getInstance(FinishPendingTransService.this).updateTransData(transData);
-                            sendDRM(true, transData);
-                            // DBHelper.getInstance(cntxt).deleteBillData(billData);
+                            for (TransBill b :
+                                    transData.getTransBills()) {
+                                DBHelper.getInstance(FinishPendingTransService.this).deleteTransBill(b.getBillUnique());
+                            }
+                            DBHelper.getInstance(FinishPendingTransService.this).deleteTransData(transData);
+                            //sendDRM(true, transData);
+//                             DBHelper.getInstance().deleteBillData(billData);
                         } else {
                             transData.setStatus(TransData.STATUS.DELETED_PENDING_VOID_REQ.getValue());
                             //DBHelper.getInstance(cntxt).deleteBillData(billData);
@@ -283,7 +286,8 @@ public class FinishPendingTransService extends Service {
     private void sendDRM(boolean isVoided, final TransData transData) {
        // Log.i("onSuccess", transData.getDrmData());
         if (transData.getDrmData() != null && !transData.getDrmData().isEmpty())
-        new ApiServices(this, true).sendDRM((JsonObject) new JsonParser().parse(transData.getDrmData()), new RequestListener() {
+        {
+            new ApiServices(this, true).sendDRM((JsonObject) new JsonParser().parse(transData.getDrmData()), new RequestListener() {
                 @Override
                 public void onSuccess(String response) {
                     Log.i("onSuccess", response);
@@ -316,6 +320,11 @@ public class FinishPendingTransService extends Service {
                     handlePendingBills();
                 }
             });
+        }else
+        {
+            handlePendingBills();
+        }
+
     }
 
     @Override

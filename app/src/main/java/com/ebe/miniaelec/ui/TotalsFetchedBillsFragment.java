@@ -44,14 +44,6 @@ public class TotalsFetchedBillsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                // navController.popBackStack(R.id.mainFragment,false);
-                navController.navigate(R.id.mainFragment);
-            }
-        });
-
 
         ArrayList<Report> report = new ArrayList<Report>(DBHelper.getInstance(requireActivity()).getReports());
         double totalAmount = 0;

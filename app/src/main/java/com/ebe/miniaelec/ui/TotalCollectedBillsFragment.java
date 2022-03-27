@@ -52,13 +52,13 @@ public class TotalCollectedBillsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                // navController.popBackStack(R.id.mainFragment,false);
-                navController.popBackStack(R.id.mainFragment,false);
-            }
-        });
+//        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
+//            @Override
+//            public void handleOnBackPressed() {
+//                // navController.popBackStack(R.id.mainFragment,false);
+//                navController.popBackStack(R.id.mainFragment,false);
+//            }
+//        });
         report_list = view.findViewById(R.id.report_list);
 
         ArrayList<String> dates = new ArrayList<String>();

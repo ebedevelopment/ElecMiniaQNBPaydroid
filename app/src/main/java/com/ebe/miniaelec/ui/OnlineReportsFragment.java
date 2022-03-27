@@ -43,14 +43,16 @@ public class OnlineReportsFragment extends Fragment {
         // Inflate the layout for this fragment
         navController = Navigation.findNavController(requireActivity(),R.id.content);
 
+
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 // navController.popBackStack(R.id.mainFragment,false);
-                if (webView.copyBackForwardList().getCurrentIndex() > 0) {
-                   // webView.goBack();
-                    navController.navigateUp();
-                } else navController.popBackStack(R.id.mainFragment,true);
+                //copyBackForwardList().getCurrentIndex() > 0
+                if (webView.canGoBack()) {
+                    webView.goBack();
+                    //navController.navigateUp();
+                } else requireActivity().getOnBackPressedDispatcher().onBackPressed();//navController.popBackStack(R.id.mainFragment,false);
             }
         });
         return inflater.inflate(R.layout.fragment_online_reports, container, false);
@@ -62,9 +64,9 @@ public class OnlineReportsFragment extends Fragment {
         webView = view.findViewById(R.id.web_view);
         url = "http://10.224.246.181:3000/";
         webView.setWebViewClient(new WebViewClient());
-        webView.setWebChromeClient(new WebChromeClient());
+       // webView.setWebChromeClient(new WebChromeClient());
         webView.getSettings().setJavaScriptEnabled(true);
-       // webView.getSettings().setUserAgentString("Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.88 Mobile Safari/537.36");
+        webView.getSettings().setUserAgentString("Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.88 Mobile Safari/537.36");
         webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
         webView.loadUrl(url);

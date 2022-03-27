@@ -51,7 +51,7 @@ ApiServices {
 
 
     public void sendDRM(final JsonObject paraObj, final RequestListener listener) {
-        showDialog();
+        //showDialog();
         Call<ResponseBody> call = APi.sendDRM(paraObj);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -188,7 +188,7 @@ ApiServices {
     }
 
     public void billInquiry(String ClientID, final RequestListener listener) {
-        showDialog();
+       // showDialog();
         final Map<String, String> params = new HashMap<>();
         params.put("UserSessionID", MiniaElectricity.getPrefsManager().getSessionId());
         params.put("UnitSerialNo", MiniaElectricity.getSerial());
