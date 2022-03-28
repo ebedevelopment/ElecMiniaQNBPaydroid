@@ -34,7 +34,7 @@ ApiServices {
     private static final String QNB_DRM_URL = "https://10.224.246.181:6001";//"https://10.224.246.181:5020";
     API APi;
 
-    public MutableLiveData<Boolean> retryState = new MutableLiveData<>(false);
+    public  MutableLiveData<Boolean> dialogState = new MutableLiveData<>(false);
 
     public ApiServices(Context context) {
         progressDialog = new SpotsDialog(context, R.style.ProcessingProgress);
@@ -56,13 +56,26 @@ ApiServices {
 
     //service sendDRM
     //Bill payment sendCash Drm
-    public void sendDRM(final JsonObject paraObj, final RequestListener listener) {
-        showDialog();
+    public void sendDRM(Boolean isView,final JsonObject paraObj, final RequestListener listener) {
+        if (isView)
+        {
+          showDialog();
+        }else
+        {
+            dialogState.setValue(true);
+        }
+
         Call<ResponseBody> call = APi.sendDRM(paraObj);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                hideDialog();
+                if (isView)
+                {
+                    hideDialog();
+                }else
+                {
+                    dialogState.setValue(false);
+                }
                 if (response.isSuccessful()) {
                     try {
                         listener.onSuccess(response.body().string());
@@ -72,9 +85,15 @@ ApiServices {
                     }
                 } /*else listener.onFailure(response.code() + ": " + response.message());*/ else if (isFirst) {
                     //Log.e("DRM_isSuccessful", "" + response.code() + response.message());
-                    reTry(APi.sendDRM(paraObj), this, listener);
+                    reTry(isView,APi.sendDRM(paraObj), this, listener);
                 } else {
-                    hideDialog();
+                    if (isView)
+                    {
+                        hideDialog();
+                    }else
+                    {
+                        dialogState.setValue(false);
+                    }
                     listener.onFailure(response.code() + ": " + response.message());
                 }
             }
@@ -84,9 +103,16 @@ ApiServices {
 
                 Log.e("DRM_Failure", t.getMessage() + "");
                 if (isFirst) {
-                    reTry(APi.sendDRM(paraObj), this, listener);
+                    reTry(isView,APi.sendDRM(paraObj), this, listener);
                 } else {
-                    hideDialog();
+                    if (isView)
+                    {
+                        hideDialog();
+                    }else
+                    {
+                        dialogState.setValue(false);
+                    }
+
                     listener.onFailure(t.getMessage() + " ");
                 }
             }
@@ -97,7 +123,7 @@ ApiServices {
 
     private boolean isFirst = true;
 
-    private void showDialog() {
+    public void showDialog() {
 
 
         MiniaElectricity.getInstance().runOnUiThread(new Runnable() {
@@ -108,7 +134,7 @@ ApiServices {
         });
     }
 
-    private void hideDialog() {
+    public void hideDialog() {
 
         MiniaElectricity.getInstance().runOnUiThread(new Runnable() {
             @Override
@@ -138,7 +164,7 @@ ApiServices {
                 } else {
                     Log.e("failed", response.code() + ": " + response.message());
                     if (isFirst) {
-                        reTry(APi.logIn(params), this, listener);
+                        reTry(true,APi.logIn(params), this, listener);
                     } else {
                         hideDialog();
                         listener.onFailure("لقد تعذر الوصول للخادم!\n" + response.message());
@@ -150,7 +176,7 @@ ApiServices {
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 Log.e("failed", t.getMessage() + "///");
                 if (isFirst) {
-                    reTry(APi.logIn(params), this, listener);
+                    reTry(true,APi.logIn(params), this, listener);
                 } else {
                     hideDialog();
                     listener.onFailure("لقد تعذر الوصول للخادم!\n" + t.getMessage());
@@ -160,7 +186,7 @@ ApiServices {
         });
     }
 
-    private void reTry(Call<ResponseBody> call, Callback<ResponseBody> callback, final RequestListener listener) {
+    private void reTry(Boolean isView,Call<ResponseBody> call, Callback<ResponseBody> callback, final RequestListener listener) {
         if (Utils.getDefaultDataSubId(MiniaElectricity.getInstance()) == 1) //connected to sim2
 //            MiniaElectricity.getDal().getSys().switchSimCard(1); //switch to sim1
             Utils.switchSimCard(0);
@@ -179,7 +205,13 @@ ApiServices {
                         counter[0]++;
                     } catch (InterruptedException e) {
                         e.printStackTrace();
-                        hideDialog();
+                        if (isView)
+                        {
+                            hideDialog();
+                        }else {
+                            dialogState.setValue(false);
+                        }
+
                         if (listener != null)
                             listener.onFailure("لقد تعذر الوصول للخادم!");
 
@@ -189,7 +221,12 @@ ApiServices {
         }
         isFirst = false;
         if (!Utils.checkConnection(MiniaElectricity.getInstance())) {
-            hideDialog();
+            if (isView)
+            {
+                hideDialog();
+            }else {
+                dialogState.setValue(false);
+            }
             if (listener != null)
                 listener.onFailure("لقد تعذر الوصول للخادم!");
         } else
@@ -218,7 +255,7 @@ ApiServices {
                     }
                 } //else listener.onFailure(response.code() + ": " +
                 else if (isFirst) {
-                    reTry(APi.billInquiry(params), this, listener);
+                    reTry(true,APi.billInquiry(params), this, listener);
                 } else {
                     hideDialog();
                     listener.onFailure(response.code() + ": " + response.message());
@@ -229,7 +266,7 @@ ApiServices {
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 Log.e("onFailure", t.getMessage() + "/////");
                 if (isFirst) {
-                    reTry(APi.billInquiry(params), this, listener);
+                    reTry(true,APi.billInquiry(params), this, listener);
                 } else {
                     hideDialog();
                     listener.onFailure("لقد تعذر الوصول للخادم!");
@@ -259,7 +296,7 @@ ApiServices {
                     }
                 } //else listener.onFailure(response.code() + ": " +
                 else if (isFirst) {
-                    reTry(APi.rePrint(params), this, listener);
+                    reTry(true,APi.rePrint(params), this, listener);
                 } else {
                     listener.onFailure(response.code() + ": " + response.message());
                     hideDialog();
@@ -270,7 +307,7 @@ ApiServices {
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 if (isFirst) {
-                    reTry(APi.rePrint(params), this, listener);
+                    reTry(true,APi.rePrint(params), this, listener);
                 } else {
                     listener.onFailure("لقد تعذر الوصول للخادم!");
                     hideDialog();
@@ -342,7 +379,7 @@ ApiServices {
                         listener.onFailure(e.getMessage() + "");
                     }
                 } else if (isFirst) {
-                    reTry(APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
+                    reTry(true,APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
                 } else {
                     hideDialog();
                     listener.onFailure(response.code() + ": " + response.message());
@@ -354,7 +391,7 @@ ApiServices {
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 Log.e("onFailure", t.getMessage() + "");
                 if (isFirst) {
-                    reTry(APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
+                    reTry(true,APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
                 } else {
                     listener.onFailure("لقد تعذر الوصول للخادم!");
                     hideDialog();
@@ -367,6 +404,7 @@ ApiServices {
     //service handle offline bills
     public void offlineBillPayment(final JsonArray ModelClintPaymentV, final RequestListener listener) {
         //showDialog();
+        dialogState.setValue(true);
         final JsonObject params = new JsonObject();
         params.addProperty("InquiryID", MiniaElectricity.getPrefsManager().getInquiryID());
         params.addProperty("UserSessionID", MiniaElectricity.getPrefsManager().getSessionId());
@@ -387,6 +425,7 @@ ApiServices {
 //                Log.e("onResponse", response.code() + response.message());
                 if (response.isSuccessful()) {
                    // hideDialog();
+                    dialogState.setValue(false);
 
                     try {
                         listener.onSuccess(response.body().string());
@@ -395,9 +434,10 @@ ApiServices {
                         listener.onFailure(e.getMessage() + "");
                     }
                 } else if (isFirst) {
-                    reTry(APi.offlineBillsPay(/*url, ModelBillPaymentV*/params), this, listener);
+                    reTry(false,APi.offlineBillsPay(/*url, ModelBillPaymentV*/params), this, listener);
                 } else {
                     //hideDialog();
+                    dialogState.setValue(false);
                     listener.onFailure(response.code() + ": " + response.message());
 
                 }
@@ -407,7 +447,7 @@ ApiServices {
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 Log.e("onFailure", t.getMessage() + "");
                 if (isFirst) {
-                    reTry(APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
+                    reTry(false,APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
                 } else {
                     listener.onFailure("لقد تعذر الوصول للخادم!" + "\n" + t.getMessage());
                     //hideDialog();
@@ -420,6 +460,7 @@ ApiServices {
     //service delete payment
     public void cancelBillPayment(String BankTransactionID, final RequestListener listener) {
        // showDialog();
+        dialogState.setValue(true);
         final Map<String, String> params = new HashMap<>();
         params.put("UnitSerialNo", MiniaElectricity.getSerial());
         params.put("BankTransactionID", BankTransactionID);
@@ -429,6 +470,7 @@ ApiServices {
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
                     //hideDialog();
+                    dialogState.setValue(false);
 
                     try {
                         listener.onSuccess(response.body().string());
@@ -437,10 +479,11 @@ ApiServices {
                         listener.onFailure(e.getMessage() + "");
                     }
                 } else if (isFirst) {
-                    reTry(APi.cancelPayment(params), this, listener);
+                    reTry(false,APi.cancelPayment(params), this, listener);
                 } else {
                     listener.onFailure(response.code() + ": " + response.message());
                     //hideDialog();
+                    dialogState.setValue(false);
                 }
 
                 //listener.onFailure(response.code() + ": " + response.message());
@@ -450,10 +493,11 @@ ApiServices {
             public void onFailure(Call<ResponseBody> call, Throwable t) {
 
                 if (isFirst) {
-                    reTry(APi.cancelPayment(params), this, listener);
+                    reTry(false,APi.cancelPayment(params), this, listener);
                 } else {
                     listener.onFailure("لقد تعذر الوصول للخادم!");
                     //hideDialog();
+                    dialogState.setValue(false);
                 }
 
             }
@@ -484,7 +528,7 @@ ApiServices {
                 } else {
 //                    listener.onFailure(response.code() + ": " + response.message())
                     if (isFirst) {
-                        reTry(APi.getOfflineClients(params), this, listener);
+                        reTry(true,APi.getOfflineClients(params), this, listener);
                     } else {
                         hideDialog();
                         listener.onFailure("لقد تعذر تحميل بيانات العملاء!");
@@ -495,7 +539,7 @@ ApiServices {
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 if (isFirst) {
-                    reTry(APi.getOfflineClients(params), this, listener);
+                    reTry(true,APi.getOfflineClients(params), this, listener);
                 } else {
                     hideDialog();
                     listener.onFailure("لقد تعذر تحميل بيانات العملاء!");

@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     DrawerLayout dlDrawer;
     NavigationView nvNavigation;
     public ITransAPI transAPI;
+    private ApiServices services;
     static int FINISH_PENDING_TRANS_START = 999;
     private boolean isAfterLogin;
     public static NavController navController;
@@ -101,6 +102,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.content);
         assert navHostFragment != null;
          navController = navHostFragment.getNavController();
+         services = new ApiServices(this, false);
+
 
         cntxt = this;
         toolbar = findViewById(R.id.toolbar);
@@ -142,6 +145,32 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
 
         startService(new Intent(this, FinishPendingTransService.class));
+
+        FinishPendingTransService.loadingState.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (aBoolean)
+                {
+                    services.showDialog();
+                }else
+                {
+                    services.hideDialog();
+                }
+            }
+        });
+
+        FinishPendingTransService.drmLoadingState.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (aBoolean)
+                {
+                    services.showDialog();
+                }else
+                {
+                    services.hideDialog();
+                }
+            }
+        });
 
         FinishPendingTransService.serviceState.observe(this, new Observer<Boolean>() {
             @Override
@@ -413,7 +442,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public  void getClientsData() {
-        new ApiServices(cntxt, false).getClients(new RequestListener() {
+        services.getClients(new RequestListener() {
             @Override
             public void onSuccess(String response) {
                 try {

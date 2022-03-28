@@ -691,7 +691,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         try {
 
             if (!offline) {
-                new ApiServices(cntxt, true).sendDRM((JsonObject) new JsonParser().parse(transData.getDrmData()), new RequestListener() {
+                new ApiServices(cntxt, true).sendDRM(true,(JsonObject) new JsonParser().parse(transData.getDrmData()), new RequestListener() {
                     @Override
                     public void onSuccess(String response) {
                         // Log.i("onSuccess", response);

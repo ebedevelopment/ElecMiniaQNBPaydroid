@@ -15,6 +15,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
 
 import com.ebe.ebeunifiedlibrary.factory.ITransAPI;
 import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
@@ -52,6 +53,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     public ITransAPI transAPI;
     private static final int APP_PERMISSIONS = 5;
 
+    private ApiServices services;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,6 +75,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.READ_PHONE_STATE};
+        services = new ApiServices(this, false);
 
         requestPermissions(permissions);
 
@@ -85,6 +89,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 //        );
         progressDialog = new SpotsDialog(cntxt, R.style.ProcessingProgress);
         progressDialog.setCancelable(false);
+
         transAPI = TransAPIFactory.createTransAPI();
         setStatusBarColor();
         if (MiniaElectricity.getPrefsManager().isLoggedIn()) {
@@ -148,7 +153,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     private void login() {
         if (Utils.checkConnection(this))
-            new ApiServices(this, false).logIn(et_collector_code.getText().toString().trim(), et_password.getText().toString().trim(),
+            services.logIn(et_collector_code.getText().toString().trim(), et_password.getText().toString().trim(),
                     new RequestListener() {
                         @Override
                         public void onSuccess(String response) {
