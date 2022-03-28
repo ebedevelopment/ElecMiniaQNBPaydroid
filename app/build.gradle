@@ -15,6 +15,9 @@ android {
         versionCode 26 // next test version 25, production 23
         versionName "1.0.26"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        ndk {
+            abiFilters "armeabi-v7a", "x86", "armeabi", "mips"
+        }
     }
     buildTypes {
         release {

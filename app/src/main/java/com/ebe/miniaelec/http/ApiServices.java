@@ -3,6 +3,8 @@ package com.ebe.miniaelec.http;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.lifecycle.MutableLiveData;
+
 import com.ebe.miniaelec.BuildConfig;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
@@ -32,6 +34,8 @@ ApiServices {
     private static final String QNB_DRM_URL = "https://10.224.246.181:6001";//"https://10.224.246.181:5020";
     API APi;
 
+    public MutableLiveData<Boolean> retryState = new MutableLiveData<>(false);
+
     public ApiServices(Context context) {
         progressDialog = new SpotsDialog(context, R.style.ProcessingProgress);
         progressDialog.setCancelable(false);
@@ -50,8 +54,10 @@ ApiServices {
 
 
 
+    //service sendDRM
+    //Bill payment sendCash Drm
     public void sendDRM(final JsonObject paraObj, final RequestListener listener) {
-        //showDialog();
+        showDialog();
         Call<ResponseBody> call = APi.sendDRM(paraObj);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -92,6 +98,8 @@ ApiServices {
     private boolean isFirst = true;
 
     private void showDialog() {
+
+
         MiniaElectricity.getInstance().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -101,6 +109,7 @@ ApiServices {
     }
 
     private void hideDialog() {
+
         MiniaElectricity.getInstance().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -187,8 +196,9 @@ ApiServices {
             call.enqueue(callback);
     }
 
+    //main fragment
     public void billInquiry(String ClientID, final RequestListener listener) {
-       // showDialog();
+        showDialog();
         final Map<String, String> params = new HashMap<>();
         params.put("UserSessionID", MiniaElectricity.getPrefsManager().getSessionId());
         params.put("UnitSerialNo", MiniaElectricity.getSerial());
@@ -228,6 +238,7 @@ ApiServices {
         });
     }
 
+    //reprintFragment
     public void rePrint(String ClientID, final RequestListener listener) {
         showDialog();
         final Map<String, String> params = new HashMap<>();
@@ -269,6 +280,7 @@ ApiServices {
         });
     }
 
+    //bill payment fragment
     public void billPayment(String InquiryID, int PayType, String ClientMobileNo, String ClientID, final JsonArray ModelBillPaymentV,
                             String BankDateTime, String BankReceiptNo, String BankTransactionID,
                             String ClientCreditCard, String AcceptCode, final RequestListener listener) {
@@ -352,8 +364,9 @@ ApiServices {
         });
     }
 
+    //service handle offline bills
     public void offlineBillPayment(final JsonArray ModelClintPaymentV, final RequestListener listener) {
-        showDialog();
+        //showDialog();
         final JsonObject params = new JsonObject();
         params.addProperty("InquiryID", MiniaElectricity.getPrefsManager().getInquiryID());
         params.addProperty("UserSessionID", MiniaElectricity.getPrefsManager().getSessionId());
@@ -373,7 +386,7 @@ ApiServices {
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 //                Log.e("onResponse", response.code() + response.message());
                 if (response.isSuccessful()) {
-                    hideDialog();
+                   // hideDialog();
 
                     try {
                         listener.onSuccess(response.body().string());
@@ -384,7 +397,7 @@ ApiServices {
                 } else if (isFirst) {
                     reTry(APi.offlineBillsPay(/*url, ModelBillPaymentV*/params), this, listener);
                 } else {
-                    hideDialog();
+                    //hideDialog();
                     listener.onFailure(response.code() + ": " + response.message());
 
                 }
@@ -397,15 +410,16 @@ ApiServices {
                     reTry(APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
                 } else {
                     listener.onFailure("لقد تعذر الوصول للخادم!" + "\n" + t.getMessage());
-                    hideDialog();
+                    //hideDialog();
                 }
 
             }
         });
     }
 
+    //service delete payment
     public void cancelBillPayment(String BankTransactionID, final RequestListener listener) {
-        showDialog();
+       // showDialog();
         final Map<String, String> params = new HashMap<>();
         params.put("UnitSerialNo", MiniaElectricity.getSerial());
         params.put("BankTransactionID", BankTransactionID);
@@ -414,7 +428,7 @@ ApiServices {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
-                    hideDialog();
+                    //hideDialog();
 
                     try {
                         listener.onSuccess(response.body().string());
@@ -426,7 +440,7 @@ ApiServices {
                     reTry(APi.cancelPayment(params), this, listener);
                 } else {
                     listener.onFailure(response.code() + ": " + response.message());
-                    hideDialog();
+                    //hideDialog();
                 }
 
                 //listener.onFailure(response.code() + ": " + response.message());
@@ -439,13 +453,15 @@ ApiServices {
                     reTry(APi.cancelPayment(params), this, listener);
                 } else {
                     listener.onFailure("لقد تعذر الوصول للخادم!");
-                    hideDialog();
+                    //hideDialog();
                 }
 
             }
         });
     }
 
+
+    //main activity get clients
     public void getClients(final RequestListener listener) {
         showDialog();
         final Map<String, String> params = new HashMap<>();

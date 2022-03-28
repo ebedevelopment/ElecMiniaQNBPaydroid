@@ -40,6 +40,7 @@ public class FinishPendingTransService extends Service {
     public static MutableLiveData<Boolean> serviceState = new MutableLiveData<>(true);
     private static int index = 0;
     public static MutableLiveData<Integer> indexState = new MutableLiveData<Integer>(index);
+    public static MutableLiveData<Boolean> loadingState= new MutableLiveData<>(false);
 
 
     @Nullable
@@ -153,11 +154,13 @@ public class FinishPendingTransService extends Service {
             i.add("ModelBillPaymentV", ModelBillPaymentV);
             ModelClientPaymentV.add(i);
         }
+        loadingState.setValue(true);
         new ApiServices(this, false).offlineBillPayment(ModelClientPaymentV,
                 new RequestListener() {
                     @Override
                     public void onSuccess(String response) {
                         try {
+                            loadingState.setValue(false);
                             JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
                             String Error = responseBody.optString("Error").trim();
                             int billsStatus = responseBody.optInt("UserNewBillStatus");
@@ -201,12 +204,14 @@ public class FinishPendingTransService extends Service {
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
+                            loadingState.setValue(false);
                             onFailure(e.getMessage());
                         }
                     }
 
                     @Override
                     public void onFailure(String failureMsg) {
+                        loadingState.setValue(false);
                         if (failureMsg != null)
                             //Toast.makeText(this, failureMsg, Toast.LENGTH_LONG).show();
                             errorMsg.setValue(failureMsg);
@@ -251,10 +256,12 @@ public class FinishPendingTransService extends Service {
     private void deletePayment(final TransData transData) {
         transData.setStatus(TransData.STATUS.PENDING_DELETE_REQ.getValue());
         DBHelper.getInstance(this).updateTransData(transData);
+        loadingState.setValue(true);
         new ApiServices(this, false).cancelBillPayment(transData.getBankTransactionID(),
                 new RequestListener() {
                     @Override
                     public void onSuccess(String response) {
+                        loadingState.setValue(false);
                         // whatever the response of delete req suppose it is succeeded
                         if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue()) {
                             transData.setStatus(TransData.STATUS.COMPLETED.getValue());
@@ -277,21 +284,24 @@ public class FinishPendingTransService extends Service {
                     @Override
                     public void onFailure(String failureMsg) {
                         //Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                        loadingState.setValue(false);
                         errorMsg.setValue(failureMsg);
                         handlePendingBills();
                     }
                 });
     }
 
-    private void sendDRM(boolean isVoided, final TransData transData) {
+    private void sendDRM(boolean isView, final TransData transData) {
        // Log.i("onSuccess", transData.getDrmData());
         if (transData.getDrmData() != null && !transData.getDrmData().isEmpty())
         {
+            loadingState.setValue(true);
             new ApiServices(this, true).sendDRM((JsonObject) new JsonParser().parse(transData.getDrmData()), new RequestListener() {
                 @Override
                 public void onSuccess(String response) {
                     Log.i("onSuccess", response);
                     JSONObject responseBody = null;
+                    loadingState.setValue(false);
                     try {
                         responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
                         String ErrorMessage = responseBody.optString("ErrorMessage").trim();
@@ -317,11 +327,13 @@ public class FinishPendingTransService extends Service {
                 @Override
                 public void onFailure(String failureMsg) {
                     Log.i("failureMsg", failureMsg);
+                    loadingState.setValue(false);
                     handlePendingBills();
                 }
             });
         }else
         {
+            loadingState.setValue(false);
             handlePendingBills();
         }
 

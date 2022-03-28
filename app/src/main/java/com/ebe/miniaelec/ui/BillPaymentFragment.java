@@ -72,10 +72,12 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
 
+import dmax.dialog.SpotsDialog;
+
 
 public class BillPaymentFragment extends Fragment implements View.OnClickListener {
 
-    FragmentManager fm;
+
     JsonObject SendContent , EMVData;
     Context cntxt;
     TextView tv_clientID, tv_clientName, tv_billDate, tv_billValue, selected_bills_value;
@@ -97,6 +99,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
     private ArrayList<BillData> billDetails;
     private boolean offline, allowCancel = true;
     private ArrayList<TransBill> transBills;
+    SpotsDialog progressDialog;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -119,6 +122,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+
         return inflater.inflate(R.layout.fragment_bill_payment, container, false);
     }
 
@@ -135,6 +139,8 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         navController = Navigation.findNavController(requireActivity(),R.id.content);
 
         cntxt = requireContext();
+        progressDialog = new SpotsDialog(cntxt, R.style.ProcessingProgress);
+        progressDialog.setCancelable(false);
         setStatusBarColor();
         //fm = getFragmentManager();
         tv_billDate = view.findViewById(R.id.bill_date);
@@ -449,10 +455,10 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                         MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(MiniaElectricity.getPrefsManager().getPaidOnlineBillsValue() + finalAmount);
                                         DBHelper.getInstance(cntxt).addReport(new Report(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
                                         JsonObject SendContent = new JsonObject(), EMVData;
-                                        EMVData = new JsonObject();
-                                        setDrm(EMVData,SendContent,false);
+
                                         deleteBills();
 
+                                        Log.d("TransBill", "onSuccess: "+ transBills.get(0));
                                         new PrintReceipt(cntxt, transBills, new PrintListener() {
                                             @Override
                                             public void onFinish() {
