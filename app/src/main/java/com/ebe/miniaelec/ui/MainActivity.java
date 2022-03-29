@@ -10,6 +10,9 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.ebe.miniaelec.database.AppDataBase;
+import com.ebe.miniaelec.database.entities.BillDataEntity;
+import com.ebe.miniaelec.database.entities.OfflineClientEntity;
 import com.ebe.miniaelec.services.FinishPendingTransService;
 import com.google.android.material.navigation.NavigationView;
 import androidx.core.content.ContextCompat;
@@ -87,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     static int FINISH_PENDING_TRANS_START = 999;
     private boolean isAfterLogin;
     public static NavController navController;
+    private AppDataBase dataBase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         getBaseContext().getResources().updateConfiguration(config,
                 getBaseContext().getResources().getDisplayMetrics());
         setContentView(R.layout.activity_main);
-
+dataBase= AppDataBase.getInstance(this);
         NavHostFragment navHostFragment =
                 (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.content);
         assert navHostFragment != null;
@@ -459,7 +463,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         }
                     } else if (!InquiryID.isEmpty()) {
                         MiniaElectricity.getPrefsManager().setInquiryID(InquiryID);
-                        new InsertInDB(responseBody).execute();
+                         insertInDB(responseBody);
                     } else onFailure("فشل في تحميل بيانات المشتركين!");
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -528,87 +532,87 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    public static class InsertInDB extends AsyncTask<Void, Integer, Void> {
-
-        private SpotsDialog progressDialog;
-        private final JSONObject responseBody;
-
-        InsertInDB(JSONObject responseBody) {
-            this.responseBody = responseBody;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            progressDialog = new SpotsDialog(cntxt, R.style.SwitchingProgress);
-            progressDialog.setCancelable(false);
-            progressDialog.show();
-        }
-
-
-        @Override
-        protected Void doInBackground(Void... arg0) {
-            JSONArray ModelSerialNoV = responseBody.optJSONArray("ModelSerialNoV");
-            //DBHelper.getInstance(cntxt).clearOfflineData();
-            BaseDbHelper.getInstance(cntxt).dropTables();
-            for (int i = 0; i < ModelSerialNoV.length(); i++) {
-                try {
-                    OfflineClient client = new OfflineClient();
-                    client.setClientMobileNo(ModelSerialNoV.getJSONObject(i).optString("ClientMobileNo"));
-                    client.setSerialNo(ModelSerialNoV.getJSONObject(i).optString("SerialNo"));
-                    if (client.getSerialNo() == null || client.getSerialNo().equalsIgnoreCase("null")) {
-                        continue;
-                    }
-                    boolean added = DBHelper.getInstance(cntxt).addOfflineClient(client);
-                    JSONArray billsData = ModelSerialNoV.getJSONObject(i).optJSONArray("ModelBillInquiryV");
-                    // ArrayList<BillDetails> billDetails = new ArrayList<>();
-                    for (int j = 0; j < billsData.length(); j++) {
-                        BillData bill = new Gson().fromJson(billsData.getJSONObject(j).toString(), BillData.class);
-                        bill.setClient(client);
-                        bill.setClientId(client.getSerialNo());
-                        if (added && (bill.getMainCode() != null && bill.getMntkaCode() != null && bill.getDayCode() != null && bill.getFaryCode() != null)) {
-                            DBHelper.getInstance(cntxt).newOfflineBillAppend(bill);
-                            DBHelper.getInstance(cntxt).updateOfflineBill(bill);
-                        }
-                        //billDetails.add(bill);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                //client.setModelBillInquiryV(billDetails);
-                //offlineClients.add(client);
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
-            try {
-                MiniaElectricity.getPrefsManager().setMaxOfflineHours(responseBody.getInt("MaxOfflineHoure"));
-
-                MiniaElectricity.getPrefsManager().setMaxOfflineBillCount(responseBody.getInt("MaxOfflineBillCount"));
-
-                MiniaElectricity.getPrefsManager().setMaxOfflineBillValue(responseBody.getInt("MaxOfflineBillValue"));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
-                    .format(new Date(System.currentTimeMillis())));
-            MiniaElectricity.getPrefsManager().setOfflineBillValue(0);
-            MiniaElectricity.getPrefsManager().setOfflineBillCount(0);
-            MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
-            //ArrayList<OfflineClient> offlineClients = new ArrayList<>();
-            progressDialog.dismiss();
-            //fragmentTransaction(new NewHomeFragment(), null);
-            navController.navigate(R.id.mainFragment);
-
-
-
-
-        }
-
-    }
+//    public static class InsertInDB extends AsyncTask<Void, Integer, Void> {
+//
+//        private SpotsDialog progressDialog;
+//        private final JSONObject responseBody;
+//
+//        InsertInDB(JSONObject responseBody) {
+//            this.responseBody = responseBody;
+//        }
+//
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//            progressDialog = new SpotsDialog(cntxt, R.style.SwitchingProgress);
+//            progressDialog.setCancelable(false);
+//            progressDialog.show();
+//        }
+//
+//
+//        @Override
+//        protected Void doInBackground(Void... arg0) {
+//            JSONArray ModelSerialNoV = responseBody.optJSONArray("ModelSerialNoV");
+//            //DBHelper.getInstance(cntxt).clearOfflineData();
+//            BaseDbHelper.getInstance(cntxt).dropTables();
+//            for (int i = 0; i < ModelSerialNoV.length(); i++) {
+//                try {
+//                    OfflineClient client = new OfflineClient();
+//                    client.setClientMobileNo(ModelSerialNoV.getJSONObject(i).optString("ClientMobileNo"));
+//                    client.setSerialNo(ModelSerialNoV.getJSONObject(i).optString("SerialNo"));
+//                    if (client.getSerialNo() == null || client.getSerialNo().equalsIgnoreCase("null")) {
+//                        continue;
+//                    }
+//                    boolean added = DBHelper.getInstance(cntxt).addOfflineClient(client);
+//                    JSONArray billsData = ModelSerialNoV.getJSONObject(i).optJSONArray("ModelBillInquiryV");
+//                    // ArrayList<BillDetails> billDetails = new ArrayList<>();
+//                    for (int j = 0; j < billsData.length(); j++) {
+//                        BillData bill = new Gson().fromJson(billsData.getJSONObject(j).toString(), BillData.class);
+//                        bill.setClient(client);
+//                        bill.setClientId(client.getSerialNo());
+//                        if (added && (bill.getMainCode() != null && bill.getMntkaCode() != null && bill.getDayCode() != null && bill.getFaryCode() != null)) {
+//                            DBHelper.getInstance(cntxt).newOfflineBillAppend(bill);
+//                            DBHelper.getInstance(cntxt).updateOfflineBill(bill);
+//                        }
+//                        //billDetails.add(bill);
+//                    }
+//                } catch (JSONException e) {
+//                    e.printStackTrace();
+//                }
+//                //client.setModelBillInquiryV(billDetails);
+//                //offlineClients.add(client);
+//            }
+//            return null;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(Void result) {
+//            super.onPostExecute(result);
+//            try {
+//                MiniaElectricity.getPrefsManager().setMaxOfflineHours(responseBody.getInt("MaxOfflineHoure"));
+//
+//                MiniaElectricity.getPrefsManager().setMaxOfflineBillCount(responseBody.getInt("MaxOfflineBillCount"));
+//
+//                MiniaElectricity.getPrefsManager().setMaxOfflineBillValue(responseBody.getInt("MaxOfflineBillValue"));
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+//            MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+//                    .format(new Date(System.currentTimeMillis())));
+//            MiniaElectricity.getPrefsManager().setOfflineBillValue(0);
+//            MiniaElectricity.getPrefsManager().setOfflineBillCount(0);
+//            MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
+//            //ArrayList<OfflineClient> offlineClients = new ArrayList<>();
+//            progressDialog.dismiss();
+//            //fragmentTransaction(new NewHomeFragment(), null);
+//            navController.navigate(R.id.mainFragment);
+//
+//
+//
+//
+//        }
+//
+//    }
 
     void hideToolbar()
     {
@@ -642,6 +646,72 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         R.animator.card_flip_left_out).commit();
             }
         });
+    }
+
+
+    void insertInDB(JSONObject responseBody)
+    {
+        SpotsDialog progressDialog;
+        progressDialog = new SpotsDialog(cntxt, R.style.SwitchingProgress);
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        JSONArray ModelSerialNoV = responseBody.optJSONArray("ModelSerialNoV");
+        dataBase.offlineClientsDao().clearClients();
+        dataBase.billDataDaoDao().clearBills();
+
+        for (int i = 0; i < ModelSerialNoV.length(); i++) {
+            try {
+                OfflineClientEntity client = new OfflineClientEntity();
+                client.setClientMobileNo(ModelSerialNoV.getJSONObject(i).optString("ClientMobileNo"));
+                client.setSerialNo(ModelSerialNoV.getJSONObject(i).optString("SerialNo"));
+                if (client.getSerialNo() == null || client.getSerialNo().equalsIgnoreCase("null")) {
+                    continue;
+                }
+                long added = dataBase.offlineClientsDao().addOfflineClient(client);
+                JSONArray billsData = ModelSerialNoV.getJSONObject(i).optJSONArray("ModelBillInquiryV");
+                // ArrayList<BillDetails> billDetails = new ArrayList<>();
+                for (int j = 0; j < billsData.length(); j++) {
+                    BillDataEntity bill = new Gson().fromJson(billsData.getJSONObject(j).toString(), BillDataEntity.class);
+                    bill.setClient(client.getId());
+                    bill.setClientId(client.getSerialNo());
+                    if (added >=0 && (bill.getMainCode() != null && bill.getMntkaCode() != null && bill.getDayCode() != null && bill.getFaryCode() != null)) {
+                        dataBase.billDataDaoDao().newOfflineBillAppend(bill);
+
+                    }
+
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        postDataInsertion(responseBody,progressDialog);
+    }
+
+    void postDataInsertion(JSONObject responseBody,SpotsDialog progressDialog)
+    {
+        try {
+            MiniaElectricity.getPrefsManager().setMaxOfflineHours(responseBody.getInt("MaxOfflineHoure"));
+
+            MiniaElectricity.getPrefsManager().setMaxOfflineBillCount(responseBody.getInt("MaxOfflineBillCount"));
+
+            MiniaElectricity.getPrefsManager().setMaxOfflineBillValue(responseBody.getInt("MaxOfflineBillValue"));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+                .format(new Date(System.currentTimeMillis())));
+        MiniaElectricity.getPrefsManager().setOfflineBillValue(0);
+        MiniaElectricity.getPrefsManager().setOfflineBillCount(0);
+        MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
+        progressDialog.dismiss();
+        navController.navigate(R.id.mainFragment);
+
+
+
+
     }
 
 

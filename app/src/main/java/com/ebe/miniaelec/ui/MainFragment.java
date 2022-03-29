@@ -39,7 +39,10 @@ import com.ebe.ebeunifiedlibrary.message.VoidMsg;
 import com.ebe.ebeunifiedlibrary.sdkconstants.SdkConstants;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.AppDataBase;
 import com.ebe.miniaelec.database.DBHelper;
+import com.ebe.miniaelec.database.entities.BillDataEntity;
+import com.ebe.miniaelec.database.entities.OfflineClientEntity;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
 import com.ebe.miniaelec.model.BillData;
@@ -53,8 +56,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import dmax.dialog.SpotsDialog;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.observers.DisposableObserver;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
 public class MainFragment extends Fragment implements View.OnClickListener {
@@ -62,8 +72,10 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
     EditText et_clientID, et_clientName;
     ListView lv_clients;
-    ArrayList<OfflineClient> offlineClients;
-    ArrayList<BillData> offlineBills;
+    private AppDataBase dataBase;
+    private CompositeDisposable compositeDisposable;
+    ArrayList<OfflineClientEntity> offlineClients;
+    ArrayList<BillDataEntity> offlineBills;
     AdapterOfflineClients offlineClientsAdapter;
     Spinner sp_mntka, sp_day, sp_main, sp_fary;
     ArrayList<String> mntakaList, dayList, mainList, faryList;
@@ -81,11 +93,9 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     int index = 0;
 
 
-
     public MainFragment() {
         // Required empty public constructor
     }
-
 
 
     @Override
@@ -99,7 +109,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             }
         };
 
-        requireActivity().getOnBackPressedDispatcher().addCallback(this,callback);
+        requireActivity().getOnBackPressedDispatcher().addCallback(this, callback);
 
 
         //offlineClients = new ArrayList<>();
@@ -122,14 +132,17 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        dataBase = AppDataBase.getInstance(requireContext());
         et_clientID = view.findViewById(R.id.client_id);
         et_clientName = view.findViewById(R.id.client_name);
         lv_clients = view.findViewById(R.id.clients);
         tv_search = view.findViewById(R.id.tv_search);
         ll_filters = view.findViewById(R.id.ll_filters);
-        navController = Navigation.findNavController(requireActivity(),R.id.content);
-        NavOptions.Builder navBuilder =  new NavOptions.Builder();
+        navController = Navigation.findNavController(requireActivity(), R.id.content);
+        NavOptions.Builder navBuilder = new NavOptions.Builder();
         TransitionInflater inflater = TransitionInflater.from(requireContext());
+        compositeDisposable = new CompositeDisposable();
 
         transAPI = TransAPIFactory.createTransAPI();
         progressDialog = new SpotsDialog(requireContext(), R.style.ProcessingProgress);
@@ -137,7 +150,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         progressDialog.create();
         progressDialog.setMessage(requireActivity().getString(R.string.switching));
         addObservers();
-        Log.d("MaxValue", "onCreateView: "+ MiniaElectricity.getPrefsManager().getOfflineBillValue());
+        Log.d("MaxValue", "onCreateView: " + MiniaElectricity.getPrefsManager().getOfflineBillValue());
         et_clientID.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -157,10 +170,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             }
         });
         view.findViewById(R.id.start).setOnClickListener(this);
-        //offlineClients = new ArrayList<>(DBHelper.getInstance(getActivity()).getAllClients());
-        offlineBills = new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBills());
-        offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
-        lv_clients.setAdapter(offlineClientsAdapter);
+       setClientList();
 
         lv_clients.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -175,8 +185,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                     }
 
 
-                    if (progressDialog != null)
-                    {
+                    if (progressDialog != null) {
 
                         progressDialog.show();
                     }
@@ -190,7 +199,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                     bundle.putString("clientID", clientId);
                     bundle.putBoolean("offline", true);
                     et_clientID.setText("");
-                    navController.navigate(R.id.billPaymentFragment,bundle);
+                    navController.navigate(R.id.billPaymentFragment, bundle);
 
                 }
             }
@@ -228,53 +237,9 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 selectesMntka = position;
                 if (position != 0) {
-                    offlineBills = new ArrayList<>(DBHelper.getInstance(requireActivity()).getDistinctBillsOfMntka(mntakaList.get(selectesMntka)));
-                    offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
-                    lv_clients.setAdapter(offlineClientsAdapter);
-                    dayList = new ArrayList<>();
-                    dayList.add(getString(R.string.daily));
-                    dayList.addAll(DBHelper.getInstance(requireActivity()).getDistinctDaysOfMntka(mntakaList.get(selectesMntka)));
-                    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(getActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, dayList);
-                    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_day.setAdapter(dataAdapter);
-                    mainList = new ArrayList<>();
-                    mainList.add(getString(R.string.main_code));
-                    ArrayAdapter<String> mainAdapter = new ArrayAdapter<>(getActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, mainList);
-                    mainAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_main.setAdapter(mainAdapter);
-                    faryList = new ArrayList<>();
-                    faryList.add(getString(R.string.fary_code));
-                    ArrayAdapter<String> faryAdapter = new ArrayAdapter<>(getActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, faryList);
-                    faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_fary.setAdapter(faryAdapter);
+                   filterByMntka();
                 } else {
-                    offlineBills = new ArrayList<>(DBHelper.getInstance(requireActivity()).getDistinctBills());
-                    offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
-                    lv_clients.setAdapter(offlineClientsAdapter);
-                    dayList = new ArrayList<>();
-                    mainList = new ArrayList<>();
-                    faryList = new ArrayList<>();
-                    dayList = new ArrayList<>();
-                    dayList.add(getString(R.string.daily));
-                    ArrayAdapter<String> daysAdapter = new ArrayAdapter<>(getActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, dayList);
-                    daysAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_day.setAdapter(daysAdapter);
-                    mainList = new ArrayList<>();
-                    mainList.add(getString(R.string.main_code));
-                    ArrayAdapter<String> mainAdapter = new ArrayAdapter<>(getActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, mainList);
-                    mainAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_main.setAdapter(mainAdapter);
-                    faryList = new ArrayList<>();
-                    faryList.add(getString(R.string.fary_code));
-                    ArrayAdapter<String> faryAdapter = new ArrayAdapter<>(getActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, faryList);
-                    faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_fary.setAdapter(faryAdapter);
+                    filterByMntkaIfPosZero();
                 }
             }
 
@@ -288,22 +253,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 selectedDay = position;
                 if (position != 0) {
-                    offlineBills = new ArrayList<>(DBHelper.getInstance(requireActivity()).getDistinctBills(mntakaList.get(selectesMntka), dayList.get(selectedDay)));
-                    offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
-                    lv_clients.setAdapter(offlineClientsAdapter);
-                    mainList = new ArrayList<>();
-                    mainList.add(getString(R.string.main_code));
-                    mainList.addAll(DBHelper.getInstance(requireActivity()).getDistinctMainsOfMntkaAndDay(mntakaList.get(selectesMntka), dayList.get(selectedDay)));
-                    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(requireActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, mainList);
-                    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_main.setAdapter(dataAdapter);
-                    faryList = new ArrayList<>();
-                    faryList.add(getString(R.string.fary_code));
-                    ArrayAdapter<String> faryAdapter = new ArrayAdapter<>(requireActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, faryList);
-                    faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_fary.setAdapter(faryAdapter);
+                    filterByDay();
                 }
             }
 
@@ -317,16 +267,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 selectedMain = position;
                 if (position != 0) {
-                    offlineBills = new ArrayList<>(DBHelper.getInstance(requireActivity()).getDistinctBills(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain)));
-                    offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
-                    lv_clients.setAdapter(offlineClientsAdapter);
-                    faryList = new ArrayList<>();
-                    faryList.add(getString(R.string.fary_code));
-                    faryList.addAll(DBHelper.getInstance(requireActivity()).getDistinctFaryOfMntkaAndDayAndMain(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain)));
-                    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(getActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, faryList);
-                    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_fary.setAdapter(dataAdapter);
+
+                    filterByMain();
                 }
             }
 
@@ -365,6 +307,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         });
     }
 
+
+
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.start) {
@@ -372,8 +316,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                 // Toast.makeText(getActivity(), "أدخل رقم الاشتراك بشكل صحيح!", Toast.LENGTH_SHORT).show();
                 clientId = et_clientID.getText().toString().trim();
                 if (Utils.checkConnection(requireActivity())) {
-                   // startActivityForResult(new Intent(getActivity(), FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
-                    requireActivity().startService(new Intent(requireContext(),FinishPendingTransService.class));
+                    // startActivityForResult(new Intent(getActivity(), FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+                    requireActivity().startService(new Intent(requireContext(), FinishPendingTransService.class));
 
                 } else {
 
@@ -382,7 +326,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                     bundle.putString("clientID", clientId);
                     bundle.putBoolean("offline", true);
                     et_clientID.setText("");
-                    navController.navigate(R.id.billPaymentFragment,bundle);
+                    navController.navigate(R.id.billPaymentFragment, bundle);
 
                 }
             } else if (!et_clientName.getText().toString().trim().isEmpty()) {
@@ -391,11 +335,11 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                 offlineClientsAdapter.notifyDataSetChanged();
                 lv_clients.setAdapter(offlineClientsAdapter);
             } else {
-                if (selectesMntka != 0 && selectedDay != 0 && selectedMain != 0 && selectedFary!=0) {
+                if (selectesMntka != 0 && selectedDay != 0 && selectedMain != 0 && selectedFary != 0) {
                     offlineBills = new ArrayList<>(DBHelper.getInstance(requireActivity()).getDistinctBills(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain), faryList.get(selectedFary)));
                     offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
                     lv_clients.setAdapter(offlineClientsAdapter);
-                } else if (selectesMntka != 0 && selectedDay != 0 && selectedMain != 0 ) {
+                } else if (selectesMntka != 0 && selectedDay != 0 && selectedMain != 0) {
                     offlineBills = new ArrayList<>(DBHelper.getInstance(requireActivity()).getDistinctBills(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain)));
                     offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
                     lv_clients.setAdapter(offlineClientsAdapter);
@@ -406,7 +350,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                             android.R.layout.simple_spinner_dropdown_item, faryList);
                     dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                     sp_fary.setAdapter(dataAdapter);
-                } else if (selectesMntka != 0 && selectedDay != 0 ) {
+                } else if (selectesMntka != 0 && selectedDay != 0) {
                     offlineBills = new ArrayList<>(DBHelper.getInstance(requireActivity()).getDistinctBills(mntakaList.get(selectesMntka), dayList.get(selectedDay)));
                     offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
                     lv_clients.setAdapter(offlineClientsAdapter);
@@ -423,7 +367,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                             android.R.layout.simple_spinner_dropdown_item, faryList);
                     faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                     sp_fary.setAdapter(faryAdapter);
-                } else if (selectesMntka != 0 ) {
+                } else if (selectesMntka != 0) {
                     offlineBills = new ArrayList<>(DBHelper.getInstance(requireActivity()).getDistinctBillsOfMntka(mntakaList.get(selectesMntka)));
                     offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
                     lv_clients.setAdapter(offlineClientsAdapter);
@@ -463,7 +407,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                         // fragment.setArguments(bundle);
                         bundle.putBoolean("offline", false);
                         et_clientID.setText("");
-                        navController.navigate(R.id.billPaymentFragment,bundle);
+                        navController.navigate(R.id.billPaymentFragment, bundle);
 
                         // MainActivity.fragmentTransaction(fragment, "BillPayment");
                     }
@@ -516,8 +460,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         BaseResponse baseResponse = transAPI.onResult(requestCode, resultCode, data);
-        Intent serviceIntent = new Intent(requireContext(),FinishPendingTransService.class);
-        serviceIntent.putExtra("pending",true);
+        Intent serviceIntent = new Intent(requireContext(), FinishPendingTransService.class);
+        serviceIntent.putExtra("pending", true);
         if (baseResponse == null) {
             //Log.e("onActivityResult", "null");
 
@@ -564,13 +508,12 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
     }
 
-    void addObservers()
-    {
+    void addObservers() {
         FinishPendingTransService.aVoid.observe(getViewLifecycleOwner(), new Observer<TransData>() {
             @Override
             public void onChanged(TransData transData) {
                 if (transData != null)
-                aVoidReq(transData);
+                    aVoidReq(transData);
             }
         });
 
@@ -578,16 +521,15 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onChanged(String s) {
                 if (!s.isEmpty())
-                Toast.makeText(requireContext(),s,Toast.LENGTH_LONG).show();
+                    Toast.makeText(requireContext(), s, Toast.LENGTH_LONG).show();
             }
         });
 
         FinishPendingTransService.goToLogin.observe(getViewLifecycleOwner(), new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean aBoolean) {
-                if (aBoolean)
-                {
-                    requireActivity().startActivity(new Intent(requireContext(),LoginActivity.class));
+                if (aBoolean) {
+                    requireActivity().startActivity(new Intent(requireContext(), LoginActivity.class));
                     requireActivity().finish();
                 }
 
@@ -598,10 +540,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onChanged(Boolean aBoolean) {
 
-                if (aBoolean)
-                {
-                    if (clientId !=null && !clientId.isEmpty())
-                    {
+                if (aBoolean) {
+                    if (clientId != null && !clientId.isEmpty()) {
                         inquiry();
                         progressDialog.dismiss();
 
@@ -617,8 +557,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         FinishPendingTransService.pendingData.observe(getViewLifecycleOwner(), new Observer<ArrayList<TransData>>() {
             @Override
             public void onChanged(ArrayList<TransData> transData) {
-                if (!transData.isEmpty())
-                {
+                if (!transData.isEmpty()) {
                     pendingTransData = transData;
                 }
             }
@@ -638,8 +577,189 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onStop() {
         super.onStop();
-        Intent intent = new Intent(requireContext(),FinishPendingTransService.class);
+        Intent intent = new Intent(requireContext(), FinishPendingTransService.class);
 
         requireActivity().stopService(intent);
+        compositeDisposable.dispose();
+    }
+
+    void setClientList() {
+        compositeDisposable.add(dataBase.billDataDaoDao().getDistinctBills().
+                subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<List<BillDataEntity>>() {
+
+
+                               @Override
+                               public void accept(List<BillDataEntity> billDataEntities) throws Throwable {
+
+                                   offlineBills = new ArrayList<>();
+                                   offlineBills.addAll(billDataEntities);
+                                   offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
+                                   lv_clients.setAdapter(offlineClientsAdapter);
+                               }
+                           }
+                )
+        );
+
+
+    }
+
+
+    void filterByMntka()
+    {
+        compositeDisposable.addAll(dataBase.billDataDaoDao().getDistinctBillsOfMntka(mntakaList.get(selectesMntka))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<List<BillDataEntity>>() {
+                    @Override
+                    public void accept(List<BillDataEntity> billDataEntities) throws Throwable {
+                        offlineBills = new ArrayList<>();
+                        offlineBills.addAll(billDataEntities);
+                        offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
+                        lv_clients.setAdapter(offlineClientsAdapter);
+                    }
+                }),dataBase.billDataDaoDao().getDistinctDaysOfMntka(mntakaList.get(selectesMntka))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<List<String>>() {
+                    @Override
+                    public void accept(List<String> strings) throws Throwable {
+
+                        dayList = new ArrayList<>();
+                        dayList.add(getString(R.string.daily));
+                        dayList.addAll(strings);
+                        ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(getActivity(),
+                                android.R.layout.simple_spinner_dropdown_item, dayList);
+                        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        sp_day.setAdapter(dataAdapter);
+                        mainList = new ArrayList<>();
+                        mainList.add(getString(R.string.main_code));
+                        ArrayAdapter<String> mainAdapter = new ArrayAdapter<>(getActivity(),
+                                android.R.layout.simple_spinner_dropdown_item, mainList);
+                        mainAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        sp_main.setAdapter(mainAdapter);
+                        faryList = new ArrayList<>();
+                        faryList.add(getString(R.string.fary_code));
+                        ArrayAdapter<String> faryAdapter = new ArrayAdapter<>(getActivity(),
+                                android.R.layout.simple_spinner_dropdown_item, faryList);
+                        faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        sp_fary.setAdapter(faryAdapter);
+
+                    }
+                })
+        );
+    }
+
+    private void filterByMntkaIfPosZero() {
+
+        compositeDisposable.add(dataBase.billDataDaoDao().getDistinctBills()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<List<BillDataEntity>>() {
+                    @Override
+                    public void accept(List<BillDataEntity> billDataEntities) throws Throwable {
+
+                        offlineBills = new ArrayList<>();
+                        offlineBills.addAll(billDataEntities);
+                        offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
+                        lv_clients.setAdapter(offlineClientsAdapter);
+                        dayList = new ArrayList<>();
+                        mainList = new ArrayList<>();
+                        faryList = new ArrayList<>();
+                        dayList = new ArrayList<>();
+                        dayList.add(getString(R.string.daily));
+                        ArrayAdapter<String> daysAdapter = new ArrayAdapter<>(getActivity(),
+                                android.R.layout.simple_spinner_dropdown_item, dayList);
+                        daysAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        sp_day.setAdapter(daysAdapter);
+                        mainList = new ArrayList<>();
+                        mainList.add(getString(R.string.main_code));
+                        ArrayAdapter<String> mainAdapter = new ArrayAdapter<>(getActivity(),
+                                android.R.layout.simple_spinner_dropdown_item, mainList);
+                        mainAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        sp_main.setAdapter(mainAdapter);
+                        faryList = new ArrayList<>();
+                        faryList.add(getString(R.string.fary_code));
+                        ArrayAdapter<String> faryAdapter = new ArrayAdapter<>(getActivity(),
+                                android.R.layout.simple_spinner_dropdown_item, faryList);
+                        faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        sp_fary.setAdapter(faryAdapter);
+
+                    }
+                }));
+    }
+
+    void filterByDay()
+    {
+        compositeDisposable.addAll(dataBase.billDataDaoDao().getDistinctBillsByMntkaAndDay(mntakaList.get(selectesMntka), dayList.get(selectedDay))
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(new Consumer<List<BillDataEntity>>() {
+            @Override
+            public void accept(List<BillDataEntity> billDataEntities) throws Throwable {
+                offlineBills = new ArrayList<>();
+                offlineBills.addAll(billDataEntities);
+                offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
+                lv_clients.setAdapter(offlineClientsAdapter);
+
+
+
+            }
+        }), dataBase.billDataDaoDao().getDistinctMainsOfMntkaAndDay(mntakaList.get(selectesMntka), dayList.get(selectedDay))
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(new Consumer<List<String>>() {
+            @Override
+            public void accept(List<String> strings) throws Throwable {
+                mainList = new ArrayList<>();
+                mainList.add(getString(R.string.main_code));
+                mainList.addAll(strings);
+                ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(requireActivity(),
+                        android.R.layout.simple_spinner_dropdown_item, mainList);
+                dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                sp_main.setAdapter(dataAdapter);
+                faryList = new ArrayList<>();
+                faryList.add(getString(R.string.fary_code));
+                ArrayAdapter<String> faryAdapter = new ArrayAdapter<>(requireActivity(),
+                        android.R.layout.simple_spinner_dropdown_item, faryList);
+                faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                sp_fary.setAdapter(faryAdapter);
+            }
+        }));
+
+    }
+
+    void filterByMain()
+    {
+
+        compositeDisposable.addAll(dataBase.billDataDaoDao().getDistinctBillsByMntkaDayAndMain(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain))
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(new Consumer<List<BillDataEntity>>() {
+            @Override
+            public void accept(List<BillDataEntity> billDataEntities) throws Throwable {
+                offlineBills = new ArrayList<>();
+                offlineBills.addAll(billDataEntities);
+                offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
+                lv_clients.setAdapter(offlineClientsAdapter);
+            }
+        }),dataBase.billDataDaoDao().getDistinctFaryOfMntkaAndDayAndMain(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain))
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(new Consumer<List<String>>() {
+            @Override
+            public void accept(List<String> strings) throws Throwable {
+                faryList = new ArrayList<>();
+                faryList.add(getString(R.string.fary_code));
+                faryList.addAll(strings);
+                ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(getActivity(),
+                        android.R.layout.simple_spinner_dropdown_item, faryList);
+                dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                sp_fary.setAdapter(dataAdapter);
+            }
+        }));
+
+
     }
 }

@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.database.DBHelper;
+import com.ebe.miniaelec.database.entities.BillDataEntity;
 import com.ebe.miniaelec.model.BillData;
 import com.ebe.miniaelec.model.OfflineClient;
 
@@ -20,10 +21,10 @@ public class AdapterOfflineClients extends BaseAdapter {
 
     public static ViewHolder holder;
     private final Context context;
-    private final ArrayList<BillData> rows;
+    private final ArrayList<BillDataEntity> rows;
     private int position;
 
-    public AdapterOfflineClients(Context c, ArrayList<BillData> data) {
+    public AdapterOfflineClients(Context c, ArrayList<BillDataEntity> data) {
         rows = data;
         context = c;
     }
