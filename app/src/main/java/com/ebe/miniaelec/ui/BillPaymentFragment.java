@@ -45,7 +45,14 @@ import com.ebe.ebeunifiedlibrary.message.VoidMsg;
 import com.ebe.ebeunifiedlibrary.sdkconstants.SdkConstants;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.AppDataBase;
 import com.ebe.miniaelec.database.DBHelper;
+import com.ebe.miniaelec.database.entities.BillDataEntity;
+import com.ebe.miniaelec.database.entities.ClientWithBillData;
+import com.ebe.miniaelec.database.entities.OfflineClientEntity;
+import com.ebe.miniaelec.database.entities.ReportEntity;
+import com.ebe.miniaelec.database.entities.TransBillEntity;
+import com.ebe.miniaelec.database.entities.TransDataEntity;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
 import com.ebe.miniaelec.model.BillData;
@@ -73,12 +80,17 @@ import java.util.Locale;
 import java.util.Objects;
 
 import dmax.dialog.SpotsDialog;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
 public class BillPaymentFragment extends Fragment implements View.OnClickListener {
 
 
     JsonObject SendContent , EMVData;
+    AppDataBase dataBase;
     Context cntxt;
     TextView tv_clientID, tv_clientName, tv_billDate, tv_billValue, selected_bills_value;
     String phoneNumber;
@@ -92,14 +104,15 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
     public ITransAPI transAPI;
     //float commission = 0;
-    private TransData transData;
+    private TransDataEntity transData;
     private CheckBox[] cb_bills;
     double selectedBillsValue;
     double percentageFees;
-    private ArrayList<BillData> billDetails;
+    private ArrayList<BillDataEntity> billDetails;
     private boolean offline, allowCancel = true;
-    private ArrayList<TransBill> transBills;
+    private ArrayList<TransBillEntity> transBills;
     SpotsDialog progressDialog;
+    CompositeDisposable compositeDisposable;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -136,9 +149,12 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         requireActivity().getBaseContext().getResources().updateConfiguration(config,
                 requireActivity().getBaseContext().getResources().getDisplayMetrics());
 
+        compositeDisposable = new CompositeDisposable();
+
         navController = Navigation.findNavController(requireActivity(),R.id.content);
 
         cntxt = requireContext();
+        dataBase = AppDataBase.getInstance(cntxt);
         progressDialog = new SpotsDialog(cntxt, R.style.ProcessingProgress);
         progressDialog.setCancelable(false);
         setStatusBarColor();
@@ -172,14 +188,26 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         String inquiryId = "";
         if (offline) {
             inquiryId = MiniaElectricity.getPrefsManager().getInquiryID();
-            OfflineClient offlineClient = DBHelper.getInstance(cntxt).getClientByClientId(clientId);
-            if (offlineClient == null) {
-                Toast.makeText(cntxt, "رقم الاشتراك غير صحيح!", Toast.LENGTH_SHORT).show();
-                navController.popBackStack();
-                return;
-            }
-            phoneNumber = offlineClient.getClientMobileNo();
-            billDetails = offlineClient.getModelBillInquiryV();
+
+          compositeDisposable.add(dataBase.offlineClientsDao().getClientByClientId(clientId)
+                  .subscribeOn(Schedulers.io())
+                  .observeOn(AndroidSchedulers.mainThread())
+                  .subscribe(new Consumer<ClientWithBillData>() {
+                      @Override
+                      public void accept(ClientWithBillData clientWithBillData) throws Throwable {
+                          OfflineClientEntity offlineClient = clientWithBillData.getClient();
+                          if (offlineClient == null) {
+                              Toast.makeText(cntxt, "رقم الاشتراك غير صحيح!", Toast.LENGTH_SHORT).show();
+                              navController.popBackStack();
+                              return;
+                          }
+                          phoneNumber = offlineClient.getClientMobileNo();
+                          billDetails = new ArrayList<>(clientWithBillData.getBills());
+                      }
+                  })
+);
+
+
         } else {
             String response = getArguments().getString("response");
             // OfflineClient client = (OfflineClient) bundle.getSerializable("response");
@@ -191,7 +219,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 JSONArray billsData = responseBody.optJSONArray("ModelBillInquiryV");
                 billDetails = new ArrayList<>();
                 for (int i = 0; i < billsData.length(); i++) {
-                    BillData bill = new Gson().fromJson(billsData.getJSONObject(i).toString(), BillData.class);
+                    BillDataEntity bill = new Gson().fromJson(billsData.getJSONObject(i).toString(), BillDataEntity.class);
                     billDetails.add(bill);
                 }
 
@@ -201,7 +229,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
             }
         }
-        transData = new TransData((int) RECEIPT_NO, clientId,
+        transData = new TransDataEntity((int) RECEIPT_NO, clientId,
                 inquiryId, TransData.STATUS.INITIATED.getValue());
         if (phoneNumber != null && !phoneNumber.isEmpty() && !phoneNumber.equalsIgnoreCase("null")) {
             ll_phone_number.setVisibility(View.GONE);
@@ -282,7 +310,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
     private void confirmPayment() {
 
         double commission = 0, total = 0;
-        for (TransBill b :
+        for (TransBillEntity b :
                 transBills) {
             total += b.getBillValue();
             if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue()) {
@@ -338,22 +366,17 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         SimpleDateFormat dateFormat1 = new SimpleDateFormat("HH:mm:ss", Locale.US);
         SimpleDateFormat dateFormat2 = new SimpleDateFormat("HH:mm", Locale.US);
         Date current = new Date(System.currentTimeMillis());
-        //trxnTime = dateFormat1.format(current);
-        /*transData.setTransTime(dateFormat2.format(current));
-        transData.setCommission(trxnTime.replaceAll(":", ""));*/
         StringBuilder bankTransactionID = new StringBuilder(transData.getClientID());
-        /*bankTransactionID.append(transData.getTransDate().replaceAll("/", ""))
-                .append(transData.getCommission());*/// ddMMyyyyHHmmss
+
         bankTransactionID.append(Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_TIME_PATTERN));
         long amount = 0;
-        for (TransBill b :
+        for (TransBillEntity b :
                 transBills) {
             amount += (b.getBillValue()) * 100
                     + (b.getCommissionValue()) * 100;
         }
         final long finalAmount = amount;
         bankTransactionID.append(amount);
-        //Log.e("bankTransactionID", bankTransactionID.toString());
         transData.setBankTransactionID(bankTransactionID.toString());
         final int billsCount = transBills.size();
         long offlineDiffHours = 0;
@@ -371,13 +394,9 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
                 transData.setPaymentType(TransData.PaymentType.OFFLINE_CASH.getValue());
                 transData.setStatus(TransData.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue());
-                /*if (!DBHelper.getInstance(cntxt).updateTransData(transData)) {
-                    Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
-                    DBHelper.getInstance(cntxt).deleteTransData(transData);
-                    BillPaymentActivity.this.finish();
-                }*/
+
                 sendCashDRM(false);
-                if (!DBHelper.getInstance(cntxt).addTransData(transData)) {
+                if (dataBase.transDataDao().addTransData(transData) == null) {
                     Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
                     navController.popBackStack();
                 } else {
@@ -386,14 +405,13 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                     MiniaElectricity.getPrefsManager().setOfflineBillValue(MiniaElectricity.getPrefsManager().getOfflineBillValue() + finalAmount);
                     MiniaElectricity.getPrefsManager().setPaidOfflineBillsCount(MiniaElectricity.getPrefsManager().getPaidOfflineBillsCount() + billsCount);
                     MiniaElectricity.getPrefsManager().setPaidOfflineBillsValue(MiniaElectricity.getPrefsManager().getPaidOfflineBillsValue() + finalAmount);
-                    DBHelper.getInstance(cntxt).addReport(new Report(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
-                    // DBHelper.getInstance(cntxt).updateTransData(transData);
-                    new PrintReceipt(cntxt, transBills, new PrintListener() {
+                    dataBase.reportEntityDaoDao().addReport(new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                    new PrintReceipt(cntxt, transBills,transData, new PrintListener() {
                         @Override
                         public void onFinish() {
                             //sendCashDRM(false);
                             transData.setPrintCount(1);
-                            DBHelper.getInstance(cntxt).updateTransData(transData);
+                            dataBase.transDataDao().addTransData(transData);
                             navController.popBackStack();
                         }
 
@@ -411,12 +429,12 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
         } else {
             //DBHelper.getInstance(cntxt).updateTransData(transData);
-            if (!DBHelper.getInstance(cntxt).addTransData(transData)) {
+            if (dataBase.transDataDao().addTransData(transData) == null) {
                 Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
                 navController.popBackStack();
             } else {
                 JsonArray ModelBillPaymentV = new JsonArray();
-                for (TransBill b :
+                for (TransBillEntity b :
                         transBills) {
                     JsonObject j = new JsonObject();
                     j.addProperty("RowNum", b.getRawNum());
@@ -439,27 +457,27 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                     //Log.e("requestCashPayment", response);
                                     if (Error != null && !Error.isEmpty()) {
                                         if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
-                                            for (TransBill b :
+                                            for (TransBillEntity b :
                                                     transBills) {
                                                 DBHelper.getInstance(cntxt).deleteTransBill(b.getBillUnique());
                                             }
-                                            DBHelper.getInstance(cntxt).deleteTransData(transData);
+                                            dataBase.transDataDao().deleteTransData(transData);
                                             MiniaElectricity.getPrefsManager().setLoggedStatus(false);
                                             startActivity(new Intent(requireActivity(), LoginActivity.class));
                                             navController.popBackStack();
                                         } else onFailure("فشل في عملية الدفع!\n" + Error);
                                     } else {
                                         transData.setStatus(TransData.STATUS.PAID_PENDING_DRM_REQ.getValue());
-                                        DBHelper.getInstance(cntxt).updateTransData(transData);
+                                        dataBase.transDataDao().addTransData(transData);
                                         MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(MiniaElectricity.getPrefsManager().getPaidOnlineBillsCount() + billsCount);
                                         MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(MiniaElectricity.getPrefsManager().getPaidOnlineBillsValue() + finalAmount);
-                                        DBHelper.getInstance(cntxt).addReport(new Report(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                                        dataBase.reportEntityDaoDao().addReport(new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
                                         JsonObject SendContent = new JsonObject(), EMVData;
 
                                         deleteBills();
 
                                         Log.d("TransBill", "onSuccess: "+ transBills.get(0));
-                                        new PrintReceipt(cntxt, transBills, new PrintListener() {
+                                        new PrintReceipt(cntxt, transBills,transData, new PrintListener() {
                                             @Override
                                             public void onFinish() {
                                                 sendCashDRM(false);
@@ -494,31 +512,36 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
     private boolean deleteBills() {
 
-        for (TransBill b :
+        for (TransBillEntity b :
                 transBills) {
-            DBHelper.getInstance(cntxt).deleteClientBill(b.getBillUnique());
+            dataBase.billDataDaoDao().deleteClientBill(b.getBillUnique());
             b.setBankTransactionID(transData.getBankTransactionID());
-            b.setTransData(transData);
-            DBHelper.getInstance(cntxt).newTransBillAppend(b);
-            DBHelper.getInstance(cntxt).updateTransBill(b);
+            b.setTransDataId(transData.getId());
+           dataBase.transBillDao().newTransBillAppend(b);
         }
-        OfflineClient client = DBHelper.getInstance(cntxt).getClientByClientId(transData.getClientID());
-        if (client != null && (client.getModelBillInquiryV() == null || client.getModelBillInquiryV().size() == 0)) {
-            DBHelper.getInstance(cntxt).deleteOfflineClient(client);
-        }
+
+        compositeDisposable.add(dataBase.offlineClientsDao().getClientByClientId(transData.getClientID())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<ClientWithBillData>() {
+                    @Override
+                    public void accept(ClientWithBillData clientWithBillData) throws Throwable {
+                        OfflineClientEntity client = clientWithBillData.getClient();
+                        if (client != null && (clientWithBillData.getBills() == null || clientWithBillData.getBills().size() == 0)) {
+                            dataBase.offlineClientsDao().deleteOfflineClient(client);
+                        }
+                    }
+                }));
+
         return true;
         //   }
     }
 
     private void requestCardPayment() {
-        /*transData.setTransDate(new SimpleDateFormat("dd/MM/yyyy", Locale.US)
-                .format(new Date(System.currentTimeMillis())));
-        transData.setTransTime(new SimpleDateFormat("HH:mm", Locale.US)
-                .format(new Date(System.currentTimeMillis())));*/
-        // DBHelper.getInstance(cntxt).updateTransData(transData);
+
         SaleMsg.Request request = new SaleMsg.Request();
         long amount = 0;
-        for (TransBill b :
+        for (TransBillEntity b :
                 transBills) {
             amount += (b.getBillValue()) * 100
                     + (b.getBillValue()) * 100 * MiniaElectricity.getPrefsManager().getPercentFees()
@@ -539,14 +562,13 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
         QRSaleMsg.Request request = new QRSaleMsg.Request();
         long amount = 0;
-        for (TransBill b :
+        for (TransBillEntity b :
                 transBills) {
             amount += (b.getBillValue()) * 100
                     + (b.getBillValue()) * 100 * MiniaElectricity.getPrefsManager().getPercentFees()
                     + (b.getCommissionValue()) * 100;
         }
 
-        //Log.e("Amount", String.valueOf(amount));
         request.setAmount(amount);
         request.setNeedReceipt(true);
         transAPI = TransAPIFactory.createTransAPI();
@@ -575,9 +597,9 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         //transData.setCommission(String.valueOf(1 + Float.parseFloat(transData.getBillValue()) * MiniaElectricity.getPrefsManager().getPercentFees()));
         transData.setTransDateTime(new SimpleDateFormat(Utils.DATE_PATTERN, Locale.US)
                 .format(new Date(System.currentTimeMillis())));
-        //DBHelper.getInstance(cntxt).updateTransData(transData);
+
         JsonArray ModelBillPaymentV = new JsonArray();
-        for (TransBill b :
+        for (TransBillEntity b :
                 transBills) {
             JsonObject j = new JsonObject();
             j.addProperty("RowNum", b.getRawNum());
@@ -597,7 +619,6 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                         try {
                             JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
                             String Error = responseBody.optString("Error").trim();
-                            //Log.e("billPayment", response);
                             if (Error != null && !Error.isEmpty()) {
                                 if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
                                     MiniaElectricity.getPrefsManager().setLoggedStatus(false);
@@ -609,7 +630,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                 transData.setStatus(TransData.STATUS.COMPLETED.getValue());
                                 //DBHelper.getInstance(cntxt).updateTransData(transData);
                                 long amount = 0;
-                                for (TransBill b :
+                                for (TransBillEntity b :
                                         transBills) {
                                     amount += (b.getBillValue()) * 100
                                             + (b.getBillValue()) * 100 * MiniaElectricity.getPrefsManager().getPercentFees()
@@ -617,17 +638,17 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                 }
                                 MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(MiniaElectricity.getPrefsManager().getPaidOnlineBillsCount() + transBills.size());
                                 MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(MiniaElectricity.getPrefsManager().getPaidOnlineBillsValue() + amount);
-                                DBHelper.getInstance(cntxt).addReport(new Report(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), amount, transBills.size(), transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                                dataBase.reportEntityDaoDao().addReport(new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), amount, transBills.size(), transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
                                 deleteBills();
-                                new PrintReceipt(cntxt, transBills, new PrintListener() {
+                                new PrintReceipt(cntxt, transBills,transData, new PrintListener() {
                                     @Override
                                     public void onFinish() {
 
-                                        for (TransBill b :
+                                        for (TransBillEntity b :
                                                 transBills) {
-                                            DBHelper.getInstance(cntxt).deleteTransBill(b.getBillUnique());
+                                            dataBase.transBillDao().deleteTransBill(b.getBillUnique());
                                         }
-                                        DBHelper.getInstance(cntxt).deleteTransData(transData);
+                                        dataBase.transDataDao().deleteTransData(transData);
                                         navController.popBackStack();
                                     }
 
@@ -655,7 +676,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
     private void cancelPaymentRequest() {
         transData.setStatus(TransData.STATUS.PENDING_DELETE_REQ.getValue());
-        DBHelper.getInstance(cntxt).updateTransData(transData);
+        dataBase.transDataDao().addTransData(transData);
         new ApiServices(cntxt, false).cancelBillPayment(transData.getBankTransactionID(),
                 new RequestListener() {
                     @Override
@@ -664,7 +685,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                         // whatever the response of delete req suppose it is succeeded
                         if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue()) {
                             transData.setStatus(TransData.STATUS.DELETED_PENDING_DRM_REQ.getValue());
-                            DBHelper.getInstance(cntxt).updateTransData(transData);
+                           dataBase.transDataDao().addTransData(transData);
                             sendCashDRM(true);
 
                         } else {
@@ -701,11 +722,11 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                             String ErrorMessage = responseBody.optString("ErrorMessage").trim();
                             if (!ErrorMessage.isEmpty() && ErrorMessage.equals("Approved")) {
                                 transData.setStatus(TransData.STATUS.COMPLETED.getValue());
-                                for (TransBill b :
+                                for (TransBillEntity b :
                                         transBills) {
-                                    DBHelper.getInstance(cntxt).deleteTransBill(b.getBillUnique());
+                                    dataBase.transBillDao().deleteTransBill(b.getBillUnique());
                                 }
-                                DBHelper.getInstance(cntxt).deleteTransData(transData);
+                                dataBase.transDataDao().deleteTransData(transData);
                             }
                             //added for test should not be added here
                             //transData.setStatus(TransData.STATUS.PENDING_CASH_PAYMENT_REQ.getValue());
@@ -725,7 +746,8 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
             }
         } catch (Exception e) {
             transData.setDrmData(SendContent.toString());
-            DBHelper.getInstance(cntxt).updateTransData(transData);
+            //update
+            dataBase.transDataDao().addTransData(transData);
             e.printStackTrace();
         }
     }
@@ -760,7 +782,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 transBills = new ArrayList<>();
                 for (int i = 0; i < cb_bills.length; i++) {
                     if (cb_bills[i].isChecked()) {
-                        transBills.add(new TransBill(billDetails.get(i)));
+                        transBills.add(new TransBillEntity(billDetails.get(i)));
                     } else break;
                 }
                 if (transBills.size() == 0) {
@@ -813,9 +835,9 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 if (transResponse.getRspCode() == 0 || transResponse.getRspCode() == -15
                         || transResponse.getRspCode() == -16 || transResponse.getRspCode() == -17 || transResponse.getRspCode() == -18) {
                     transData.setStatus(TransData.STATUS.COMPLETED.getValue());
-                    // DBHelper.getInstance(cntxt).updateTransData(transData);
+
                 }
-                //DBHelper.getInstance(cntxt).deleteTransData(transData);
+
                 navController.popBackStack();
             } else if (transData.getStatus() == TransData.STATUS.PENDING_SALE_REQ.getValue()) {
                 if (transResponse.getRspCode() == 0) {
@@ -833,31 +855,28 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 if (baseResponse.getRspCode() == 0 || baseResponse.getRspCode() == -15
                         || baseResponse.getRspCode() == -16 || baseResponse.getRspCode() == -17 || baseResponse.getRspCode() == -18) {
                     transData.setStatus(TransData.STATUS.COMPLETED.getValue());
-                    //DBHelper.getInstance(cntxt).deleteTransData(transData);
-                    //DBHelper.getInstance(cntxt).updateTransData(transData);
+
                 }
                 navController.popBackStack();
             } else if (transData.getStatus() == TransData.STATUS.PENDING_SALE_REQ.getValue()) {
-                //DBHelper.getInstance(cntxt).deleteTransData(transData);
                 Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
                 navController.popBackStack();
             } else if (transData.getStatus() == TransData.STATUS.PENDING_QR_SALE_REQ.getValue()) {
                 if (baseResponse.getRspCode() == 0) {
 
                 } else {
-                    //DBHelper.getInstance(cntxt).deleteTransData(transData);
                     Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
                     navController.popBackStack();
                 }
             }
-            Log.e("onActivityResult", "BaseResponse");
+
         }
     }
 
    void  setDrm(JsonObject EMVData,JsonObject SendContent,boolean isVoided)
     {
         long amount = 0;
-        for (TransBill b :
+        for (TransBillEntity b :
                 transBills) {
             amount += (b.getBillValue()) * 100
                     + (b.getCommissionValue()) * 100;
@@ -881,7 +900,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         SendContent.addProperty("BATCH", "000001");
         SendContent.addProperty("STAN", transData.getStan());
         amount = 0;
-        for (TransBill b :
+        for (TransBillEntity b :
                 transBills) {
             amount +=/* (b.getBillValue()) * 100
                     +*/ (b.getCommissionValue()) * 100;
@@ -920,7 +939,13 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         SendContent.addProperty("Signature", "");
         //Log.i("SendContent", SendContent.toString());
         transData.setDrmData(SendContent.toString());
-        DBHelper.getInstance(cntxt).updateTransData(transData);
+        dataBase.transDataDao().addTransData(transData);
 
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        compositeDisposable.dispose();
     }
 }

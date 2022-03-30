@@ -11,6 +11,8 @@ import android.util.Log;
 
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.entities.TransBillEntity;
+import com.ebe.miniaelec.database.entities.TransDataEntity;
 import com.ebe.miniaelec.model.TransBill;
 import com.ebe.miniaelec.model.TransData;
 import com.ebe.miniaelec.utils.Utils;
@@ -28,8 +30,8 @@ public class PrintReceipt {
     private Handler handler = new Handler();
     private Context context;
     private int index;
-    private TransData transData;
-    private ArrayList<TransBill> transBills = new ArrayList<>();
+    private TransDataEntity transData;
+    private ArrayList<TransBillEntity> transBills = new ArrayList<>();
     private PrintListener listener;
     private boolean isReport;
 
@@ -37,17 +39,17 @@ public class PrintReceipt {
         this.context = context;
     }
 
-    public PrintReceipt(Context context, TransData transData, PrintListener listener) {
+    public PrintReceipt(Context context, TransDataEntity transData, PrintListener listener) {
         this.context = context;
         //this.transData = transData;
         this.listener = listener;
         printReceipt();
     }
 
-    public PrintReceipt(Context context, ArrayList<TransBill> transBills, PrintListener listener) {
+    public PrintReceipt(Context context, ArrayList<TransBillEntity> transBills,TransDataEntity transData, PrintListener listener) {
         this.context = context;
         this.transBills = transBills;
-        this.transData = transBills.get(0).getTransData();
+        this.transData = transData;
         this.listener = listener;
         printReceipt();
     }

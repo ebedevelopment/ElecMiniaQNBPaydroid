@@ -396,26 +396,26 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         if (clientId != null && !clientId.isEmpty()) {
 
             //clientId = null;
-            dataBase.offlineClientsDao().getClientByClientId(clientId).subscribeOn(Schedulers.io()
+            compositeDisposable.add(dataBase.offlineClientsDao().getClientByClientId(clientId).subscribeOn(Schedulers.io()
             ).observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Consumer<ClientWithBillData>() {
-                        @Override
-                        public void accept(ClientWithBillData clientWithBillData) throws Throwable {
-                            OfflineClientEntity client = clientWithBillData.getClient();
-                            if (client == null || (clientWithBillData.getBills() == null || clientWithBillData.getBills().size() == 0)) {
-                                offlineBills.remove(selectedClient);
-                                offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
-                                offlineClientsAdapter.notifyDataSetChanged();
-                                lv_clients.setAdapter(offlineClientsAdapter);
-                            } else {
-                                //offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
-                                offlineClientsAdapter.notifyDataSetChanged();
-                                // lv_clients.setAdapter(offlineClientsAdapter);
-                            }
-                        }
-                        }
-                    );}
-
+                                   @Override
+                                   public void accept(ClientWithBillData clientWithBillData) throws Throwable {
+                                       OfflineClientEntity client = clientWithBillData.getClient();
+                                       if (client == null || (clientWithBillData.getBills() == null || clientWithBillData.getBills().size() == 0)) {
+                                           offlineBills.remove(selectedClient);
+                                           offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
+                                           offlineClientsAdapter.notifyDataSetChanged();
+                                           lv_clients.setAdapter(offlineClientsAdapter);
+                                       } else {
+                                           //offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
+                                           offlineClientsAdapter.notifyDataSetChanged();
+                                           // lv_clients.setAdapter(offlineClientsAdapter);
+                                       }
+                                   }
+                               }
+                    ));
+        }
         }
 
     private void aVoidReq(TransData transData) {
@@ -447,52 +447,52 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                 //Log.e("response", "//" + transResponse.toString());
                 if (transResponse.getRspCode() == 0 || transResponse.getRspCode() == -15
                         || transResponse.getRspCode() == -16 || transResponse.getRspCode() == -17 || transResponse.getRspCode() == -18) {
-                    dataBase.transDataDao().getTransByRefNo(pendingTransData.get(index - 1).getReferenceNo())
-                            .subscribeOn(Schedulers.io())
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(new Consumer<TransDataWithTransBill>() {
-                                           @Override
-                                           public void accept(TransDataWithTransBill transDataWithTransBill) throws Throwable {
-                                               TransDataEntity transData = transDataWithTransBill.getTransData();
-                                               if (transData != null) {
+                  compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(pendingTransData.get(index - 1).getReferenceNo())
+                          .subscribeOn(Schedulers.io())
+                          .observeOn(AndroidSchedulers.mainThread())
+                          .subscribe(new Consumer<TransDataWithTransBill>() {
+                                         @Override
+                                         public void accept(TransDataWithTransBill transDataWithTransBill) throws Throwable {
+                                             TransDataEntity transData = transDataWithTransBill.getTransData();
+                                             if (transData != null) {
 
-                                                   transData.setStatus(TransData.STATUS.COMPLETED.getValue());
-                                                   for (TransBillEntity bill :
-                                                           transDataWithTransBill.getTransBills()) {
-                                                       DBHelper.getInstance(requireActivity()).deleteTransBill(bill.getBillUnique());
-                                                   }
-                                                   dataBase.transDataDao().deleteTransData(transData);
-                                               }
-                                               //DBHelper.getInstance(cntxt).updateTransData(transData);
-                                           }
-                                       }
-                            );
-
-                } else {
-                    //Log.e("onActivityResult", "BaseResponse");
-                    if (baseResponse.getRspCode() == 0 || baseResponse.getRspCode() == -15
-                            || baseResponse.getRspCode() == -16 || baseResponse.getRspCode() == -17 || baseResponse.getRspCode() == -18) {
-                         dataBase.transDataDao().getTransByRefNo(pendingTransData.get(index - 1).getReferenceNo())
-                                 .subscribeOn(Schedulers.io())
-                                 .observeOn(AndroidSchedulers.mainThread())
-                                 .subscribe(new Consumer<TransDataWithTransBill>() {
-                                     @Override
-                                     public void accept(TransDataWithTransBill transDataWithTransBill) throws Throwable {
-
-                                         TransDataEntity transData = transDataWithTransBill.getTransData();
-                                         if (transData != null) {
-
-                                             transData.setStatus(TransData.STATUS.COMPLETED.getValue());
-                                             for (TransBillEntity bill :
-                                                     transDataWithTransBill.getTransBills()) {
-                                                 dataBase.transBillDao().deleteTransBill(bill.getBillUnique());
+                                                 transData.setStatus(TransData.STATUS.COMPLETED.getValue());
+                                                 for (TransBillEntity bill :
+                                                         transDataWithTransBill.getTransBills()) {
+                                                     DBHelper.getInstance(requireActivity()).deleteTransBill(bill.getBillUnique());
+                                                 }
+                                                 dataBase.transDataDao().deleteTransData(transData);
                                              }
-                                            dataBase.transDataDao().deleteTransData(transData);
+
                                          }
                                      }
-                                 });
+                          )) ;
 
-                        //DBHelper.getInstance(cntxt).updateTransData(transData);
+                } else {
+
+                    if (baseResponse.getRspCode() == 0 || baseResponse.getRspCode() == -15
+                            || baseResponse.getRspCode() == -16 || baseResponse.getRspCode() == -17 || baseResponse.getRspCode() == -18) {
+                        compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(pendingTransData.get(index - 1).getReferenceNo())
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(new Consumer<TransDataWithTransBill>() {
+                                    @Override
+                                    public void accept(TransDataWithTransBill transDataWithTransBill) throws Throwable {
+
+                                        TransDataEntity transData = transDataWithTransBill.getTransData();
+                                        if (transData != null) {
+
+                                            transData.setStatus(TransData.STATUS.COMPLETED.getValue());
+                                            for (TransBillEntity bill :
+                                                    transDataWithTransBill.getTransBills()) {
+                                                dataBase.transBillDao().deleteTransBill(bill.getBillUnique());
+                                            }
+                                            dataBase.transDataDao().deleteTransData(transData);
+                                        }
+                                    }
+                                }));
+
+
                     }
                 }
                 requireActivity().startService(serviceIntent);

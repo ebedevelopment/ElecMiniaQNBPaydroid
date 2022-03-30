@@ -65,7 +65,7 @@ public class TransBillEntity {
     public TransBillEntity() {
     }
 
-    public TransBillEntity(BillData data) {
+    public TransBillEntity(BillDataEntity data) {
         BillUnique = data.getBillUnique();
         this.rawNum = data.getRawNum();
         this.sectorName = data.getSectorName();

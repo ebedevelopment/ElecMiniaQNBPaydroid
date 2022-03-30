@@ -23,7 +23,11 @@ import android.widget.Toast;
 
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.AppDataBase;
 import com.ebe.miniaelec.database.DBHelper;
+import com.ebe.miniaelec.database.entities.TransBillEntity;
+import com.ebe.miniaelec.database.entities.TransDataEntity;
+import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
 import com.ebe.miniaelec.model.TransBill;
@@ -38,12 +42,20 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Objects;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
 public class ReprintFragment extends Fragment implements View.OnClickListener {
 
     EditText et_clientID;
     NavController navController;
+    AppDataBase dataBase;
+    CompositeDisposable compositeDisposable;
 
     public ReprintFragment() {
         // Required empty public constructor
@@ -59,7 +71,9 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
         requireActivity().getResources().updateConfiguration(config,
                 requireActivity().getResources().getDisplayMetrics());
 
-        navController = Navigation.findNavController(requireActivity(),R.id.content);
+        navController = Navigation.findNavController(requireActivity(), R.id.content);
+        dataBase = AppDataBase.getInstance(requireContext());
+        compositeDisposable = new CompositeDisposable();
 
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_reprint, container, false);
@@ -102,90 +116,110 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
     }
 
 
-        private void reprint() {
-            final TransData transData = DBHelper.getInstance(requireContext()).getTransByClientId(et_clientID.getText().toString().trim());
-            if (transData != null && transData.getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue()) {
-                if (transData.getPrintCount() == 2) {
-                    Toast.makeText(requireActivity(), "تمت اعادة طباعة هذه الفاتورة من قبل!", Toast.LENGTH_SHORT).show();
-                    et_clientID.setText("");
-                    navController.popBackStack(R.id.mainFragment,false);
-                } else {
-                    transData.setPrintCount(2);
-                    DBHelper.getInstance(requireActivity()).updateTransData(transData);
-                    new PrintReceipt(requireActivity(), transData.getTransBills(), new PrintListener() {
-                        @Override
-                        public void onFinish() {
-                            et_clientID.setText("");
-                            navController.popBackStack(R.id.mainFragment,false);
+    private void reprint() {
 
-                        }
+        ArrayList<TransBillEntity> transBillEntities= new ArrayList<>();
+        compositeDisposable.add(dataBase.transDataDao().getTransByClientId(et_clientID.getText().toString().trim())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(response -> {
 
-                        @Override
-                        public void onCancel() {
+                    transBillEntities.addAll(response.getTransBills());
+                    return response.getTransData();
+                })
+                .subscribe(new Consumer<TransDataEntity>() {
+                               @Override
+                               public void accept(TransDataEntity transDataEntity) throws Throwable {
 
-                        }
-                    });
-                }
-            } else
-                new ApiServices(requireContext(), false).rePrint(et_clientID.getText().toString().trim(), new RequestListener() {
-                    @Override
-                    public void onSuccess(String response) {
-                        try {
-                            JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
-                            String Error = responseBody.optString("Error").trim();
-                            Log.e("response", response);
-                            if (Error != null && !Error.isEmpty()) {
-                                onFailure("فشل في اعادة الطباعة!\n" + Error);
-                            } else {
-                                TransData transData = new TransData();
-                                JSONArray billsData = responseBody.optJSONArray("ModelPrintInquiryV");
-                                transData.setReferenceNo(responseBody.getInt("BankReceiptNo"));
-                                transData.setStan(String.valueOf(responseBody.getInt("BankReceiptNo")));
-                                transData.setPaymentType(responseBody.getInt("PayType"));
-                                transData.setTransDateTime(responseBody.getString("BankDateTime"));
-                                transData.setClientID(et_clientID.getText().toString().trim());
-                                transData.setStatus(TransData.STATUS.REPRINT.getValue());
-                                ArrayList<TransBill> billDetails = new ArrayList<>();
-                                for (int i = 0; i < billsData.length(); i++) {
-                                    TransBill bill = new Gson().fromJson(billsData.getJSONObject(i).toString(), TransBill.class);
-                                    billDetails.add(bill);
-                                    bill.setTransData(transData);
-                                }
-//                            transData.setTransBills((ForeignCollection<TransBill>) billDetails);
 
-                                int printCount = responseBody.getInt("PrintCount");
-                                if (printCount > 2) {
-                                    Toast.makeText(requireContext(), "تمت اعادة طباعة هذه الفاتورة من قبل!", Toast.LENGTH_SHORT).show();
-                                    navController.popBackStack(R.id.mainFragment,false);
-                                } else {
-                                    new PrintReceipt(requireContext(), billDetails, new PrintListener() {
-                                        @Override
-                                        public void onFinish() {
-                                            et_clientID.setText("");
-                                            navController.popBackStack(R.id.mainFragment,false);
+                                   if (transDataEntity != null && transDataEntity.getPaymentType() == TransDataEntity.PaymentType.OFFLINE_CASH.getValue()) {
+                                       if (transDataEntity.getPrintCount() == 2) {
+                                           Toast.makeText(requireActivity(), "تمت اعادة طباعة هذه الفاتورة من قبل!", Toast.LENGTH_SHORT).show();
+                                           et_clientID.setText("");
+                                           navController.popBackStack(R.id.mainFragment, false);
+                                       } else {
+                                           transDataEntity.setPrintCount(2);
 
-                                        }
+                                           dataBase.transDataDao().addTransData(transDataEntity);
+                                           new PrintReceipt(requireActivity(), transBillEntities,transDataEntity, new PrintListener() {
+                                               @Override
+                                               public void onFinish() {
+                                                   et_clientID.setText("");
+                                                   navController.popBackStack(R.id.mainFragment, false);
 
-                                        @Override
-                                        public void onCancel() {
+                                               }
 
-                                        }
-                                    });
-                                }
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            onFailure(e.getMessage());
-                        }
-                    }
+                                               @Override
+                                               public void onCancel() {
 
-                    @Override
-                    public void onFailure(String failureMsg) {
-                        Toast.makeText(requireContext(), failureMsg, Toast.LENGTH_SHORT).show();
-                        et_clientID.setText("");
+                                               }
+                                           });
+                                       }
+                                   } else
+                                       new ApiServices(requireContext(), false).rePrint(et_clientID.getText().toString().trim(), new RequestListener() {
+                                           @Override
+                                           public void onSuccess(String response) {
+                                               try {
+                                                   JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                                                   String Error = responseBody.optString("Error").trim();
+                                                   Log.e("response", response);
+                                                   if (Error != null && !Error.isEmpty()) {
+                                                       onFailure("فشل في اعادة الطباعة!\n" + Error);
+                                                   } else {
+                                                       TransDataEntity transData = new TransDataEntity();
+                                                       JSONArray billsData = responseBody.optJSONArray("ModelPrintInquiryV");
+                                                       transData.setReferenceNo(responseBody.getInt("BankReceiptNo"));
+                                                       transData.setStan(String.valueOf(responseBody.getInt("BankReceiptNo")));
+                                                       transData.setPaymentType(responseBody.getInt("PayType"));
+                                                       transData.setTransDateTime(responseBody.getString("BankDateTime"));
+                                                       transData.setClientID(et_clientID.getText().toString().trim());
+                                                       transData.setStatus(TransData.STATUS.REPRINT.getValue());
+                                                       ArrayList<TransBillEntity> billDetails = new ArrayList<>();
+                                                       for (int i = 0; i < Objects.requireNonNull(billsData).length(); i++) {
+                                                           TransBillEntity bill = new Gson().fromJson(billsData.getJSONObject(i).toString(), TransBillEntity.class);
+                                                           billDetails.add(bill);
+                                                           bill.setTransDataId(transData.getId());
+                                                       }
 
-                    }
-                });
-        }
+                                                       int printCount = responseBody.getInt("PrintCount");
+                                                       if (printCount > 2) {
+                                                           Toast.makeText(requireContext(), "تمت اعادة طباعة هذه الفاتورة من قبل!", Toast.LENGTH_SHORT).show();
+                                                           navController.popBackStack(R.id.mainFragment, false);
+                                                       } else {
+                                                           new PrintReceipt(requireContext(), transBillEntities,transDataEntity, new PrintListener() {
+                                                               @Override
+                                                               public void onFinish() {
+                                                                   et_clientID.setText("");
+                                                                   navController.popBackStack(R.id.mainFragment, false);
+
+                                                               }
+
+                                                               @Override
+                                                               public void onCancel() {
+
+                                                               }
+                                                           });
+                                                       }
+                                                   }
+                                               } catch (JSONException e) {
+                                                   e.printStackTrace();
+                                                   onFailure(e.getMessage());
+                                               }
+                                           }
+
+                                           @Override
+                                           public void onFailure(String failureMsg) {
+                                               Toast.makeText(requireContext(), failureMsg, Toast.LENGTH_SHORT).show();
+                                               et_clientID.setText("");
+
+                                           }
+                                       });
+                               }
+                           }
+
+                )
+);
+
+    }
 
 }
