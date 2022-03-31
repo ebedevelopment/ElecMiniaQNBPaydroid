@@ -29,13 +29,13 @@ public interface ReportEntityDao {
     int getTotalCountOfPaymentTypeAndDate(String date, int pType);
 
     @Query("Select * From Reports Where transDate =:date")
-    Flowable<List<Report>> getReportsByDate(String date);
+    List<Report> getReportsByDate(String date);
 
     @Query("Select * From Reports")
-    Flowable<List<Report>> getReports();
+    List<Report> getReports();
 
     @Query("Delete From REPORTS")
-    void clearReports();
+   int clearReports();
 
 
     //void clearReportsByDate(String date);

@@ -186,7 +186,7 @@ dataBase= AppDataBase.getInstance(this);
                     } else {
                         onNavigationItemSelected(nvNavigation.getMenu().getItem(0));
                         if ((MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 ||
-                                (isAfterLogin && DBHelper.getInstance(cntxt).offlineClientsCount() == 0))) {
+                                (isAfterLogin && dataBase.offlineClientsDao().offlineClientsCount() == 0))) {
                             getClientsData();
                         }
                     }
@@ -215,7 +215,7 @@ dataBase= AppDataBase.getInstance(this);
         nv.getMenu().findItem(R.id.load_clients_data).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                if (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || DBHelper.getInstance(cntxt).offlineClientsCount() == 0)
+                if (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || dataBase.offlineClientsDao().offlineClientsCount() == 0)
                     startService(new Intent(MainActivity.this,FinishPendingTransService.class));
                     //getClientsData();
                 else Toast.makeText(cntxt, "لا يوجد فواتير جديدة", Toast.LENGTH_LONG).show();
@@ -370,7 +370,7 @@ dataBase= AppDataBase.getInstance(this);
                                     }
                                     sum = (sum + 55) * 128;
                                     if (String.valueOf(sum).equals(text)) {
-                                        Utils.copyBillsFromDB(cntxt);
+                                        Utils.copyBillsFromDB(cntxt,dataBase);
                                     } else
                                         Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
                                 }
@@ -521,7 +521,7 @@ dataBase= AppDataBase.getInstance(this);
         Utils.enableHomeRecentKey(false);
         Utils.enableStatusBar(false);
         if (Utils.isNeedDeleteLogs()) {
-            if (BaseDbHelper.getInstance(cntxt).deleteReports()) {
+            if (dataBase.reportEntityDaoDao().clearReports()>0) {
                 new PrefsManager().setLastResetLogsMonth(Calendar.getInstance().get(Calendar.MONTH) + 1);
             }
         }

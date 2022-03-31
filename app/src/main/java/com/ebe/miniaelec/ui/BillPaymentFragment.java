@@ -459,7 +459,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                         if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
                                             for (TransBillEntity b :
                                                     transBills) {
-                                                DBHelper.getInstance(cntxt).deleteTransBill(b.getBillUnique());
+                                                dataBase.transBillDao().deleteTransBill(b.getBillUnique());
                                             }
                                             dataBase.transDataDao().deleteTransData(transData);
                                             MiniaElectricity.getPrefsManager().setLoggedStatus(false);
@@ -789,14 +789,11 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                     Toast.makeText(cntxt, "يرجى اختيار الفواتير المطلوب سدادها!", Toast.LENGTH_LONG).show();
                     return;
                 }
-                //b_pay.setVisibility(View.GONE);
-//                transData.setTransBills(transBills);
+
                 if (ll_phone_number.getVisibility() == View.VISIBLE) {
                     transData.setClientMobileNo(et_clientMobileNo.getText().toString());
                 } else transData.setClientMobileNo(phoneNumber);
-                //DBHelper.getInstance(cntxt).updateTransData(transData);
-                //ll_paymentMethods.setVisibility(View.GONE);
-                //ll_phone_number.setVisibility(View.GONE);
+
                 if (paymentTypes.getSelectedItemPosition() == 1 && !offline) { // 1 card payment
                     transData.setPaymentType(TransData.PaymentType.CARD.getValue());
                     transData.setStatus(TransData.STATUS.PENDING_SALE_REQ.getValue());
@@ -937,7 +934,6 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         SendContent.addProperty("ResponseMessage2", "");
         SendContent.addProperty("CardHolderPhone", transData.getClientMobileNo()); // ????????
         SendContent.addProperty("Signature", "");
-        //Log.i("SendContent", SendContent.toString());
         transData.setDrmData(SendContent.toString());
         dataBase.transDataDao().addTransData(transData);
 

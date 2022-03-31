@@ -21,7 +21,7 @@ public interface OfflineClientsDao {
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    long addOfflineClient( OfflineClientEntity client);
+    int addOfflineClient( OfflineClientEntity client);
 
     @Query("Select Count(*) From OfflineClient")
     long offlineClientsCount();
@@ -31,12 +31,12 @@ public interface OfflineClientsDao {
 
     @Transaction
     @Query("Select * From OfflineClient")
-    Flowable<List<ClientWithBillData>> getAllOfflineClients();
+    List<ClientWithBillData> getAllOfflineClients();
 
 
     @Transaction
     @Query("Select * From OfflineClient Where client_id = :clientId")
-    Single<ClientWithBillData> getClientByClientId(String clientId);
+   ClientWithBillData getClientByClientId(String clientId);
 
     @Query("Delete From OfflineClient")
     void clearClients();

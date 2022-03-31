@@ -9,12 +9,25 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.AppDataBase;
 import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.database.entities.BillDataEntity;
+import com.ebe.miniaelec.database.entities.ClientWithBillData;
+import com.ebe.miniaelec.database.entities.OfflineClientEntity;
 import com.ebe.miniaelec.model.BillData;
 import com.ebe.miniaelec.model.OfflineClient;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Observer;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.observers.DisposableSingleObserver;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
 public class AdapterOfflineClients extends BaseAdapter {
@@ -23,10 +36,13 @@ public class AdapterOfflineClients extends BaseAdapter {
     private final Context context;
     private final ArrayList<BillDataEntity> rows;
     private int position;
+    private AppDataBase dataBase;
+    private CompositeDisposable disposable;
 
     public AdapterOfflineClients(Context c, ArrayList<BillDataEntity> data) {
         rows = data;
         context = c;
+        dataBase = AppDataBase.getInstance(context);
     }
 
     @Override
@@ -77,19 +93,23 @@ public class AdapterOfflineClients extends BaseAdapter {
         holder.fary_code.setText(rows.get(position).getFaryCode());
         holder.client_name.setText(rows.get(position).getClientName());
         holder.client_id.setText(rows.get(position).getClientId());
-        OfflineClient client = DBHelper.getInstance(context).getClientByClientId(rows.get(position).getClientId());
-        if (client != null) {
-            ArrayList<BillData> bills = client.getModelBillInquiryV();
-            holder.bills_count.setText("ع: " + bills.size());
-            double total = 0;
-            for (BillData b :
-                    bills) {
-                total += b.getBillValue();
-                total += b.getCommissionValue();
-            }
-            holder.bills_amount.setText("ق: " + total);
+
+      ClientWithBillData client = dataBase.offlineClientsDao().getClientByClientId(rows.get(position).getClientId());
+        List<BillDataEntity> bills = client.getBills();
+        holder.bills_count.setText("ع: " + bills.size());
+        double total = 0;
+        for (BillDataEntity b :
+                bills) {
+            total += b.getBillValue();
+            total += b.getCommissionValue();
         }
+        holder.bills_amount.setText("ق: " + total);
+
+
+
     }
+
+
 
 
     private static class ViewHolder {

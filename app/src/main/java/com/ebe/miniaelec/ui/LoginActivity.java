@@ -25,8 +25,11 @@ import com.ebe.ebeunifiedlibrary.message.TransResponse;
 import com.ebe.ebeunifiedlibrary.sdkconstants.SdkConstants;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.AppDataBase;
 import com.ebe.miniaelec.database.BaseDbHelper;
 import com.ebe.miniaelec.database.DBHelper;
+import com.ebe.miniaelec.database.entities.TransDataEntity;
+import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
 import com.ebe.miniaelec.model.TransData;
@@ -38,9 +41,14 @@ import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import dmax.dialog.SpotsDialog;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import pub.devrel.easypermissions.EasyPermissions;
 
 //import android.util.Log;
@@ -52,7 +60,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private SpotsDialog progressDialog;
     public ITransAPI transAPI;
     private static final int APP_PERMISSIONS = 5;
-
+    private AppDataBase dataBase;
+    private CompositeDisposable disposable;
     private ApiServices services;
 
     @Override
@@ -68,6 +77,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         et_collector_code = findViewById(R.id.collector_code);
         et_password = findViewById(R.id.password);
         cntxt = this;
+        dataBase = AppDataBase.getInstance(cntxt);
         Utils.enableHomeRecentKey(false);
         Utils.enableStatusBar(false);
         String[] permissions = {Manifest.permission.ACCESS_NETWORK_STATE,
@@ -118,22 +128,26 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 if (MiniaElectricity.getPrefsManager().getCollectorCode().equals(et_collector_code.getText().toString().trim())) {
                     login();
                 } else {
+
+                    List<TransDataWithTransBill>transDataWithTransBills=dataBase.transDataDao().getAllTrans();
                     boolean allowLogin = true;
-                    ArrayList<TransData> transData = new ArrayList<>(DBHelper.getInstance(cntxt).getAllTrans());
-                    for (TransData b :
-                            transData) {
-                        if (b.getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue() && b.getStatus() == TransData.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
+                    //ArrayList<TransDataEntity> transData = new ArrayList<TransDataEntity>(transDataWithTransBills);
+                    for (TransDataWithTransBill b :
+                            transDataWithTransBills) {
+                        if (b.getTransData().getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue() && b.getTransData().getStatus() == TransDataEntity.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
                             allowLogin = false;
                             break;
-                        } else if (b.getStatus() != TransData.STATUS.INITIATED.getValue() && b.getStatus() != TransData.STATUS.COMPLETED.getValue()
-                                && b.getStatus() != TransData.STATUS.CANCELLED.getValue()) {
+                        } else if (b.getTransData().getStatus() != TransData.STATUS.INITIATED.getValue() && b.getTransData().getStatus() != TransData.STATUS.COMPLETED.getValue()
+                                && b.getTransData().getStatus() != TransData.STATUS.CANCELLED.getValue()) {
                             allowLogin = false;
                             break;
                         }
                     }
                     StringBuilder warning = new StringBuilder();
                     if (allowLogin) {
-                        BaseDbHelper.getInstance(this).dropTables();
+                        dataBase.offlineClientsDao().clearClients();
+                        dataBase.billDataDaoDao().clearBills();
+
                         //DBHelper.getInstance(cntxt).clearOfflineData();
                         login();
                     } else
@@ -142,7 +156,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     warning.append(MiniaElectricity.getPrefsManager().getCollectorCode());
                     warning.append("لتمكين تسجيل الدخول.");
 
-                       Toast.makeText(cntxt, warning.toString(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(cntxt, warning.toString(), Toast.LENGTH_LONG).show();
+
+
                     //Toast.makeText(cntxt, " برجاء مزامنة فواتير المحصل السابق لتمكين تسجيل الدخول. "+"( "+MiniaElectricity.getPrefsManager().getCollectorCode()+")" , Toast.LENGTH_LONG).show();
 
                 }
@@ -176,7 +192,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                         MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
                                     if (billsStatus == 2)
                                     {
-                                        BaseDbHelper.getInstance(cntxt).dropTables();
+                                        dataBase.offlineClientsDao().clearClients();
+                                        dataBase.billDataDaoDao().clearBills();
                                     }
                                 /*startActivity(new Intent(LoginActivity.this, MainActivity.class));
                                 finish();*/

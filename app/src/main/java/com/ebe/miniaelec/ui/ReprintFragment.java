@@ -222,4 +222,10 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
 
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        compositeDisposable.dispose();
+    }
 }

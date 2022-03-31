@@ -13,8 +13,12 @@ import android.view.animation.AnimationUtils;
 
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.AppDataBase;
 import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.database.PrefsManager;
+import com.ebe.miniaelec.database.entities.TransBillEntity;
+import com.ebe.miniaelec.database.entities.TransDataEntity;
+import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.model.TransBill;
 import com.ebe.miniaelec.model.TransData;
 import com.google.gson.JsonArray;
@@ -34,7 +38,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class Utils {
     public static final String DATE_TIME_PATTERN = "ddMMyyyyHHmmss";
@@ -213,73 +222,83 @@ public class Utils {
         }
     }
 
-    public static void copyBillsFromDB(Context context) {
+    public static void copyBillsFromDB(Context context, AppDataBase dataBase) {
         String name = "Bills_" + new SimpleDateFormat("dd-MM-yy", Locale.US)
                 .format(new Date(System.currentTimeMillis())) + ".txt";
         File outFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), name);
-        FileWriter writer = null;
-        try {
-            writer = new FileWriter(outFile);
-            ArrayList<TransData> transData = new ArrayList<>(DBHelper.getInstance(context).getAllTrans());
-            JsonArray jBills = new JsonArray();
-            for (TransData b :
-                    transData) {
-                if (b.getTransBills() != null) {
-                    for (TransBill bill :
-                            b.getTransBills()) {
-                        JsonObject jBill = new JsonObject();
-                        jBill.addProperty("clientId", b.getClientID());
-                        jBill.addProperty("RowNum", bill.getRawNum());
-                        jBill.addProperty("SectorName", bill.getSectorName());
-                        jBill.addProperty("BranchName", bill.getBranchName());
-                        jBill.addProperty("ClientAddress", bill.getClientAddress());
-                        jBill.addProperty("ClientActivity", bill.getClientActivity());
-                        jBill.addProperty("ClientPlace", bill.getClientPlace());
-                        jBill.addProperty("CurrentRead", bill.getCurrentRead());
-                        jBill.addProperty("PreviousRead", bill.getPreviousRead());
-                        jBill.addProperty("Consumption", bill.getConsumption());
-                        jBill.addProperty("Installment", bill.getInstallments());
-                        jBill.addProperty("Fees", bill.getFees());
-                        jBill.addProperty("Payments", bill.getPayments());
-                        jBill.addProperty("CommissionValue", bill.getCommissionValue());
-                        jBill.addProperty("ClientName", bill.getClientName());
-                        jBill.addProperty("BillDate", bill.getBillDate());
-                        jBill.addProperty("BillValue", bill.getBillValue());
-                        jBill.addProperty("MntkaCode", bill.getMntkaCode());
-                        jBill.addProperty("DayCode", bill.getDayCode());
-                        jBill.addProperty("MainCode", bill.getMainCode());
-                        jBill.addProperty("FaryCode", bill.getFaryCode());
-                        jBill.addProperty("PrintCount", b.getPrintCount());
-                        jBill.addProperty("ReceiptNo", b.getStan());
-                        jBill.addProperty("TransDateTime", b.getTransDateTime());
-                        jBill.addProperty("ClientMobileNo", b.getClientMobileNo());
-                        jBill.addProperty("BankTransactionID", b.getBankTransactionID());
-                        jBill.addProperty("DrmData", b.getDrmData());
-                        jBill.addProperty("InquiryID", b.getInquiryID());
-                        jBill.addProperty("Status", b.getStatus());
-                        jBill.addProperty("PaymentType", b.getPaymentType());
-                        jBills.add(jBill);
 
-                    }
-                } else {
-                    JsonObject jBill = new JsonObject();
-                    jBill.addProperty("clientId", b.getClientID());
-                    jBill.addProperty("PrintCount", b.getPrintCount());
-                    jBill.addProperty("ReceiptNo", b.getStan());
-                    jBill.addProperty("TransDateTime", b.getTransDateTime());
-                    jBill.addProperty("ClientMobileNo", b.getClientMobileNo());
-                    jBill.addProperty("BankTransactionID", b.getBankTransactionID());
-                    jBill.addProperty("DrmData", b.getDrmData());
-                    jBill.addProperty("InquiryID", b.getInquiryID());
-                    jBill.addProperty("Status", b.getStatus());
-                    jBill.addProperty("PaymentType", b.getPaymentType());
-                    jBills.add(jBill);
-                }
-            }
-            writer.append(jBills.toString());
-            writer.flush();
-            writer.close();
-        } catch (IOException e) {
+        try {
+
+            dataBase.transDataDao().getAllTrans().subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Consumer<List<TransDataWithTransBill>>() {
+                        @Override
+                        public void accept(List<TransDataWithTransBill> transDataWithTransBills) throws Throwable {
+                            FileWriter writer = null;
+                            writer = new FileWriter(outFile);
+
+                            JsonArray jBills = new JsonArray();
+                            for (TransDataWithTransBill b :
+                                    transDataWithTransBills) {
+                                if (b.getTransBills() != null) {
+                                    for (TransBillEntity bill :
+                                            b.getTransBills()) {
+                                        JsonObject jBill = new JsonObject();
+                                        jBill.addProperty("clientId", b.getTransData().getClientID());
+                                        jBill.addProperty("RowNum", bill.getRawNum());
+                                        jBill.addProperty("SectorName", bill.getSectorName());
+                                        jBill.addProperty("BranchName", bill.getBranchName());
+                                        jBill.addProperty("ClientAddress", bill.getClientAddress());
+                                        jBill.addProperty("ClientActivity", bill.getClientActivity());
+                                        jBill.addProperty("ClientPlace", bill.getClientPlace());
+                                        jBill.addProperty("CurrentRead", bill.getCurrentRead());
+                                        jBill.addProperty("PreviousRead", bill.getPreviousRead());
+                                        jBill.addProperty("Consumption", bill.getConsumption());
+                                        jBill.addProperty("Installment", bill.getInstallments());
+                                        jBill.addProperty("Fees", bill.getFees());
+                                        jBill.addProperty("Payments", bill.getPayments());
+                                        jBill.addProperty("CommissionValue", bill.getCommissionValue());
+                                        jBill.addProperty("ClientName", bill.getClientName());
+                                        jBill.addProperty("BillDate", bill.getBillDate());
+                                        jBill.addProperty("BillValue", bill.getBillValue());
+                                        jBill.addProperty("MntkaCode", bill.getMntkaCode());
+                                        jBill.addProperty("DayCode", bill.getDayCode());
+                                        jBill.addProperty("MainCode", bill.getMainCode());
+                                        jBill.addProperty("FaryCode", bill.getFaryCode());
+                                        jBill.addProperty("PrintCount", b.getTransData().getPrintCount());
+                                        jBill.addProperty("ReceiptNo", b.getTransData().getStan());
+                                        jBill.addProperty("TransDateTime", b.getTransData().getTransDateTime());
+                                        jBill.addProperty("ClientMobileNo", b.getTransData().getClientMobileNo());
+                                        jBill.addProperty("BankTransactionID", b.getTransData().getBankTransactionID());
+                                        jBill.addProperty("DrmData", b.getTransData().getDrmData());
+                                        jBill.addProperty("InquiryID", b.getTransData().getInquiryID());
+                                        jBill.addProperty("Status", b.getTransData().getStatus());
+                                        jBill.addProperty("PaymentType", b.getTransData().getPaymentType());
+                                        jBills.add(jBill);
+
+                                    }
+                                } else {
+                                    JsonObject jBill = new JsonObject();
+                                    jBill.addProperty("clientId", b.getTransData().getClientID());
+                                    jBill.addProperty("PrintCount", b.getTransData().getPrintCount());
+                                    jBill.addProperty("ReceiptNo", b.getTransData().getStan());
+                                    jBill.addProperty("TransDateTime", b.getTransData().getTransDateTime());
+                                    jBill.addProperty("ClientMobileNo", b.getTransData().getClientMobileNo());
+                                    jBill.addProperty("BankTransactionID", b.getTransData().getBankTransactionID());
+                                    jBill.addProperty("DrmData", b.getTransData().getDrmData());
+                                    jBill.addProperty("InquiryID", b.getTransData().getInquiryID());
+                                    jBill.addProperty("Status", b.getTransData().getStatus());
+                                    jBill.addProperty("PaymentType", b.getTransData().getPaymentType());
+                                    jBills.add(jBill);
+                                }
+                            }
+                            writer.append(jBills.toString());
+                            writer.flush();
+                            writer.close();
+                        }
+                    }).dispose();
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

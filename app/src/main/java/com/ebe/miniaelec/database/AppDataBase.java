@@ -17,11 +17,13 @@ import com.ebe.miniaelec.database.entities.ReportEntity;
 import com.ebe.miniaelec.database.entities.TransBillEntity;
 import com.ebe.miniaelec.database.entities.TransDataEntity;
 
+
 @Database(entities = {BillDataEntity.class, OfflineClientEntity.class, ReportEntity.class, TransBillEntity.class, TransDataEntity.class}, version = 0)
 public abstract class AppDataBase extends RoomDatabase {
 
 
-    private static AppDataBase dataBase;
+
+    private volatile static AppDataBase dataBase;
 
     public abstract BillDataDao billDataDaoDao();
     public abstract OfflineClientsDao offlineClientsDao();

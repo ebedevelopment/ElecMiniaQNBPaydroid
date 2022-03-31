@@ -9,8 +9,12 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.MutableLiveData;
 
 import com.ebe.miniaelec.MiniaElectricity;
+import com.ebe.miniaelec.database.AppDataBase;
 import com.ebe.miniaelec.database.BaseDbHelper;
 import com.ebe.miniaelec.database.DBHelper;
+import com.ebe.miniaelec.database.entities.TransBillEntity;
+import com.ebe.miniaelec.database.entities.TransDataEntity;
+import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
 import com.ebe.miniaelec.model.TransBill;
@@ -26,26 +30,40 @@ import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.SingleObserver;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class FinishPendingTransService extends Service {
 
-    private static ArrayList<TransData> pendingTransData = new ArrayList<>();
-    private ArrayList<TransData> offlineTransData;
+    private static ArrayList<TransDataEntity> pendingTransData = new ArrayList<>();
+    private ArrayList<TransDataEntity> offlineTransData;
     public static MutableLiveData<String> errorMsg = new MutableLiveData<String>("");
-    public static MutableLiveData<TransData> aVoid = new MutableLiveData<>(null);
+    public static MutableLiveData<TransDataEntity> aVoid = new MutableLiveData<>(null);
     public static MutableLiveData<Boolean> goToLogin = new MutableLiveData<>(false);
     public static MutableLiveData<Boolean> goToPayment = new MutableLiveData<>(false);
-    public static MutableLiveData<ArrayList<TransData>> pendingData = new MutableLiveData<ArrayList<TransData>>(pendingTransData);
+    public static MutableLiveData<ArrayList<TransDataEntity>> pendingData = new MutableLiveData<ArrayList<TransDataEntity>>(pendingTransData);
     public static MutableLiveData<Boolean> serviceState = new MutableLiveData<>(true);
 
     private static int index = 0;
     ApiServices services;
     ApiServices drmServices;
+    private JsonArray ModelClientPaymentV = new JsonArray();
 
     public static MutableLiveData<Integer> indexState = new MutableLiveData<Integer>(index);
     public static MutableLiveData<Boolean> loadingState = new MutableLiveData<>(false);
     public static MutableLiveData<Boolean> drmLoadingState = new MutableLiveData<>(false);
+
+    AppDataBase dataBase;
+    CompositeDisposable compositeDisposable;
 
 
 
@@ -64,6 +82,8 @@ public class FinishPendingTransService extends Service {
 
         loadingState = services.dialogState;
         drmLoadingState = drmServices.dialogState;
+        dataBase = AppDataBase.getInstance(this);
+        compositeDisposable = new CompositeDisposable();
 
 
 
@@ -91,39 +111,52 @@ public class FinishPendingTransService extends Service {
 
     void init()
     {
-        pendingTransData = new ArrayList<>();
-        offlineTransData = new ArrayList<>();
 
-        ArrayList<TransData> transData = new ArrayList<>(DBHelper.getInstance(this).getAllTrans());
-        for (TransData b :
-                transData) {
-            if (b.getClientID() == null || b.getClientID().equalsIgnoreCase("null") || (b.getStatus() == TransData.STATUS.DELETED_PENDING_DRM_REQ.getValue() && b.getDrmData() == null) || (b.getStatus() == TransData.STATUS.DELETED_PENDING_DRM_REQ.getValue() && b.getDrmData().equals("null"))) {
-                for (TransBill bill :
-                        b.getTransBills()) {
-                    DBHelper.getInstance(this).deleteTransBill(bill.getBillUnique());
-                }
-                DBHelper.getInstance(this).deleteTransData(b);
-            } else {
-                if (b.getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue() && b.getStatus() == TransData.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
-                    offlineTransData.add(b);
-                } else if (b.getStatus() != TransData.STATUS.INITIATED.getValue() && b.getStatus() != TransData.STATUS.COMPLETED.getValue()
-                        && b.getStatus() != TransData.STATUS.CANCELLED.getValue()) {
-                    pendingTransData.add(b);
-                } else {
-                    for (TransBill bill :
-                            b.getTransBills()) {
-                        DBHelper.getInstance(this).deleteTransBill(bill.getBillUnique());
+        compositeDisposable.add(dataBase.transDataDao().getAllTrans()
+        .subscribeOn(Schedulers.computation())
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(new Consumer<List<TransDataWithTransBill>>() {
+            @Override
+            public void accept(List<TransDataWithTransBill> transDataWithTransBills) throws Throwable {
+                pendingTransData = new ArrayList<>();
+                offlineTransData = new ArrayList<>();
+                ArrayList<TransDataWithTransBill> transData = new ArrayList<>(transDataWithTransBills);
+
+                for (TransDataWithTransBill b :
+                        transData) {
+                    if (b.getTransData().getClientID() == null || b.getTransData().getClientID().equalsIgnoreCase("null") || (b.getTransData().getStatus() == TransDataEntity.STATUS.DELETED_PENDING_DRM_REQ.getValue() && b.getTransData().getDrmData() == null) || (b.getTransData().getStatus() == TransData.STATUS.DELETED_PENDING_DRM_REQ.getValue() && b.getTransData().getDrmData().equals("null"))) {
+                        for (TransBillEntity bill :
+                                b.getTransBills()) {
+                            dataBase.transBillDao().deleteTransBill(bill.getBillUnique());
+                        }
+                       dataBase.transDataDao().deleteTransData(b.getTransData());
+                    } else {
+                        if (b.getTransData().getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue() && b.getTransData().getStatus() == TransDataEntity.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
+                            offlineTransData.add(b.getTransData());
+                        } else if (b.getTransData().getStatus() != TransData.STATUS.INITIATED.getValue() && b.getTransData().getStatus() != TransData.STATUS.COMPLETED.getValue()
+                                && b.getTransData().getStatus() != TransData.STATUS.CANCELLED.getValue()) {
+                            pendingTransData.add(b.getTransData());
+                        } else {
+                            for (TransBillEntity bill :
+                                    b.getTransBills()) {
+                                dataBase.transBillDao().deleteTransBill(bill.getBillUnique());
+                            }
+                            dataBase.transDataDao().deleteTransData(b.getTransData());
+                        }
                     }
-                    DBHelper.getInstance(this).deleteTransData(b);
                 }
+                if ((offlineTransData.size() > 0 || pendingTransData.size() > 0) && Utils.checkConnection(MiniaElectricity.getInstance())) {
+                    setBills();
+                } else {
+                    goToPayment.setValue(true);
+                    stopSelf();
+                }
+
             }
-        }
-        if ((offlineTransData.size() > 0 || pendingTransData.size() > 0) && Utils.checkConnection(MiniaElectricity.getInstance())) {
-            setBills();
-        } else {
-            goToPayment.setValue(true);
-            stopSelf();
-        }
+        }));
+
+
+
 
     }
 
@@ -132,15 +165,17 @@ public class FinishPendingTransService extends Service {
 //        all.addAll(offlineTransData);
 //        AdapterBills adapterBills = new AdapterBills(this, all);
 
+
         if (offlineTransData.size() > 0) {
+            prepareOfflineBills();
             handleOfflineBills();
         } else
             handlePendingBills();
     }
 
-    private void handleOfflineBills() {
-        JsonArray ModelClientPaymentV = new JsonArray();
-        for (TransData transData :
+    void prepareOfflineBills()
+    {
+        for (TransDataEntity transData :
                 offlineTransData) {
             JsonObject i = new JsonObject();
             i.addProperty("BankTransactionID", transData.getBankTransactionID());
@@ -151,90 +186,110 @@ public class FinishPendingTransService extends Service {
             i.addProperty("PrintCount", transData.getPrintCount());
 
             JsonArray ModelBillPaymentV = new JsonArray();
-            for (TransBill b :
-                    transData.getTransBills()) {
-                JsonObject j = new JsonObject();
-                j.addProperty("RowNum", b.getRawNum());
-                j.addProperty("BillDate", b.getBillDate());
-                j.addProperty("BillValue", b.getBillValue());
-                j.addProperty("CommissionValue", b.getCommissionValue());
-                //j.addProperty("CommissionValueCreditCard", "0");
 
-                ModelBillPaymentV.add(j);
-            }
-            i.add("ModelBillPaymentV", ModelBillPaymentV);
-            ModelClientPaymentV.add(i);
+            dataBase.transBillDao().getTransBillsByTransData(transData.getClientID())
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .blockingSubscribe(new Consumer<List<TransBillEntity>>() {
+                                           @Override
+                                           public void accept(List<TransBillEntity> transBillEntities) throws Throwable {
+                                               for (TransBillEntity b :
+                                                       transBillEntities) {
+                                                   JsonObject j = new JsonObject();
+                                                   j.addProperty("RowNum", b.getRawNum());
+                                                   j.addProperty("BillDate", b.getBillDate());
+                                                   j.addProperty("BillValue", b.getBillValue());
+                                                   j.addProperty("CommissionValue", b.getCommissionValue());
+                                                   //j.addProperty("CommissionValueCreditCard", "0");
+
+                                                   ModelBillPaymentV.add(j);
+                                               }
+                                               i.add("ModelBillPaymentV", ModelBillPaymentV);
+                                               ModelClientPaymentV.add(i);
+                                           }
+                                       }
+
+                    );
+
         }
 
-        services.offlineBillPayment(ModelClientPaymentV,
-                new RequestListener() {
-                    @Override
-                    public void onSuccess(String response) {
-                        try {
-
-                            JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
-                            String Error = responseBody.optString("Error").trim();
-                            int billsStatus = responseBody.optInt("UserNewBillStatus");
-                            int userStatus = responseBody.getInt("UserStatus");
-                            String operationStatus = responseBody.getString("OperationStatus");
-
-                            if (!operationStatus.trim().equalsIgnoreCase("successful")) {
-                                if (Error.contains("ليس لديك صلاحيات الوصول للهندسه") || Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول") || userStatus == 0) {
-                                    MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                    errorMsg.setValue(Error);
-                                    //Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
-                                    //startActivity(new Intent(FinishPendingTransActivity.this, LoginActivity.class));
-                                    goToLogin.setValue(true);
-                                    stopSelf();
-                                } else onFailure("فشل في مزامنة عمليات الدفع\n" + Error);
-
-                            } else {
-                                MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
-                                        .format(new Date(System.currentTimeMillis())));
-                                MiniaElectricity.getPrefsManager().setOfflineBillValue(0);
-                                MiniaElectricity.getPrefsManager().setOfflineBillCount(0);
-                                if (billsStatus != 0)
-                                {
-                                    MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
-                                }if (billsStatus == 2)
-                                {
-                                    BaseDbHelper.getInstance(FinishPendingTransService.this).dropTables();
-                                }
-
-
-                                for (TransData t :
-                                        offlineTransData) {
-                                    t.setStatus(TransData.STATUS.PAID_PENDING_DRM_REQ.getValue());
-                                    DBHelper.getInstance(FinishPendingTransService.this).updateTransData(t);
-                                    pendingTransData.add(t);
-                                }
-
-                                offlineTransData.clear();
-                                onFailure(null);
-                                handlePendingBills();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            onFailure(e.getMessage());
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(String failureMsg) {
-                        if (failureMsg != null)
-                            //Toast.makeText(this, failureMsg, Toast.LENGTH_LONG).show();
-                            errorMsg.setValue(failureMsg);
-                        MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
-
-                    }
-                });
-
     }
+
+    private void handleOfflineBills() {
+
+       if (ModelClientPaymentV.size() >0)
+       {
+           services.offlineBillPayment(ModelClientPaymentV,
+                   new RequestListener() {
+                       @Override
+                       public void onSuccess(String response) {
+                           try {
+
+                               JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                               String Error = responseBody.optString("Error").trim();
+                               int billsStatus = responseBody.optInt("UserNewBillStatus");
+                               int userStatus = responseBody.getInt("UserStatus");
+                               String operationStatus = responseBody.getString("OperationStatus");
+
+                               if (!operationStatus.trim().equalsIgnoreCase("successful")) {
+                                   if (Error.contains("ليس لديك صلاحيات الوصول للهندسه") || Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول") || userStatus == 0) {
+                                       MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                                       errorMsg.setValue(Error);
+                                       //Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
+                                       //startActivity(new Intent(FinishPendingTransActivity.this, LoginActivity.class));
+                                       goToLogin.setValue(true);
+                                       stopSelf();
+                                   } else onFailure("فشل في مزامنة عمليات الدفع\n" + Error);
+
+                               } else {
+                                   MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+                                           .format(new Date(System.currentTimeMillis())));
+                                   MiniaElectricity.getPrefsManager().setOfflineBillValue(0);
+                                   MiniaElectricity.getPrefsManager().setOfflineBillCount(0);
+                                   if (billsStatus != 0) {
+                                       MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
+                                   }
+                                   if (billsStatus == 2) {
+                                       dataBase.offlineClientsDao().clearClients();
+                                       dataBase.billDataDaoDao().clearBills();
+                                   }
+
+
+                                   for (TransDataEntity t :
+                                           offlineTransData) {
+                                       t.setStatus(TransData.STATUS.PAID_PENDING_DRM_REQ.getValue());
+                                       dataBase.transDataDao().addTransData(t);
+                                       pendingTransData.add(t);
+                                   }
+
+                                   offlineTransData.clear();
+                                   onFailure(null);
+                                   handlePendingBills();
+                               }
+                           } catch (JSONException e) {
+                               e.printStackTrace();
+                               onFailure(e.getMessage());
+                           }
+                       }
+
+                       @Override
+                       public void onFailure(String failureMsg) {
+                           if (failureMsg != null)
+                               //Toast.makeText(this, failureMsg, Toast.LENGTH_LONG).show();
+                               errorMsg.setValue(failureMsg);
+                           MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
+
+                       }
+                   });
+       }
+
+        }
+
 
 
     private void handlePendingBills() {
         if (index < pendingTransData.size() && Utils.checkConnection(MiniaElectricity.getInstance())) {
-            TransData transData = pendingTransData.get(index);
+            TransDataEntity transData = pendingTransData.get(index);
             index = index + 1;
             if (TransData.STATUS.PENDING_CASH_PAYMENT_REQ.getValue() == transData.getStatus() ||
                     TransData.STATUS.PENDING_CARD_PAYMENT_REQ.getValue() == transData.getStatus() ||
@@ -262,9 +317,9 @@ public class FinishPendingTransService extends Service {
 
     }
 
-    private void deletePayment(final TransData transData) {
-        transData.setStatus(TransData.STATUS.PENDING_DELETE_REQ.getValue());
-        DBHelper.getInstance(this).updateTransData(transData);
+    private void deletePayment(final TransDataEntity transData) {
+        transData.setStatus(TransDataEntity.STATUS.PENDING_DELETE_REQ.getValue());
+       dataBase.transDataDao().addTransData(transData);
        services.cancelBillPayment(transData.getBankTransactionID(),
                 new RequestListener() {
                     @Override
@@ -272,14 +327,23 @@ public class FinishPendingTransService extends Service {
                         // whatever the response of delete req suppose it is succeeded
                         if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue()) {
                             transData.setStatus(TransData.STATUS.COMPLETED.getValue());
-                            DBHelper.getInstance(FinishPendingTransService.this).updateTransData(transData);
-                            for (TransBill b :
-                                    transData.getTransBills()) {
-                                DBHelper.getInstance(FinishPendingTransService.this).deleteTransBill(b.getBillUnique());
-                            }
-                            DBHelper.getInstance(FinishPendingTransService.this).deleteTransData(transData);
-                            //sendDRM(true, transData);
-//                             DBHelper.getInstance().deleteBillData(billData);
+                            dataBase.transDataDao().addTransData(transData);
+                            compositeDisposable.add(
+                                    dataBase.transBillDao().getTransBillsByTransData(transData.getClientID())
+                                            .subscribeOn(Schedulers.io())
+                                            .observeOn(AndroidSchedulers.mainThread())
+                                            .subscribe(new Consumer<List<TransBillEntity>>() {
+                                                @Override
+                                                public void accept(List<TransBillEntity> transBillEntities) throws Throwable {
+                                                    for (TransBillEntity b :transBillEntities
+                                                    ) {
+                                                        dataBase.transBillDao().deleteTransBill(b.getBillUnique());
+                                                    }
+                                                    dataBase.transDataDao().deleteTransData(transData);
+                                                }
+                                            })
+                            );
+
                         } else {
                             transData.setStatus(TransData.STATUS.DELETED_PENDING_VOID_REQ.getValue());
                             //DBHelper.getInstance(cntxt).deleteBillData(billData);
@@ -297,7 +361,7 @@ public class FinishPendingTransService extends Service {
                 });
     }
 
-    private void sendDRM(boolean isView, final TransData transData) {
+    private void sendDRM(boolean isView, final TransDataEntity transData) {
        // Log.i("onSuccess", transData.getDrmData());
         if (transData.getDrmData() != null && !transData.getDrmData().isEmpty())
         {
@@ -313,15 +377,27 @@ public class FinishPendingTransService extends Service {
                         String ErrorMessage = responseBody.optString("ErrorMessage").trim();
                         if (!ErrorMessage.isEmpty() && ErrorMessage.equals("Approved")) {
                             transData.setStatus(TransData.STATUS.COMPLETED.getValue());
-                            DBHelper.getInstance(FinishPendingTransService.this).updateTransData(transData);
-                            for (TransBill b :
-                                    transData.getTransBills()) {
-                                DBHelper.getInstance(FinishPendingTransService.this).deleteTransBill(b.getBillUnique());
-                            }
-                            DBHelper.getInstance(FinishPendingTransService.this).deleteTransData(transData);
-                        }
-                        //added for test should not be added here
-                        //transData.setStatus(TransData.STATUS.PENDING_CASH_PAYMENT_REQ.getValue());
+                            dataBase.transDataDao().addTransData(transData);
+
+                           compositeDisposable.add(
+                                   dataBase.transBillDao().getTransBillsByTransData(transData.getClientID())
+                                           .subscribeOn(Schedulers.io())
+                                           .observeOn(AndroidSchedulers.mainThread())
+                                           .subscribe(new Consumer<List<TransBillEntity>>() {
+                                               @Override
+                                               public void accept(List<TransBillEntity> transBillEntities) throws Throwable {
+                                                   for (TransBillEntity b :
+                                                           transBillEntities) {
+                                                       dataBase.transBillDao().deleteTransBill(b.getBillUnique());
+                                                   }
+                                                  dataBase.transDataDao().deleteTransData(transData);
+
+                                                   handlePendingBills();
+                                               }
+                                           })
+                           );
+
+                        }else
                         handlePendingBills();
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -347,5 +423,6 @@ public class FinishPendingTransService extends Service {
     public void onDestroy() {
         super.onDestroy();
         serviceState.setValue(false);
+        compositeDisposable.clear();
     }
 }

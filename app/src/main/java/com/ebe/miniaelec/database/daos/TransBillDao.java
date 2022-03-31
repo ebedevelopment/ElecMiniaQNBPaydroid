@@ -26,5 +26,5 @@ public interface TransBillDao {
     void deleteTransBillsByTransData(int transId);
 
     @Query("Select * From TransBillEntity Where transDataId = :transId")
-    Flowable<List<TransBillEntity>> getTransBillsByTransData(String transId);
+    List<TransBillEntity> getTransBillsByTransData(String transId);
 }

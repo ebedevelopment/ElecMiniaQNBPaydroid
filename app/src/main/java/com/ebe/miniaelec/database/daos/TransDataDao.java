@@ -28,17 +28,17 @@ public interface TransDataDao {
 
     @Query("Select * From TransData")
     @Transaction
-    Flowable<List<TransDataWithTransBill>>getAllTrans();
+    List<TransDataWithTransBill>getAllTrans();
 
 
     @Query("Select * From TransData Where reference_no = :refNo")
     @Transaction
-    Single<TransDataWithTransBill> getTransByRefNo(int refNo);
+    TransDataWithTransBill getTransByRefNo(int refNo);
 
 
     @Query("Select * From TransData Where client_id = :clientId")
     @Transaction
-    Single<TransDataWithTransBill> getTransByClientId(String clientId);
+    TransDataWithTransBill getTransByClientId(String clientId);
 
 
 }
