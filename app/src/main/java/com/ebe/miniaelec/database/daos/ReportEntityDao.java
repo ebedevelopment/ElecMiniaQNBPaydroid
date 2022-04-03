@@ -11,6 +11,7 @@ import com.ebe.miniaelec.model.Report;
 import java.util.List;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 @Dao
 public interface ReportEntityDao {
@@ -20,22 +21,22 @@ public interface ReportEntityDao {
     void addReport(ReportEntity report);
 
     @Query("Select DISTINCT transDate From Reports")
-    Flowable<List<String>> getDistinctCollectedDates();
+    Single<List<String>> getDistinctCollectedDates();
 
     @Query("Select SUM(totalAmount)/100 From Reports Where transDate = :date and paymentType = :pType")
-    double getTotalAmountOfPaymentTypeAndDate(String date, int pType);
+    Single<Double> getTotalAmountOfPaymentTypeAndDate(String date, int pType);
 
     @Query("Select SUM(billsCount) From Reports Where transDate = :date and paymentType = :pType")
-    int getTotalCountOfPaymentTypeAndDate(String date, int pType);
+    Single<Integer> getTotalCountOfPaymentTypeAndDate(String date, int pType);
 
     @Query("Select * From Reports Where transDate =:date")
-    List<Report> getReportsByDate(String date);
+    Single<List<Report>> getReportsByDate(String date);
 
     @Query("Select * From Reports")
-    List<Report> getReports();
+    Single<List<Report>> getReports();
 
     @Query("Delete From REPORTS")
-   int clearReports();
+   Single<Integer> clearReports();
 
 
     //void clearReportsByDate(String date);

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -46,9 +47,13 @@ import java.util.Locale;
 
 import dmax.dialog.SpotsDialog;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableObserver;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.subscribers.DisposableSubscriber;
 import pub.devrel.easypermissions.EasyPermissions;
 
 //import android.util.Log;
@@ -78,6 +83,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         et_password = findViewById(R.id.password);
         cntxt = this;
         dataBase = AppDataBase.getInstance(cntxt);
+        disposable = new CompositeDisposable();
         Utils.enableHomeRecentKey(false);
         Utils.enableStatusBar(false);
         String[] permissions = {Manifest.permission.ACCESS_NETWORK_STATE,
@@ -145,11 +151,26 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     }
                     StringBuilder warning = new StringBuilder();
                     if (allowLogin) {
-                        dataBase.offlineClientsDao().clearClients();
-                        dataBase.billDataDaoDao().clearBills();
+                        disposable.add(Completable.fromRunnable(new Runnable() {
+                            @Override
+                            public void run() {
+                                dataBase.offlineClientsDao().clearClients();
+                                dataBase.billDataDaoDao().clearBills();
+                            }
+                        }).subscribeOn(Schedulers.io())
+                                .onErrorReturn(throwable -> {
+                                    Log.d(null, "insertInDB: "+throwable.getMessage());
+                                    return null;
+                                }).observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(new Consumer<Object>() {
+                                    @Override
+                                    public void accept(Object o) throws Throwable {
+                                        login();
+                                    }
+                                }));
 
                         //DBHelper.getInstance(cntxt).clearOfflineData();
-                        login();
+
                     } else
 
                         warning.append("برجاء مزامنة فواتير المحصل السابق");
@@ -192,8 +213,18 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                         MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
                                     if (billsStatus == 2)
                                     {
-                                        dataBase.offlineClientsDao().clearClients();
-                                        dataBase.billDataDaoDao().clearBills();
+                                      disposable.add( Completable.fromRunnable(new Runnable() {
+                                          @Override
+                                          public void run() {
+                                              dataBase.offlineClientsDao().clearClients();
+                                              dataBase.billDataDaoDao().clearBills();
+                                          }
+                                      }).subscribeOn(Schedulers.io())
+                                              .onErrorReturn(throwable -> {
+                                                  Log.d("Login", "onSuccess: "+throwable.getMessage());
+                                                  return null;
+                                              }).subscribe());
+
                                     }
                                 /*startActivity(new Intent(LoginActivity.this, MainActivity.class));
                                 finish();*/

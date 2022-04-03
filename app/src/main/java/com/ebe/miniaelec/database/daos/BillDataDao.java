@@ -11,7 +11,7 @@ import com.ebe.miniaelec.database.entities.BillDataEntity;
 
 import java.util.List;
 
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 
 @Dao
@@ -32,45 +32,45 @@ public interface BillDataDao {
     void deleteBillByClientId(String Id);
 
     @Query("Select * From BillDataEntity Where clientId = :Id")
-    List<BillDataEntity> getBillsByClientId(String Id);
+    Single<List<BillDataEntity>> getBillsByClientId(String Id);
 
 
     @Query("Select * From BillDataEntity")
-    List<BillDataEntity> getAllBills();
+    Single<List<BillDataEntity>> getAllBills();
 
 
     @Query("SElECT DISTINCT mntkaCode From BillDataEntity")
-    List<String> getDistinctMntka();
+    Single<List<String>> getDistinctMntka();
 
     @Query("Select DISTINCT dayCode From BillDataEntity Where mntkaCode = :mntka ")
-    List<String> getDistinctDaysOfMntka(String mntka);
+    Single<List<String>> getDistinctDaysOfMntka(String mntka);
 
     @Query("Select DISTINCT mainCode From BillDataEntity Where mntkaCode = :mntka and dayCode = :day")
-    List<String> getDistinctMainsOfMntkaAndDay(String mntka, String day);
+    Single<List<String>> getDistinctMainsOfMntkaAndDay(String mntka, String day);
 
     @Query("Select DISTINCT faryCode From BillDataEntity Where mntkaCode = :mntka and dayCode = :day and mainCode = :main")
-   List<String> getDistinctFaryOfMntkaAndDayAndMain(String mntka, String day, String main);
+   Single<List<String>> getDistinctFaryOfMntkaAndDayAndMain(String mntka, String day, String main);
 
     @Query("Select * From BillDataEntity Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc  ")
-    List<BillDataEntity> getDistinctBills();
+    Single<List<BillDataEntity>> getDistinctBills();
 
 
     @Query("Select * From BillDataEntity Where mntkaCode = :mntka Group by faryCode ,clientName, mainCode,clientId")
-    List<BillDataEntity> getDistinctBillsOfMntka(String mntka);
+    Single<List<BillDataEntity>> getDistinctBillsOfMntka(String mntka);
 
 
     @Query("Select * From BillDataEntity Where mntkaCode =:mntka and dayCode =:day Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc")
-    List<BillDataEntity> getDistinctBillsByMntkaAndDay(String mntka, String day);
+    Single<List<BillDataEntity>> getDistinctBillsByMntkaAndDay(String mntka, String day);
 
     @Query("Select * From BillDataEntity Where mntkaCode =:mntka and dayCode =:day and mainCode =:main Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc")
-    List<BillDataEntity> getDistinctBillsByMntkaDayAndMain(String mntka, String day, String main);
+    Single<List<BillDataEntity>> getDistinctBillsByMntkaDayAndMain(String mntka, String day, String main);
 
     @Query("Select * From BillDataEntity Where mntkaCode =:mntka and dayCode =:day and mainCode =:main and faryCode = :fary Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc")
-    List<BillDataEntity> getDistinctBillsByMntkaDayMainAndFary(String mntka, String day, String main, String fary);
+    Single<List<BillDataEntity>> getDistinctBillsByMntkaDayMainAndFary(String mntka, String day, String main, String fary);
 
 
     @Query("Select * From BillDataEntity Where clientName = :clientName Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc")
-    List<BillDataEntity> getDistinctBillsByClientName(String clientName);
+    Single<List<BillDataEntity>> getDistinctBillsByClientName(String clientName);
 
     @Query("Delete From BillDataEntity")
     void clearBills();

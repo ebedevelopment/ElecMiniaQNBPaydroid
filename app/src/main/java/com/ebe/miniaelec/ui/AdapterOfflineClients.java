@@ -2,6 +2,7 @@ package com.ebe.miniaelec.ui;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -94,16 +95,27 @@ public class AdapterOfflineClients extends BaseAdapter {
         holder.client_name.setText(rows.get(position).getClientName());
         holder.client_id.setText(rows.get(position).getClientId());
 
-      ClientWithBillData client = dataBase.offlineClientsDao().getClientByClientId(rows.get(position).getClientId());
-        List<BillDataEntity> bills = client.getBills();
-        holder.bills_count.setText("ع: " + bills.size());
-        double total = 0;
-        for (BillDataEntity b :
-                bills) {
-            total += b.getBillValue();
-            total += b.getCommissionValue();
-        }
-        holder.bills_amount.setText("ق: " + total);
+       dataBase.offlineClientsDao().getClientByClientId(rows.get(position).getClientId())
+               .subscribeOn(Schedulers.io())
+               .observeOn(AndroidSchedulers.mainThread())
+               .onErrorReturn(throwable -> {
+                   Log.d(null, "setRow: "+throwable.getMessage());
+                   return null;
+               }).subscribe(new Consumer<ClientWithBillData>() {
+           @Override
+           public void accept(ClientWithBillData clientWithBillData) throws Throwable {
+               List<BillDataEntity> bills = clientWithBillData.getBills();
+               holder.bills_count.setText("ع: " + bills.size());
+               double total = 0;
+               for (BillDataEntity b :
+                       bills) {
+                   total += b.getBillValue();
+                   total += b.getCommissionValue();
+               }
+               holder.bills_amount.setText("ق: " + total);
+           }
+       }).dispose();
+
 
 
 

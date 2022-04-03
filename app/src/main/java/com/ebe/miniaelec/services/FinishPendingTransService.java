@@ -35,6 +35,7 @@ import java.util.Locale;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.SingleObserver;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
@@ -127,6 +128,7 @@ public class FinishPendingTransService extends Service {
                     if (b.getTransData().getClientID() == null || b.getTransData().getClientID().equalsIgnoreCase("null") || (b.getTransData().getStatus() == TransDataEntity.STATUS.DELETED_PENDING_DRM_REQ.getValue() && b.getTransData().getDrmData() == null) || (b.getTransData().getStatus() == TransData.STATUS.DELETED_PENDING_DRM_REQ.getValue() && b.getTransData().getDrmData().equals("null"))) {
                         for (TransBillEntity bill :
                                 b.getTransBills()) {
+
                             dataBase.transBillDao().deleteTransBill(bill.getBillUnique());
                         }
                        dataBase.transDataDao().deleteTransData(b.getTransData());
@@ -250,8 +252,15 @@ public class FinishPendingTransService extends Service {
                                        MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
                                    }
                                    if (billsStatus == 2) {
-                                       dataBase.offlineClientsDao().clearClients();
-                                       dataBase.billDataDaoDao().clearBills();
+                                      compositeDisposable.add(Completable.fromRunnable(new Runnable() {
+                                          @Override
+                                          public void run() {
+                                              dataBase.offlineClientsDao().clearClients();
+                                              dataBase.billDataDaoDao().clearBills();
+                                          }
+                                      }).subscribeOn(Schedulers.io())
+                                              .subscribe());
+
                                    }
 
 
@@ -423,6 +432,6 @@ public class FinishPendingTransService extends Service {
     public void onDestroy() {
         super.onDestroy();
         serviceState.setValue(false);
-        compositeDisposable.clear();
+        compositeDisposable.dispose();
     }
 }

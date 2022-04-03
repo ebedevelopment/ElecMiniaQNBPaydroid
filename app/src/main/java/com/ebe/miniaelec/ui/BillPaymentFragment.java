@@ -81,8 +81,11 @@ import java.util.Objects;
 
 import dmax.dialog.SpotsDialog;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.functions.Predicate;
+import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
@@ -405,7 +408,16 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                     MiniaElectricity.getPrefsManager().setOfflineBillValue(MiniaElectricity.getPrefsManager().getOfflineBillValue() + finalAmount);
                     MiniaElectricity.getPrefsManager().setPaidOfflineBillsCount(MiniaElectricity.getPrefsManager().getPaidOfflineBillsCount() + billsCount);
                     MiniaElectricity.getPrefsManager().setPaidOfflineBillsValue(MiniaElectricity.getPrefsManager().getPaidOfflineBillsValue() + finalAmount);
-                    dataBase.reportEntityDaoDao().addReport(new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                    compositeDisposable.add(Completable.fromRunnable(new Runnable() {
+                        @Override
+                        public void run() {
+                            dataBase.reportEntityDaoDao().addReport(new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                        }
+                    }).subscribeOn(Schedulers.io())
+                            .onErrorReturn(throwable -> {
+                                Log.d("request CashPayment", "onSuccess: "+throwable.getMessage());
+                                return null;
+                            }).subscribe());
                     new PrintReceipt(cntxt, transBills,transData, new PrintListener() {
                         @Override
                         public void onFinish() {
@@ -471,7 +483,17 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                         dataBase.transDataDao().addTransData(transData);
                                         MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(MiniaElectricity.getPrefsManager().getPaidOnlineBillsCount() + billsCount);
                                         MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(MiniaElectricity.getPrefsManager().getPaidOnlineBillsValue() + finalAmount);
-                                        dataBase.reportEntityDaoDao().addReport(new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                                        compositeDisposable.add(Completable.fromRunnable(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                dataBase.reportEntityDaoDao().addReport(new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                                            }
+                                        }).subscribeOn(Schedulers.io())
+                                                .onErrorReturn(throwable -> {
+                                                    Log.d("request CashPayment", "onSuccess: "+throwable.getMessage());
+                                                    return null;
+                                                }).subscribe());
+
                                         JsonObject SendContent = new JsonObject(), EMVData;
 
                                         deleteBills();
@@ -512,17 +534,34 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
     private boolean deleteBills() {
 
-        for (TransBillEntity b :
-                transBills) {
-            dataBase.billDataDaoDao().deleteClientBill(b.getBillUnique());
-            b.setBankTransactionID(transData.getBankTransactionID());
-            b.setTransDataId(transData.getId());
-           dataBase.transBillDao().newTransBillAppend(b);
-        }
+
+          compositeDisposable.add(Completable.fromRunnable(new Runnable() {
+              @Override
+              public void run() {
+                  for (TransBillEntity b :
+                          transBills) {
+                      dataBase.billDataDaoDao().deleteClientBill(b.getBillUnique());
+                      b.setBankTransactionID(transData.getBankTransactionID());
+                      b.setTransDataId(transData.getId());
+                      dataBase.transBillDao().newTransBillAppend(b);
+                  }
+              }
+          }).subscribeOn(Schedulers.io())
+                  .onErrorComplete(new Predicate<Throwable>() {
+                      @Override
+                      public boolean test(Throwable throwable) throws Throwable {
+                          Log.d("deleteBills", "test: "+throwable.getMessage());
+                          return false;
+                      }
+                  }).subscribe() );
+
+
+
+
+
 
         compositeDisposable.add(dataBase.offlineClientsDao().getClientByClientId(transData.getClientID())
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<ClientWithBillData>() {
                     @Override
                     public void accept(ClientWithBillData clientWithBillData) throws Throwable {
@@ -530,8 +569,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                         if (client != null && (clientWithBillData.getBills() == null || clientWithBillData.getBills().size() == 0)) {
                             dataBase.offlineClientsDao().deleteOfflineClient(client);
                         }
-                    }
-                }));
+                    }}));
 
         return true;
         //   }
@@ -638,7 +676,17 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                 }
                                 MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(MiniaElectricity.getPrefsManager().getPaidOnlineBillsCount() + transBills.size());
                                 MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(MiniaElectricity.getPrefsManager().getPaidOnlineBillsValue() + amount);
-                                dataBase.reportEntityDaoDao().addReport(new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), amount, transBills.size(), transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                                long finalAmount = amount;
+                                compositeDisposable.add(Completable.fromRunnable(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        dataBase.reportEntityDaoDao().addReport(new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, transBills.size(), transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                                    }
+                                }).subscribeOn(Schedulers.io())
+                                        .onErrorReturn(throwable -> {
+                                            Log.d("request CashPayment", "onSuccess: "+throwable.getMessage());
+                                            return null;
+                                        }).subscribe());
                                 deleteBills();
                                 new PrintReceipt(cntxt, transBills,transData, new PrintListener() {
                                     @Override

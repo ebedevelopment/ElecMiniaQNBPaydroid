@@ -11,6 +11,7 @@ import com.ebe.miniaelec.database.entities.TransBillEntity;
 import java.util.List;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 @Dao
 public interface TransBillDao {
@@ -26,5 +27,5 @@ public interface TransBillDao {
     void deleteTransBillsByTransData(int transId);
 
     @Query("Select * From TransBillEntity Where transDataId = :transId")
-    List<TransBillEntity> getTransBillsByTransData(String transId);
+    Single<List<TransBillEntity>> getTransBillsByTransData(String transId);
 }
