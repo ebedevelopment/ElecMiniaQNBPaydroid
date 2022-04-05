@@ -83,6 +83,7 @@ import dmax.dialog.SpotsDialog;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.functions.Action;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.functions.Predicate;
 import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
@@ -202,11 +203,14 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                           if (offlineClient == null) {
                               Toast.makeText(cntxt, "رقم الاشتراك غير صحيح!", Toast.LENGTH_SHORT).show();
                               navController.popBackStack();
-                              return;
+
                           }
+                          assert offlineClient != null;
                           phoneNumber = offlineClient.getClientMobileNo();
                           billDetails = new ArrayList<>(clientWithBillData.getBills());
                       }
+                  },throwable -> {
+                      Log.e(null, "setBillData: "+throwable.getLocalizedMessage() );
                   })
 );
 
@@ -469,14 +473,29 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                     //Log.e("requestCashPayment", response);
                                     if (Error != null && !Error.isEmpty()) {
                                         if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
-                                            for (TransBillEntity b :
-                                                    transBills) {
-                                                dataBase.transBillDao().deleteTransBill(b.getBillUnique());
-                                            }
-                                            dataBase.transDataDao().deleteTransData(transData);
-                                            MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                            startActivity(new Intent(requireActivity(), LoginActivity.class));
-                                            navController.popBackStack();
+                                          compositeDisposable.add(Completable.fromAction(() -> {
+                                              for (TransBillEntity b :
+                                                      transBills) {
+                                                  dataBase.transBillDao().deleteTransBill(b.getBillUnique());
+                                              }
+                                              dataBase.transDataDao().deleteTransData(transData);
+                                          }).subscribeOn(Schedulers.io())
+                                                  .observeOn(AndroidSchedulers.mainThread())
+                                                  .subscribeWith(new DisposableCompletableObserver() {
+                                                      @Override
+                                                      public void onComplete() {
+                                                          MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                                                          startActivity(new Intent(requireActivity(), LoginActivity.class));
+                                                          navController.popBackStack();
+                                                      }
+
+                                                      @Override
+                                                      public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
+
+                                                          Log.e("requestCashPayment", "onError: "+e.getLocalizedMessage() );
+                                                      }
+                                                  }));
+
                                         } else onFailure("فشل في عملية الدفع!\n" + Error);
                                     } else {
                                         transData.setStatus(TransData.STATUS.PAID_PENDING_DRM_REQ.getValue());
@@ -547,13 +566,18 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                   }
               }
           }).subscribeOn(Schedulers.io())
-                  .onErrorComplete(new Predicate<Throwable>() {
+                 .subscribeWith(new DisposableCompletableObserver() {
                       @Override
-                      public boolean test(Throwable throwable) throws Throwable {
-                          Log.d("deleteBills", "test: "+throwable.getMessage());
-                          return false;
+                      public void onComplete() {
+
                       }
-                  }).subscribe() );
+
+                      @Override
+                      public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
+
+                          Log.e("deleteBills", "onError: "+ e.getLocalizedMessage() );
+                      }
+                  }));
 
 
 
@@ -569,7 +593,9 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                         if (client != null && (clientWithBillData.getBills() == null || clientWithBillData.getBills().size() == 0)) {
                             dataBase.offlineClientsDao().deleteOfflineClient(client);
                         }
-                    }}));
+                    }},throwable -> {
+                    Log.e("DeleteBills", "deleteBills: "+ throwable.getLocalizedMessage() );
+                }));
 
         return true;
         //   }
@@ -692,12 +718,23 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                     @Override
                                     public void onFinish() {
 
-                                        for (TransBillEntity b :
-                                                transBills) {
-                                            dataBase.transBillDao().deleteTransBill(b.getBillUnique());
-                                        }
-                                        dataBase.transDataDao().deleteTransData(transData);
-                                        navController.popBackStack();
+                                        Completable.fromRunnable(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                for (TransBillEntity b :
+                                                        transBills) {
+                                                    dataBase.transBillDao().deleteTransBill(b.getBillUnique());
+                                                }
+                                                dataBase.transDataDao().deleteTransData(transData);
+                                            }
+                                        }).subscribeOn(Schedulers.io())
+                                                .observeOn(AndroidSchedulers.mainThread())
+                                                .subscribe(() ->  {
+                                                    navController.popBackStack();
+                                                },throwable -> {
+                                                    Log.e("BillPaymentFragment", "onFinish: "+throwable.getLocalizedMessage() );
+                                                });
+
                                     }
 
                                     @Override
@@ -770,15 +807,25 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                             String ErrorMessage = responseBody.optString("ErrorMessage").trim();
                             if (!ErrorMessage.isEmpty() && ErrorMessage.equals("Approved")) {
                                 transData.setStatus(TransData.STATUS.COMPLETED.getValue());
-                                for (TransBillEntity b :
-                                        transBills) {
-                                    dataBase.transBillDao().deleteTransBill(b.getBillUnique());
-                                }
-                                dataBase.transDataDao().deleteTransData(transData);
+                                Completable.fromRunnable(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        for (TransBillEntity b :
+                                                transBills) {
+                                            dataBase.transBillDao().deleteTransBill(b.getBillUnique());
+                                        }
+                                        dataBase.transDataDao().deleteTransData(transData);
+                                    }
+                                }).observeOn(Schedulers.io())
+                                        .subscribe(()->{
+                                            navController.popBackStack();
+                                        },throwable -> {
+                                            Log.e("sendCashDrm", "onSuccess: "+throwable.getLocalizedMessage() );
+                                        });
                             }
                             //added for test should not be added here
                             //transData.setStatus(TransData.STATUS.PENDING_CASH_PAYMENT_REQ.getValue());
-                            navController.popBackStack();
+
                         } catch (JSONException e) {
                             e.printStackTrace();
                             onFailure(e.getMessage() + "");

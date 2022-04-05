@@ -42,6 +42,8 @@ import java.util.List;
 import java.util.Locale;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.functions.Action;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -51,6 +53,8 @@ public class Utils {
     public static final String TIME_PATTERN2 = "HH:mm";
     public static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss";
     public static final String DATE_PATTERN2 = "dd/MM/yyyy";
+
+    private static CompositeDisposable compositeDisposable = new CompositeDisposable();
 
 
     public static void switchSimCard(int simNo) {
@@ -229,7 +233,7 @@ public class Utils {
 
         try {
 
-            dataBase.transDataDao().getAllTrans().subscribeOn(Schedulers.io())
+            compositeDisposable.add(dataBase.transDataDao().getAllTrans().subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Consumer<List<TransDataWithTransBill>>() {
                         @Override
@@ -296,7 +300,11 @@ public class Utils {
                             writer.flush();
                             writer.close();
                         }
-                    }).dispose();
+                    }, throwable -> {
+                        Log.e(null, "copyBillsFromDB: " + throwable.getLocalizedMessage());
+                    }, () -> {
+                        compositeDisposable.dispose();
+                    }));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -319,5 +327,10 @@ public class Utils {
         }
         sdf = new SimpleDateFormat(newPattern, Locale.US);
         return sdf.format(date);
+    }
+
+    public void disposeUtilObservable()
+    {
+       compositeDisposable.dispose();
     }
 }

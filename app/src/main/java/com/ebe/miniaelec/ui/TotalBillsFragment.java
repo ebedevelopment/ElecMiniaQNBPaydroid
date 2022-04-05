@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.AppDataBase;
 import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.model.BillData;
 import com.ebe.miniaelec.model.CollectedReport;
@@ -18,15 +19,16 @@ import java.util.ArrayList;
 
 public class TotalBillsFragment extends Fragment {
 
-    FragmentManager fm;
+
     ArrayList<CollectedReport> reports;
+    AppDataBase dataBase;
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         reports = new ArrayList<>();
-        fm = getFragmentManager();
+
 
     }
 
@@ -36,8 +38,10 @@ public class TotalBillsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_total_bills, container, false);
 
         MainActivity.setToolbarVisibility(View.VISIBLE);
-        MainActivity.setTitleText(getString(R.string.total_bills));
+       // MainActivity.setTitleText(getString(R.string.total_bills));
         MainActivity.setBackAction(1);
+
+
 
 
         ArrayList<Report> report = new ArrayList<Report>(DBHelper.getInstance(getActivity()).getReports());

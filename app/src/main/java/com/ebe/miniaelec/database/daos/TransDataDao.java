@@ -1,5 +1,6 @@
 package com.ebe.miniaelec.database.daos;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -28,7 +29,11 @@ public interface TransDataDao {
 
     @Query("Select * From TransData")
     @Transaction
-    Flowable<List<TransDataWithTransBill>>getAllTrans();
+    Flowable<List<TransDataWithTransBill>> getAllTrans();
+
+    @Query("Select * From TransData")
+    @Transaction
+    LiveData<List<TransDataWithTransBill>> getAllTransBills();
 
 
     @Query("Select * From TransData Where reference_no = :refNo")

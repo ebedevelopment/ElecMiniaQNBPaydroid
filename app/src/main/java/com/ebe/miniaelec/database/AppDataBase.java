@@ -18,7 +18,7 @@ import com.ebe.miniaelec.database.entities.TransBillEntity;
 import com.ebe.miniaelec.database.entities.TransDataEntity;
 
 
-@Database(entities = {BillDataEntity.class, OfflineClientEntity.class, ReportEntity.class, TransBillEntity.class, TransDataEntity.class}, version = 0)
+@Database(entities = {BillDataEntity.class, OfflineClientEntity.class, ReportEntity.class, TransBillEntity.class, TransDataEntity.class}, version = 1)
 public abstract class AppDataBase extends RoomDatabase {
 
 
@@ -42,6 +42,7 @@ public abstract class AppDataBase extends RoomDatabase {
                 {
                     dataBase = Room.databaseBuilder(cntxt,
                             AppDataBase.class, "AppDataBase").fallbackToDestructiveMigration().
+                            allowMainThreadQueries().
                             build();
                 }
             }

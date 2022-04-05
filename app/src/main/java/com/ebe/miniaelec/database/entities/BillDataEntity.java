@@ -4,6 +4,8 @@ package com.ebe.miniaelec.database.entities;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.google.gson.annotations.SerializedName;
+
 @Entity(tableName = "BillDataEntity")
 public class BillDataEntity {
 
@@ -15,50 +17,68 @@ public class BillDataEntity {
 
     String clientId;
 
+    @SerializedName("BillUnique")
     private String billUnique;
 
-
+    @SerializedName("RowNum")
     private int rawNum;
 
 
-
+    @SerializedName("SectorName")
     private String sectorName;
 
-
+    @SerializedName("BranchName")
     private String branchName;
 
+    @SerializedName("ClientAddress")
     private String clientAddress;
 
+    @SerializedName("ClientActivity")
     private String clientActivity;
 
+    @SerializedName("ClientPlace")
     private String clientPlace;
 
+    @SerializedName("CurrentRead")
     private String currentRead;
 
+    @SerializedName("PreviousRead")
     private String previousRead;
 
+    @SerializedName("Consumption")
     private String consumption;
 
+    @SerializedName("Installment")
     private String installments;
 
+    @SerializedName("Fees")
     private String fees;
 
+    @SerializedName("Payments")
     private String payments;
 
+    @SerializedName("CommissionValue")
     private double commissionValue;
 
+    @SerializedName("ClientName")
     private String clientName;
+
+    @SerializedName("BillDate")
     private String billDate;
 
+    @SerializedName("BillValue")
     private double billValue;
 
-
+    @SerializedName("MntkaCode")
     private String mntkaCode;
 
+    @SerializedName("DayCode")
     private String dayCode;
 
+    @SerializedName("MainCode")
     private String mainCode;
 
+    @SerializedName("FaryCode")
     private String faryCode;
 
     public BillDataEntity() {

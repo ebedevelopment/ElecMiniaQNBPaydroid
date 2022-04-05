@@ -40,7 +40,9 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.SingleObserver;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.functions.Action;
 import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class FinishPendingTransService extends Service {
@@ -115,7 +117,7 @@ public class FinishPendingTransService extends Service {
 
         compositeDisposable.add(dataBase.transDataDao().getAllTrans()
         .subscribeOn(Schedulers.computation())
-        .observeOn(AndroidSchedulers.mainThread())
+       // .observeOn(AndroidSchedulers.mainThread())
         .subscribe(new Consumer<List<TransDataWithTransBill>>() {
             @Override
             public void accept(List<TransDataWithTransBill> transDataWithTransBills) throws Throwable {
@@ -150,7 +152,8 @@ public class FinishPendingTransService extends Service {
                 if ((offlineTransData.size() > 0 || pendingTransData.size() > 0) && Utils.checkConnection(MiniaElectricity.getInstance())) {
                     setBills();
                 } else {
-                    goToPayment.setValue(true);
+                    goToPayment.postValue(true);
+                    serviceState.postValue(false);
                     stopSelf();
                 }
 
@@ -252,13 +255,15 @@ public class FinishPendingTransService extends Service {
                                        MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
                                    }
                                    if (billsStatus == 2) {
-                                      compositeDisposable.add(Completable.fromRunnable(new Runnable() {
-                                          @Override
-                                          public void run() {
-                                              dataBase.offlineClientsDao().clearClients();
-                                              dataBase.billDataDaoDao().clearBills();
-                                          }
+                                      compositeDisposable.add(Completable.fromRunnable(() -> {
+                                          dataBase.offlineClientsDao().clearClients();
+                                          dataBase.billDataDaoDao().clearBills();
                                       }).subscribeOn(Schedulers.io())
+                                              .onErrorReturn(throwable -> {
+                                                  Log.e("clearBills", "onSuccess: "+throwable.getLocalizedMessage() );
+                                                  return null;
+                                              })
+
                                               .subscribe());
 
                                    }
@@ -336,11 +341,27 @@ public class FinishPendingTransService extends Service {
                         // whatever the response of delete req suppose it is succeeded
                         if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue()) {
                             transData.setStatus(TransData.STATUS.COMPLETED.getValue());
-                            dataBase.transDataDao().addTransData(transData);
+                           compositeDisposable.add(Completable.fromAction(new Action() {
+                               @Override
+                               public void run() throws Throwable {
+                                   dataBase.transDataDao().addTransData(transData);
+                               }
+                           }).subscribeOn(Schedulers.io())
+                                   .subscribeWith(new DisposableCompletableObserver() {
+                                       @Override
+                                       public void onComplete() {
+
+                                       }
+
+                                       @Override
+                                       public void onError(@NonNull Throwable e) {
+
+                                       }
+                                   }));
+
                             compositeDisposable.add(
                                     dataBase.transBillDao().getTransBillsByTransData(transData.getClientID())
                                             .subscribeOn(Schedulers.io())
-                                            .observeOn(AndroidSchedulers.mainThread())
                                             .subscribe(new Consumer<List<TransBillEntity>>() {
                                                 @Override
                                                 public void accept(List<TransBillEntity> transBillEntities) throws Throwable {
@@ -350,6 +371,8 @@ public class FinishPendingTransService extends Service {
                                                     }
                                                     dataBase.transDataDao().deleteTransData(transData);
                                                 }
+                                            },throwable -> {
+                                                Log.e("delete payment", "onSuccess: "+throwable.getLocalizedMessage() );
                                             })
                             );
 
@@ -391,7 +414,7 @@ public class FinishPendingTransService extends Service {
                            compositeDisposable.add(
                                    dataBase.transBillDao().getTransBillsByTransData(transData.getClientID())
                                            .subscribeOn(Schedulers.io())
-                                           .observeOn(AndroidSchedulers.mainThread())
+                                           //.observeOn(AndroidSchedulers.mainThread())
                                            .subscribe(new Consumer<List<TransBillEntity>>() {
                                                @Override
                                                public void accept(List<TransBillEntity> transBillEntities) throws Throwable {
@@ -403,6 +426,8 @@ public class FinishPendingTransService extends Service {
 
                                                    handlePendingBills();
                                                }
+                                           },throwable -> {
+                                               Log.e("sendDrm", "onSuccess: "+throwable.getLocalizedMessage() );
                                            })
                            );
 

@@ -76,10 +76,12 @@ import java.util.TimeZone;
 import dmax.dialog.SpotsDialog;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableObserver;
 import io.reactivex.rxjava3.core.MaybeObserver;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
@@ -98,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public static NavController navController;
     private AppDataBase dataBase;
     CompositeDisposable disposable;
+    DisposableCompletableObserver observer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +109,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Configuration config = new Configuration();
         config.locale = loc;
         disposable = new CompositeDisposable();
+
+
         getBaseContext().getResources().updateConfiguration(config,
                 getBaseContext().getResources().getDisplayMetrics());
         setContentView(R.layout.activity_main);
@@ -196,9 +201,6 @@ dataBase= AppDataBase.getInstance(this);
                        disposable.add(dataBase.offlineClientsDao().offlineClientsCount()
                                .subscribeOn(Schedulers.io())
                                .observeOn(AndroidSchedulers.mainThread())
-                               .onErrorReturn(throwable -> {
-                                   Log.d(null, "onChanged: "+throwable.getMessage());
-                                   return null;})
                                .subscribe(new Consumer<Long>() {
                                    @Override
                                    public void accept(Long aLong) throws Throwable {
@@ -208,6 +210,8 @@ dataBase= AppDataBase.getInstance(this);
                                            getClientsData();
                                        }
                                    }
+                               },throwable -> {
+                                   Log.e("serviceState", "onChanged: "+throwable.getLocalizedMessage() );
                                }));
 
 
@@ -240,10 +244,7 @@ dataBase= AppDataBase.getInstance(this);
                 disposable.add(dataBase.offlineClientsDao().offlineClientsCount()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .onErrorReturn(throwable -> {
-                            Log.d(null, "onMenuItemClick: "+throwable.getMessage());
-                            return null;
-                        }).subscribe(new Consumer<Long>() {
+                        .subscribe(new Consumer<Long>() {
                             @Override
                             public void accept(Long aLong) throws Throwable {
                                 if (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || aLong == 0)
@@ -251,6 +252,8 @@ dataBase= AppDataBase.getInstance(this);
                                     //getClientsData();
                                 else Toast.makeText(cntxt, "لا يوجد فواتير جديدة", Toast.LENGTH_LONG).show();
                             }
+                        },throwable -> {
+                            Log.e("MainActivity", "onMenuItemClick: "+throwable.getLocalizedMessage() );
                         }));
 
                 return true;
@@ -453,21 +456,6 @@ dataBase= AppDataBase.getInstance(this);
             navController.popBackStack(R.id.mainFragment,false);
 
 
-
-
-//        switch (BACK_ACTION) {
-//            case 1:
-//               // fragmentTransaction(new NewHomeFragment(), null);
-//                navController.navigate(R.id.mainFragment);
-//                break;
-//            case 2:
-//               // getFragmentManager().popBackStack();
-//                navController.popBackStack();
-//                break;
-//            default:
-//                //super.onBackPressed();
-//
-//        }
     }
 
     @Override
@@ -558,17 +546,16 @@ dataBase= AppDataBase.getInstance(this);
 
            disposable.add(dataBase.reportEntityDaoDao().clearReports().subscribeOn(Schedulers.io())
                    .observeOn(AndroidSchedulers.mainThread())
-                   .onErrorReturn(throwable -> {
-                       Log.d("mainActivity", "onResume: "+throwable.getMessage());
-                       return null;
-                   }).subscribe(new Consumer<Integer>() {
+                  .subscribe(new Consumer<Integer>() {
                        @Override
                        public void accept(Integer integer) throws Throwable {
                            if (integer>0) {
                                new PrefsManager().setLastResetLogsMonth(Calendar.getInstance().get(Calendar.MONTH) + 1);
                            }
                        }
-                   }));
+                   },throwable -> {
+                      Log.e("MainActivity", "onResume: "+throwable.getLocalizedMessage() );
+                  }));
 
         }
         if (!isAfterLogin && MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1) {
@@ -578,87 +565,6 @@ dataBase= AppDataBase.getInstance(this);
         }
     }
 
-//    public static class InsertInDB extends AsyncTask<Void, Integer, Void> {
-//
-//        private SpotsDialog progressDialog;
-//        private final JSONObject responseBody;
-//
-//        InsertInDB(JSONObject responseBody) {
-//            this.responseBody = responseBody;
-//        }
-//
-//        @Override
-//        protected void onPreExecute() {
-//            super.onPreExecute();
-//            progressDialog = new SpotsDialog(cntxt, R.style.SwitchingProgress);
-//            progressDialog.setCancelable(false);
-//            progressDialog.show();
-//        }
-//
-//
-//        @Override
-//        protected Void doInBackground(Void... arg0) {
-//            JSONArray ModelSerialNoV = responseBody.optJSONArray("ModelSerialNoV");
-//            //DBHelper.getInstance(cntxt).clearOfflineData();
-//            BaseDbHelper.getInstance(cntxt).dropTables();
-//            for (int i = 0; i < ModelSerialNoV.length(); i++) {
-//                try {
-//                    OfflineClient client = new OfflineClient();
-//                    client.setClientMobileNo(ModelSerialNoV.getJSONObject(i).optString("ClientMobileNo"));
-//                    client.setSerialNo(ModelSerialNoV.getJSONObject(i).optString("SerialNo"));
-//                    if (client.getSerialNo() == null || client.getSerialNo().equalsIgnoreCase("null")) {
-//                        continue;
-//                    }
-//                    boolean added = DBHelper.getInstance(cntxt).addOfflineClient(client);
-//                    JSONArray billsData = ModelSerialNoV.getJSONObject(i).optJSONArray("ModelBillInquiryV");
-//                    // ArrayList<BillDetails> billDetails = new ArrayList<>();
-//                    for (int j = 0; j < billsData.length(); j++) {
-//                        BillData bill = new Gson().fromJson(billsData.getJSONObject(j).toString(), BillData.class);
-//                        bill.setClient(client);
-//                        bill.setClientId(client.getSerialNo());
-//                        if (added && (bill.getMainCode() != null && bill.getMntkaCode() != null && bill.getDayCode() != null && bill.getFaryCode() != null)) {
-//                            DBHelper.getInstance(cntxt).newOfflineBillAppend(bill);
-//                            DBHelper.getInstance(cntxt).updateOfflineBill(bill);
-//                        }
-//                        //billDetails.add(bill);
-//                    }
-//                } catch (JSONException e) {
-//                    e.printStackTrace();
-//                }
-//                //client.setModelBillInquiryV(billDetails);
-//                //offlineClients.add(client);
-//            }
-//            return null;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(Void result) {
-//            super.onPostExecute(result);
-//            try {
-//                MiniaElectricity.getPrefsManager().setMaxOfflineHours(responseBody.getInt("MaxOfflineHoure"));
-//
-//                MiniaElectricity.getPrefsManager().setMaxOfflineBillCount(responseBody.getInt("MaxOfflineBillCount"));
-//
-//                MiniaElectricity.getPrefsManager().setMaxOfflineBillValue(responseBody.getInt("MaxOfflineBillValue"));
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//            MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
-//                    .format(new Date(System.currentTimeMillis())));
-//            MiniaElectricity.getPrefsManager().setOfflineBillValue(0);
-//            MiniaElectricity.getPrefsManager().setOfflineBillCount(0);
-//            MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
-//            //ArrayList<OfflineClient> offlineClients = new ArrayList<>();
-//            progressDialog.dismiss();
-//            //fragmentTransaction(new NewHomeFragment(), null);
-//            navController.navigate(R.id.mainFragment);
-//
-//
-//
-//
-//        }
-//
-//    }
 
     void hideToolbar()
     {
@@ -703,60 +609,62 @@ dataBase= AppDataBase.getInstance(this);
         progressDialog.show();
 
         JSONArray ModelSerialNoV = responseBody.optJSONArray("ModelSerialNoV");
-       disposable.add(Completable.fromRunnable(new Runnable() {
+      observer = Completable.fromRunnable(new Runnable() {
            @Override
            public void run() {
-               dataBase.offlineClientsDao().clearClients();
-               dataBase.billDataDaoDao().clearBills();
+              // dataBase.offlineClientsDao().clearClients();
+              // dataBase.billDataDaoDao().clearBills();
+
+               for (int i = 0; i < ModelSerialNoV.length(); i++) {
+                   try {
+                       OfflineClientEntity client = new OfflineClientEntity();
+                       client.setClientMobileNo(ModelSerialNoV.getJSONObject(i).optString("ClientMobileNo"));
+                       client.setSerialNo(ModelSerialNoV.getJSONObject(i).optString("SerialNo"));
+                       if (client.getSerialNo() == null || client.getSerialNo().equalsIgnoreCase("null")) {
+                           continue;
+                       }
+                       int finalI = i;
+                       long added = dataBase.offlineClientsDao().addOfflineClient(client);
+                       JSONArray billsData = ModelSerialNoV.getJSONObject(finalI).optJSONArray("ModelBillInquiryV");
+                       // ArrayList<BillDetails> billDetails = new ArrayList<>();
+                       for (int j = 0; j < billsData.length(); j++) {
+                           BillDataEntity bill = new Gson().fromJson(billsData.getJSONObject(j).toString(), BillDataEntity.class);
+                           bill.setClient(client.getId());
+                           bill.setClientId(client.getSerialNo());
+                           if (added >= 0 && (bill.getMainCode() != null && bill.getMntkaCode() != null && bill.getDayCode() != null && bill.getFaryCode() != null)) {
+
+                               dataBase.billDataDaoDao().newOfflineBillAppend(bill);
+
+
+                           }
+
+                       }
+
+
+                   } catch (JSONException e) {
+                       e.printStackTrace();
+                   }
+
+               }
+
+
            }
        }).subscribeOn(Schedulers.io())
-               .onErrorReturn(throwable -> {
-                   Log.d(null, "insertInDB: "+throwable.getMessage());
-                   return null;
-               }).subscribe()
-);
+              .observeOn(AndroidSchedulers.mainThread())
+               .subscribeWith(new DisposableCompletableObserver() {
+                   @Override
+                   public void onComplete() {
+                       postDataInsertion(responseBody,progressDialog);
 
-        for (int i = 0; i < ModelSerialNoV.length(); i++) {
-            try {
-                OfflineClientEntity client = new OfflineClientEntity();
-                client.setClientMobileNo(ModelSerialNoV.getJSONObject(i).optString("ClientMobileNo"));
-                client.setSerialNo(ModelSerialNoV.getJSONObject(i).optString("SerialNo"));
-                if (client.getSerialNo() == null || client.getSerialNo().equalsIgnoreCase("null")) {
-                    continue;
-                }
-                int finalI = i;
-                disposable.add(Observable.fromCallable(()->dataBase.offlineClientsDao().addOfflineClient(client))
-                        .subscribeOn(Schedulers.io())
-                        .onErrorComplete()
-                        .subscribe(new Consumer<Long>() {
-                            @Override
-                            public void accept(Long aLong) throws Throwable {
-                                long  added = aLong;
-                                JSONArray billsData = ModelSerialNoV.getJSONObject(finalI).optJSONArray("ModelBillInquiryV");
-                                // ArrayList<BillDetails> billDetails = new ArrayList<>();
-                                for (int j = 0; j < billsData.length(); j++) {
-                                    BillDataEntity bill = new Gson().fromJson(billsData.getJSONObject(j).toString(), BillDataEntity.class);
-                                    bill.setClient(client.getId());
-                                    bill.setClientId(client.getSerialNo());
-                                    if (added >=0 && (bill.getMainCode() != null && bill.getMntkaCode() != null && bill.getDayCode() != null && bill.getFaryCode() != null)) {
+                   }
 
-                                        dataBase.billDataDaoDao().newOfflineBillAppend(bill);
+                   @Override
+                   public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
+                       Log.d(null, "insertInDB: "+e.getMessage());
+                   }
+               });
 
 
-                                    }
-
-                                }
-                            }
-                        }));
-
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-        postDataInsertion(responseBody,progressDialog);
     }
 
     void postDataInsertion(JSONObject responseBody,SpotsDialog progressDialog)
@@ -776,12 +684,18 @@ dataBase= AppDataBase.getInstance(this);
         MiniaElectricity.getPrefsManager().setOfflineBillCount(0);
         MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
         progressDialog.dismiss();
-        navController.navigate(R.id.mainFragment);
+       // navController.navigate(R.id.mainFragment);
 
 
 
 
     }
 
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        disposable.dispose();
+        if (observer!=null)
+            observer.dispose();
+    }
 }

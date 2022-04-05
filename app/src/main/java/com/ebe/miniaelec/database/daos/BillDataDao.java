@@ -1,6 +1,7 @@
 package com.ebe.miniaelec.database.daos;
 
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
@@ -11,6 +12,7 @@ import com.ebe.miniaelec.database.entities.BillDataEntity;
 
 import java.util.List;
 
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
 
@@ -52,7 +54,7 @@ public interface BillDataDao {
    Single<List<String>> getDistinctFaryOfMntkaAndDayAndMain(String mntka, String day, String main);
 
     @Query("Select * From BillDataEntity Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc  ")
-    Single<List<BillDataEntity>> getDistinctBills();
+    LiveData<List<BillDataEntity>> getDistinctBills();
 
 
     @Query("Select * From BillDataEntity Where mntkaCode = :mntka Group by faryCode ,clientName, mainCode,clientId")

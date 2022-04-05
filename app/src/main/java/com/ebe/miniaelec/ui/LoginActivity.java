@@ -50,6 +50,7 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.CompletableObserver;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -67,7 +68,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private static final int APP_PERMISSIONS = 5;
     private AppDataBase dataBase;
     private CompositeDisposable disposable;
+    DisposableCompletableObserver observer;
     private ApiServices services;
+    private volatile boolean allowLogin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,14 +98,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         requestPermissions(permissions);
 
-//        Utils.callPermissions(this, permissions,
-//                new Action() {
-//                    @Override
-//                    public void run() throws Exception {
-//
-//                    }
-//                }, getString(R.string.enable_required_permossions)
-//        );
         progressDialog = new SpotsDialog(cntxt, R.style.ProcessingProgress);
         progressDialog.setCancelable(false);
 
@@ -134,44 +129,61 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 if (MiniaElectricity.getPrefsManager().getCollectorCode().equals(et_collector_code.getText().toString().trim())) {
                     login();
                 } else {
-
-                    List<TransDataWithTransBill>transDataWithTransBills=dataBase.transDataDao().getAllTrans();
-                    boolean allowLogin = true;
-                    //ArrayList<TransDataEntity> transData = new ArrayList<TransDataEntity>(transDataWithTransBills);
-                    for (TransDataWithTransBill b :
-                            transDataWithTransBills) {
-                        if (b.getTransData().getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue() && b.getTransData().getStatus() == TransDataEntity.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
-                            allowLogin = false;
-                            break;
-                        } else if (b.getTransData().getStatus() != TransData.STATUS.INITIATED.getValue() && b.getTransData().getStatus() != TransData.STATUS.COMPLETED.getValue()
-                                && b.getTransData().getStatus() != TransData.STATUS.CANCELLED.getValue()) {
-                            allowLogin = false;
-                            break;
+                     allowLogin = true;
+                    dataBase.transDataDao().getAllTransBills().observe(this, transDataWithTransBills -> {
+                        //ArrayList<TransDataEntity> transData = new ArrayList<TransDataEntity>(transDataWithTransBills);
+                        for (TransDataWithTransBill b :
+                                transDataWithTransBills) {
+                            if (b.getTransData().getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue() && b.getTransData().getStatus() == TransDataEntity.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
+                                allowLogin = false;
+                                break;
+                            } else if (b.getTransData().getStatus() != TransData.STATUS.INITIATED.getValue() && b.getTransData().getStatus() != TransData.STATUS.COMPLETED.getValue()
+                                    && b.getTransData().getStatus() != TransData.STATUS.CANCELLED.getValue()) {
+                                allowLogin = false;
+                                break;
+                            }
                         }
-                    }
+                    });
+
+
+
+
+
                     StringBuilder warning = new StringBuilder();
                     if (allowLogin) {
-                        disposable.add(Completable.fromRunnable(new Runnable() {
+                        progressDialog.show();
+//                        dataBase.offlineClientsDao().clearClients();
+//                        dataBase.billDataDaoDao().clearBills();
+//                        login();
+                  observer = Completable.fromRunnable(new Runnable() {
                             @Override
                             public void run() {
                                 dataBase.offlineClientsDao().clearClients();
                                 dataBase.billDataDaoDao().clearBills();
                             }
-                        }).subscribeOn(Schedulers.io())
-                                .onErrorReturn(throwable -> {
-                                    Log.d(null, "insertInDB: "+throwable.getMessage());
-                                    return null;
-                                }).observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(new Consumer<Object>() {
+                        }).subscribeOn(AndroidSchedulers.mainThread())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribeWith(new DisposableCompletableObserver() {
                                     @Override
-                                    public void accept(Object o) throws Throwable {
+                                    public void onComplete() {
+                                        progressDialog.dismiss();
                                         login();
                                     }
-                                }));
 
-                        //DBHelper.getInstance(cntxt).clearOfflineData();
+                                    @Override
+                                    public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
+                                    progressDialog.dismiss();
+                                    Toast.makeText(LoginActivity.this,"UnKnownError",Toast.LENGTH_LONG).show();
+
+                                    }
+                                });
+
+
+
+
 
                     } else
+
 
                         warning.append("برجاء مزامنة فواتير المحصل السابق");
                     warning.append(MiniaElectricity.getPrefsManager().getCollectorCode());
@@ -235,19 +247,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                     request.setPackageName(MiniaElectricity.getPrefsManager().getPackageName());
                                              transAPI.startTrans(cntxt, request);
 
-//                                    MiniaElectricity.getPrefsManager().setLoggedStatus(true);
-//                                    MiniaElectricity.getPrefsManager().setTerminalId("");
-//                                    MiniaElectricity.getPrefsManager().setMerchantId("");
-//                                    MiniaElectricity.getPrefsManager().setFixedFees(0);
-//                                    MiniaElectricity.getPrefsManager().setPercentFees(0);
-//                                    MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
-//                                            .format(new Date(System.currentTimeMillis())));
-//                                    Intent intent = new Intent(cntxt, MainActivity.class);
-//                                    Bundle bundle = new Bundle();
-//                                    bundle.putBoolean("after_login", true);
-//                                    intent.putExtra("params", bundle);
-//                                    startActivity(intent);
-//                                    finish();
 
                                 } else onFailure("فشل في عملية تسجيل الدخول!");
                             } catch (JSONException e) {
@@ -320,5 +319,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         // Forward results to EasyPermissions
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        disposable.dispose();
+        if (observer !=null)
+        observer.dispose();
     }
 }
