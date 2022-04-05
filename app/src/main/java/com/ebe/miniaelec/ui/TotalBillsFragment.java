@@ -38,8 +38,9 @@ public class TotalBillsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_total_bills, container, false);
 
         MainActivity.setToolbarVisibility(View.VISIBLE);
-       // MainActivity.setTitleText(getString(R.string.total_bills));
+        MainActivity.setTitleText(getString(R.string.total_bills));
         MainActivity.setBackAction(1);
+        //dataBase=AppDataBase.getInstance(this.)
 
 
 

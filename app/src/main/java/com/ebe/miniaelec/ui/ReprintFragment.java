@@ -215,7 +215,7 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
                                            }
                                        });
                                }
-                           }
+                           },throwable -> {Toast.makeText(ReprintFragment.this.requireContext(),throwable.getLocalizedMessage(),Toast.LENGTH_LONG).show();}
 
                 )
 );
