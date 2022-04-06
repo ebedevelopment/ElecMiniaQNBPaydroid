@@ -592,7 +592,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         FinishPendingTransService.pendingData.observe(getViewLifecycleOwner(), new Observer<ArrayList<TransDataEntity>>() {
                     @Override
                     public void onChanged(ArrayList<TransDataEntity> transDataEntities) {
-                        if (!transDataEntities.isEmpty()) {
+                        if (transDataEntities != null && !transDataEntities.isEmpty()) {
                             pendingTransData = transDataEntities;
                         }
                     }

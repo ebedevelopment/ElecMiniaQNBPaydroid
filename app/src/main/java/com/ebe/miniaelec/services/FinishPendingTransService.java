@@ -47,13 +47,13 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class FinishPendingTransService extends Service {
 
-    private static ArrayList<TransDataEntity> pendingTransData = new ArrayList<>();
+    private ArrayList<TransDataEntity> pendingTransData = new ArrayList<>();
     private ArrayList<TransDataEntity> offlineTransData;
     public static MutableLiveData<String> errorMsg = new MutableLiveData<String>("");
     public static MutableLiveData<TransDataEntity> aVoid = new MutableLiveData<>(null);
     public static MutableLiveData<Boolean> goToLogin = new MutableLiveData<>(false);
     public static MutableLiveData<Boolean> goToPayment = new MutableLiveData<>(false);
-    public static MutableLiveData<ArrayList<TransDataEntity>> pendingData = new MutableLiveData<ArrayList<TransDataEntity>>(pendingTransData);
+    public static MutableLiveData<ArrayList<TransDataEntity>> pendingData = new MutableLiveData<ArrayList<TransDataEntity>>(new ArrayList<>());
     public static MutableLiveData<Boolean> serviceState = new MutableLiveData<>(true);
 
     private static int index = 0;
@@ -140,6 +140,7 @@ public class FinishPendingTransService extends Service {
                         } else if (b.getTransData().getStatus() != TransData.STATUS.INITIATED.getValue() && b.getTransData().getStatus() != TransData.STATUS.COMPLETED.getValue()
                                 && b.getTransData().getStatus() != TransData.STATUS.CANCELLED.getValue()) {
                             pendingTransData.add(b.getTransData());
+                            pendingData.postValue(pendingTransData);
                         } else {
                             for (TransBillEntity bill :
                                     b.getTransBills()) {
@@ -158,6 +159,8 @@ public class FinishPendingTransService extends Service {
                 }
 
             }
+        },throwable -> {
+            Log.e("Init", "init: "+throwable.getLocalizedMessage() );
         }));
 
 
@@ -276,6 +279,7 @@ public class FinishPendingTransService extends Service {
                                        pendingTransData.add(t);
                                    }
 
+                                   pendingData.setValue(pendingTransData);
                                    offlineTransData.clear();
                                    onFailure(null);
                                    handlePendingBills();
@@ -313,7 +317,7 @@ public class FinishPendingTransService extends Service {
             } else if (TransData.STATUS.PENDING_SALE_REQ.getValue() == transData.getStatus() ||
                     TransData.STATUS.DELETED_PENDING_VOID_REQ.getValue() == transData.getStatus()) {
                 //send void by referenceNo
-                aVoid.setValue(transData);
+                aVoid.postValue(transData);
                 //aVoidReq(transData);
             } else if (TransData.STATUS.DELETED_PENDING_DRM_REQ.getValue() == transData.getStatus()) {
                 //send void DRM
@@ -325,7 +329,7 @@ public class FinishPendingTransService extends Service {
 
         } else
         {
-            goToPayment.setValue(true);
+            goToPayment.postValue(true);
             stopSelf();
         }
 
@@ -333,7 +337,6 @@ public class FinishPendingTransService extends Service {
 
     private void deletePayment(final TransDataEntity transData) {
         transData.setStatus(TransDataEntity.STATUS.PENDING_DELETE_REQ.getValue());
-       dataBase.transDataDao().addTransData(transData);
        services.cancelBillPayment(transData.getBankTransactionID(),
                 new RequestListener() {
                     @Override
@@ -341,12 +344,8 @@ public class FinishPendingTransService extends Service {
                         // whatever the response of delete req suppose it is succeeded
                         if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue()) {
                             transData.setStatus(TransData.STATUS.COMPLETED.getValue());
-                           compositeDisposable.add(Completable.fromAction(new Action() {
-                               @Override
-                               public void run() throws Throwable {
-                                   dataBase.transDataDao().addTransData(transData);
-                               }
-                           }).subscribeOn(Schedulers.io())
+                           compositeDisposable.add(Completable.fromRunnable(
+                                   () -> dataBase.transDataDao().addTransData(transData)).subscribeOn(Schedulers.io())
                                    .subscribeWith(new DisposableCompletableObserver() {
                                        @Override
                                        public void onComplete() {
@@ -356,6 +355,7 @@ public class FinishPendingTransService extends Service {
                                        @Override
                                        public void onError(@NonNull Throwable e) {
 
+                                           Log.e("DeleteBill", "onError: "+e.getLocalizedMessage() );
                                        }
                                    }));
 

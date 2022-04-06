@@ -816,7 +816,8 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                         }
                                         dataBase.transDataDao().deleteTransData(transData);
                                     }
-                                }).observeOn(Schedulers.io())
+                                }).subscribeOn(Schedulers.io())
+                                        .observeOn(AndroidSchedulers.mainThread())
                                         .subscribe(()->{
                                             navController.popBackStack();
                                         },throwable -> {
