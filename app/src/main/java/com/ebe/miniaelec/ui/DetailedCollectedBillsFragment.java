@@ -14,11 +14,17 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.AppDataBase;
 import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.model.DetailedReport;
 import com.ebe.miniaelec.model.Report;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
 public class DetailedCollectedBillsFragment extends Fragment {
@@ -27,6 +33,7 @@ public class DetailedCollectedBillsFragment extends Fragment {
     NavController navController;
     ListView report_list;
     ArrayList<DetailedReport> reports;
+    private AppDataBase dataBase;
 
 
     public DetailedCollectedBillsFragment() {
@@ -60,9 +67,20 @@ public class DetailedCollectedBillsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         report_list = view.findViewById(R.id.report_list);
+        dataBase = AppDataBase.getInstance(this.requireActivity());
 
         ArrayList<String> dates = new ArrayList<String>();
         dates.addAll(DBHelper.getInstance(requireActivity()).getDistinctCollectedDates());
+
+        dataBase.reportEntityDaoDao().getDistinctCollectedDates()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<List<String>>() {
+                    @Override
+                    public void accept(List<String> strings) throws Throwable {
+
+                    }
+                });
         for (String date :
                 dates) {
             ArrayList<Report> reportsList = new ArrayList<Report>();
