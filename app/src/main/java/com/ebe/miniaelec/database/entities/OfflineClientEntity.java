@@ -12,7 +12,7 @@ import java.util.List;
 public class OfflineClientEntity {
 
     @PrimaryKey(autoGenerate = true)
-    private int id = 0;
+    private long id = 0;
 
 
 
@@ -39,7 +39,7 @@ public class OfflineClientEntity {
     }
 
 
-    public int getId() {
+    public long getId() {
         return id;
     }
     public void setId(int id) {

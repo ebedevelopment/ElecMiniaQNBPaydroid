@@ -7,6 +7,7 @@ import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Transaction;
+import androidx.room.Update;
 
 import com.ebe.miniaelec.database.entities.TransDataEntity;
 import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
@@ -22,6 +23,9 @@ public interface TransDataDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     Long addTransData( TransDataEntity transData);
+
+    @Update
+    void updateTransData(TransDataEntity transDataEntity);
 
     @Delete
     void deleteTransData(TransDataEntity transData);

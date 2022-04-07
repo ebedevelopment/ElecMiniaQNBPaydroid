@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,6 +59,7 @@ public class TotalsFetchedBillsFragment extends Fragment {
         database= AppDataBase.getInstance(this.requireActivity());
 
         ArrayList<Report> report = new ArrayList<Report>(DBHelper.getInstance(requireActivity()).getReports());
+        disposable = new CompositeDisposable();
 
        disposable.add(database.reportEntityDaoDao().getReports()
                .subscribeOn(Schedulers.io())
@@ -77,6 +79,8 @@ public class TotalsFetchedBillsFragment extends Fragment {
                        TextView tv_collected_count = view.findViewById(R.id.total_collected_count);
                        tv_collected_count.setText(String.valueOf(totalCount));
                    }
+               },throwable -> {
+                   Log.e("total fetched", "onViewCreated: "+throwable.getLocalizedMessage() );
                }));
 
 
@@ -97,6 +101,8 @@ public class TotalsFetchedBillsFragment extends Fragment {
                         TextView tv_remain_count = view.findViewById(R.id.remain_bills_count);
                         tv_remain_count.setText(String.valueOf(totalCount));
                     }
+                },throwable -> {
+                    Log.e("total fetched", "onViewCreated: "+throwable.getLocalizedMessage() );
                 }));
 
 

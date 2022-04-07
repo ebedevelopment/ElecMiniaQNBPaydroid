@@ -13,7 +13,7 @@ public class BillDataEntity {
     private int id = 0;
 
 
-    int clientRowId;
+    long clientRowId;
 
     String clientId;
 
@@ -106,14 +106,14 @@ public class BillDataEntity {
         this.billValue = billValue;
     }
 
-    public int getClient() {
+    public long getClient() {
         return clientRowId;
     }
 
     public int getId() {
         return id;
     }
-    public void setClient(int id) {
+    public void setClient(long id) {
         this.clientRowId = id;
     }
 
@@ -277,7 +277,7 @@ public class BillDataEntity {
         this.dayCode = dayCode;
     }
 
-    public int getClientRowId() {
+    public long getClientRowId() {
         return clientRowId;
     }
 

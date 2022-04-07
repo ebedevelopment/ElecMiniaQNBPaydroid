@@ -11,8 +11,8 @@ public class ClientWithBillData {
     OfflineClientEntity client;
 
     @Relation(
-            parentColumn = "id",
-            entityColumn = "clientRowId"
+            parentColumn = "client_id",
+            entityColumn = "clientId"
     )
     List<BillDataEntity> Bills;
 

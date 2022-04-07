@@ -61,7 +61,7 @@ public class FinishPendingTransService extends Service {
     ApiServices drmServices;
     private JsonArray ModelClientPaymentV = new JsonArray();
 
-    public static MutableLiveData<Integer> indexState = new MutableLiveData<Integer>(index);
+    public static MutableLiveData<Integer> indexState = new MutableLiveData<Integer>(0);
     public static MutableLiveData<Boolean> loadingState = new MutableLiveData<>(false);
     public static MutableLiveData<Boolean> drmLoadingState = new MutableLiveData<>(false);
 
@@ -309,6 +309,7 @@ public class FinishPendingTransService extends Service {
         if (index < pendingTransData.size() && Utils.checkConnection(MiniaElectricity.getInstance())) {
             TransDataEntity transData = pendingTransData.get(index);
             index = index + 1;
+            indexState.postValue(index);
             if (TransData.STATUS.PENDING_CASH_PAYMENT_REQ.getValue() == transData.getStatus() ||
                     TransData.STATUS.PENDING_CARD_PAYMENT_REQ.getValue() == transData.getStatus() ||
                     TransData.STATUS.PENDING_DELETE_REQ.getValue() == transData.getStatus()) {
@@ -380,14 +381,14 @@ public class FinishPendingTransService extends Service {
                             transData.setStatus(TransData.STATUS.DELETED_PENDING_VOID_REQ.getValue());
                             //DBHelper.getInstance(cntxt).deleteBillData(billData);
                             // send void request to QNB payment App
-                            aVoid.setValue(transData);
+                            aVoid.postValue(transData);
                         }
                     }
 
                     @Override
                     public void onFailure(String failureMsg) {
                         //Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
-                        errorMsg.setValue(failureMsg);
+                        errorMsg.postValue(failureMsg);
                         handlePendingBills();
                     }
                 });
@@ -403,7 +404,7 @@ public class FinishPendingTransService extends Service {
                 public void onSuccess(String response) {
                     Log.i("onSuccess", response);
                     JSONObject responseBody = null;
-                    loadingState.setValue(false);
+                    loadingState.postValue(false);
                     try {
                         responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
                         String ErrorMessage = responseBody.optString("ErrorMessage").trim();

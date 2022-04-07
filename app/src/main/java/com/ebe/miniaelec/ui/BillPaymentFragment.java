@@ -427,7 +427,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                         public void onFinish() {
                             //sendCashDRM(false);
                             transData.setPrintCount(1);
-                            dataBase.transDataDao().addTransData(transData);
+                            dataBase.transDataDao().updateTransData(transData);
                             navController.popBackStack();
                         }
 
@@ -499,7 +499,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                         } else onFailure("فشل في عملية الدفع!\n" + Error);
                                     } else {
                                         transData.setStatus(TransData.STATUS.PAID_PENDING_DRM_REQ.getValue());
-                                        dataBase.transDataDao().addTransData(transData);
+                                        dataBase.transDataDao().updateTransData(transData);
                                         MiniaElectricity.getPrefsManager().setPaidOnlineBillsCount(MiniaElectricity.getPrefsManager().getPaidOnlineBillsCount() + billsCount);
                                         MiniaElectricity.getPrefsManager().setPaidOnlineBillsValue(MiniaElectricity.getPrefsManager().getPaidOnlineBillsValue() + finalAmount);
                                         compositeDisposable.add(Completable.fromRunnable(new Runnable() {
@@ -563,6 +563,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                       b.setBankTransactionID(transData.getBankTransactionID());
                       b.setTransDataId(transData.getId());
                       dataBase.transBillDao().newTransBillAppend(b);
+
                   }
               }
           }).subscribeOn(Schedulers.io())
@@ -761,7 +762,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
     private void cancelPaymentRequest() {
         transData.setStatus(TransData.STATUS.PENDING_DELETE_REQ.getValue());
-        dataBase.transDataDao().addTransData(transData);
+        dataBase.transDataDao().updateTransData(transData);
         new ApiServices(cntxt, false).cancelBillPayment(transData.getBankTransactionID(),
                 new RequestListener() {
                     @Override
@@ -770,7 +771,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                         // whatever the response of delete req suppose it is succeeded
                         if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue()) {
                             transData.setStatus(TransData.STATUS.DELETED_PENDING_DRM_REQ.getValue());
-                           dataBase.transDataDao().addTransData(transData);
+                           dataBase.transDataDao().updateTransData(transData);
                             sendCashDRM(true);
 
                         } else {
@@ -841,9 +842,9 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 });
             }
         } catch (Exception e) {
-            transData.setDrmData(SendContent.toString());
+           // transData.setDrmData(SendContent.toString());
             //update
-            dataBase.transDataDao().addTransData(transData);
+           // dataBase.transDataDao().addTransData(transData);
             e.printStackTrace();
         }
     }

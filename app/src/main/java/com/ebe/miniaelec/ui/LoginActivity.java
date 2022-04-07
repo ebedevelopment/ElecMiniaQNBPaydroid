@@ -183,13 +183,16 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
 
                     } else
-
-
+                    {
                         warning.append("برجاء مزامنة فواتير المحصل السابق");
-                    warning.append(MiniaElectricity.getPrefsManager().getCollectorCode());
-                    warning.append("لتمكين تسجيل الدخول.");
+                        warning.append(MiniaElectricity.getPrefsManager().getCollectorCode());
+                        warning.append("لتمكين تسجيل الدخول.");
 
-                    Toast.makeText(cntxt, warning.toString(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(cntxt, warning.toString(), Toast.LENGTH_LONG).show();
+                    }
+
+
+
 
 
                     //Toast.makeText(cntxt, " برجاء مزامنة فواتير المحصل السابق لتمكين تسجيل الدخول. "+"( "+MiniaElectricity.getPrefsManager().getCollectorCode()+")" , Toast.LENGTH_LONG).show();

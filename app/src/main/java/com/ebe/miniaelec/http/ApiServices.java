@@ -62,7 +62,7 @@ ApiServices {
           showDialog();
         }else
         {
-            dialogState.setValue(true);
+            dialogState.postValue(true);
         }
 
         Call<ResponseBody> call = APi.sendDRM(paraObj);
@@ -74,7 +74,7 @@ ApiServices {
                     hideDialog();
                 }else
                 {
-                    dialogState.setValue(false);
+                    dialogState.postValue(false);
                 }
                 if (response.isSuccessful()) {
                     try {
@@ -92,7 +92,7 @@ ApiServices {
                         hideDialog();
                     }else
                     {
-                        dialogState.setValue(false);
+                        dialogState.postValue(false);
                     }
                     listener.onFailure(response.code() + ": " + response.message());
                 }
@@ -110,7 +110,7 @@ ApiServices {
                         hideDialog();
                     }else
                     {
-                        dialogState.setValue(false);
+                        dialogState.postValue(false);
                     }
 
                     listener.onFailure(t.getMessage() + " ");
