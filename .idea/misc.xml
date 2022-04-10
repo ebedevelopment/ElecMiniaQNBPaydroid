@@ -3,8 +3,13 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/content.xml" value="0.1109375" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/detailed_collected_item.xml" value="0.22826086956521738" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/fragment_collected_report.xml" value="0.11778115501519756" />
+        <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/fragment_crn_collect.xml" value="0.1109375" />
+        <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/fragment_home.xml" value="0.1109375" />
+        <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/fragment_pay_bills.xml" value="0.1109375" />
+        <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/fragment_read_counter_meter.xml" value="0.1109375" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/fragment_reports.xml" value="0.22826086956521738" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/fragment_total_bills.xml" value="0.22826086956521738" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/fragment_unit_bill_payment.xml" value="0.22826086956521738" />

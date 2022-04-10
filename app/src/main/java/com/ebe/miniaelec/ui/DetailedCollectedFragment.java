@@ -11,6 +11,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 
 import com.ebe.miniaelec.R;
@@ -49,6 +50,7 @@ public class DetailedCollectedFragment extends Fragment {
         MainActivity.setBackAction(1);
 
         report_list = view.findViewById(R.id.report_list);
+        //ProgressBar = view.findViewById(R.id.lo)
 
         ArrayList<String> dates = new ArrayList<String>();
         dates.addAll(DBHelper.getInstance(getActivity()).getDistinctCollectedDates());
@@ -131,24 +133,31 @@ public class DetailedCollectedFragment extends Fragment {
 
     void addSpinnerClickListener()
     {
-        fromSpinneer.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        fromSpinneer.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                                   @Override
+                                                   public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                                                       //startDay = (int) adapterView.getItemAtPosition(i);
+                                                   }
 
+                                                   @Override
+                                                   public void onNothingSelected(AdapterView<?> adapterView) {
 
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-
-                startDay = (int) adapterView.getItemAtPosition(i);
-            }
-        }
+                                                   }
+                                               }
 
 
         );
 
 
-        toSpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        toSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                endDay = (int) adapterView.getItemAtPosition(i);
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+               // endDay = (int) adapterView.getItemAtPosition(i);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
             }
         });
     }

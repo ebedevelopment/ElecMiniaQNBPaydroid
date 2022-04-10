@@ -114,24 +114,31 @@ public class TotalCollectedFragment extends Fragment {
 
     void addSpinnerClickListener()
     {
-        fromSpinneer.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        fromSpinneer.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                                   @Override
+                                                   public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                                                       //startDay = (int) adapterView.getItemAtPosition(i);
+                                                   }
 
+                                                   @Override
+                                                   public void onNothingSelected(AdapterView<?> adapterView) {
 
-                                                @Override
-                                                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-
-                                                    startDay = (int) adapterView.getItemAtPosition(i);
-                                                }
-                                            }
+                                                   }
+                                               }
 
 
         );
 
 
-        toSpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        toSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                endDay = (int) adapterView.getItemAtPosition(i);
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                //endDay = (int) adapterView.getItemAtPosition(i);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
             }
         });
     }
