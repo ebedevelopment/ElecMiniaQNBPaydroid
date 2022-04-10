@@ -37,7 +37,7 @@ public class BaseDbHelper extends OrmLiteSqliteOpenHelper {
     // DB Name
     private static final String DATABASE_NAME = "data.db";
     // DB version
-    private static final int DATABASE_VERSION = 8;
+    private static final int DATABASE_VERSION = 9;
 
     private static BaseDbHelper instance;
 

@@ -47,6 +47,7 @@ public class NewHomeFragment extends Fragment implements View.OnClickListener {
     ArrayList<String> mntakaList, dayList, mainList, faryList;
     int selectesMntka, selectedDay, selectedMain, selectedFary, selectedClient;
     private String clientId = "";
+    private boolean emptyParams = false;
     TextView tv_search;
     LinearLayout ll_filters;
     static int FINISH_PENDING_TRANS_START = 888;
@@ -317,54 +318,70 @@ public class NewHomeFragment extends Fragment implements View.OnClickListener {
                 offlineClientsAdapter.notifyDataSetChanged();
                 lv_clients.setAdapter(offlineClientsAdapter);
             } else {
-                if (selectesMntka != 0 && selectedDay != 0 && selectedMain != 0 && selectedFary!=0) {
-                    offlineBills = new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBills(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain), faryList.get(selectedFary)));
-                    offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
-                    lv_clients.setAdapter(offlineClientsAdapter);
-                } else if (selectesMntka != 0 && selectedDay != 0 && selectedMain != 0 ) {
-                    offlineBills = new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBills(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain)));
-                    offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
-                    lv_clients.setAdapter(offlineClientsAdapter);
-                    faryList = new ArrayList<>();
-                    faryList.add(getString(R.string.fary_code));
-                    faryList.addAll(DBHelper.getInstance(getActivity()).getDistinctFaryOfMntkaAndDayAndMain(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain)));
-                    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(getActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, faryList);
-                    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_fary.setAdapter(dataAdapter);
-                } else if (selectesMntka != 0 && selectedDay != 0 ) {
-                    offlineBills = new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBills(mntakaList.get(selectesMntka), dayList.get(selectedDay)));
-                    offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
-                    lv_clients.setAdapter(offlineClientsAdapter);
-                    mainList = new ArrayList<>();
-                    mainList.add(getString(R.string.main_code));
-                    mainList.addAll(DBHelper.getInstance(getActivity()).getDistinctMainsOfMntkaAndDay(mntakaList.get(selectesMntka), dayList.get(selectedDay)));
-                    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(getActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, mainList);
-                    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_main.setAdapter(dataAdapter);
-                    faryList = new ArrayList<>();
-                    faryList.add(getString(R.string.fary_code));
-                    ArrayAdapter<String> faryAdapter = new ArrayAdapter<>(getActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, faryList);
-                    faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_fary.setAdapter(faryAdapter);
-                } else if (selectesMntka != 0 ) {
-                    offlineBills = new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBillsOfMntka(mntakaList.get(selectesMntka)));
-                    offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
-                    lv_clients.setAdapter(offlineClientsAdapter);
-                    dayList = new ArrayList<>();
-                    dayList.add(getString(R.string.daily));
-                    dayList.addAll(DBHelper.getInstance(getActivity()).getDistinctDaysOfMntka(mntakaList.get(selectesMntka)));
-                    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(getActivity(),
-                            android.R.layout.simple_spinner_dropdown_item, dayList);
-                    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    sp_day.setAdapter(dataAdapter);
-                } else
+
+                clientsFilter();
+                if (emptyParams)
+                {
                     Toast.makeText(getActivity(), "أدخل رقم الاشتراك او اسم العميل بشكل صحيح!", Toast.LENGTH_SHORT).show();
+
+                }
             }
         }
     }
+
+     void clientsFilter()
+     {
+         if (selectesMntka != 0 && selectedDay != 0 && selectedMain != 0 && selectedFary!=0) {
+             offlineBills = new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBills(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain), faryList.get(selectedFary)));
+             offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
+             lv_clients.setAdapter(offlineClientsAdapter);
+             emptyParams = false;
+         } else if (selectesMntka != 0 && selectedDay != 0 && selectedMain != 0 ) {
+             offlineBills = new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBills(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain)));
+             offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
+             lv_clients.setAdapter(offlineClientsAdapter);
+             faryList = new ArrayList<>();
+             faryList.add(getString(R.string.fary_code));
+             faryList.addAll(DBHelper.getInstance(getActivity()).getDistinctFaryOfMntkaAndDayAndMain(mntakaList.get(selectesMntka), dayList.get(selectedDay), mainList.get(selectedMain)));
+             ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(getActivity(),
+                     android.R.layout.simple_spinner_dropdown_item, faryList);
+             dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+             sp_fary.setAdapter(dataAdapter);
+             emptyParams = false;
+         } else if (selectesMntka != 0 && selectedDay != 0 ) {
+             offlineBills = new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBills(mntakaList.get(selectesMntka), dayList.get(selectedDay)));
+             offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
+             lv_clients.setAdapter(offlineClientsAdapter);
+             mainList = new ArrayList<>();
+             mainList.add(getString(R.string.main_code));
+             mainList.addAll(DBHelper.getInstance(getActivity()).getDistinctMainsOfMntkaAndDay(mntakaList.get(selectesMntka), dayList.get(selectedDay)));
+             ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(getActivity(),
+                     android.R.layout.simple_spinner_dropdown_item, mainList);
+             dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+             sp_main.setAdapter(dataAdapter);
+             faryList = new ArrayList<>();
+             faryList.add(getString(R.string.fary_code));
+             ArrayAdapter<String> faryAdapter = new ArrayAdapter<>(getActivity(),
+                     android.R.layout.simple_spinner_dropdown_item, faryList);
+             faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+             sp_fary.setAdapter(faryAdapter);
+             emptyParams = false;
+         } else if (selectesMntka != 0 ) {
+             offlineBills = new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBillsOfMntka(mntakaList.get(selectesMntka)));
+             offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
+             lv_clients.setAdapter(offlineClientsAdapter);
+             dayList = new ArrayList<>();
+             dayList.add(getString(R.string.daily));
+             dayList.addAll(DBHelper.getInstance(getActivity()).getDistinctDaysOfMntka(mntakaList.get(selectesMntka)));
+             ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(getActivity(),
+                     android.R.layout.simple_spinner_dropdown_item, dayList);
+             dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+             sp_day.setAdapter(dataAdapter);
+             emptyParams = false;
+         }else
+             emptyParams = true;
+
+     }
 
     private void inquiry() {
         new ApiServices(getActivity(), false).billInquiry(clientId, new RequestListener() {
@@ -412,20 +429,23 @@ public class NewHomeFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onResume() {
         super.onResume();
-        if (clientId != null && !clientId.isEmpty()) {
-            OfflineClient client = DBHelper.getInstance(getActivity()).getClientByClientId(clientId);
-            //clientId = null;
-            if (client == null || (client.getModelBillInquiryV() == null || client.getModelBillInquiryV().size() == 0)) {
-                offlineBills.remove(selectedClient);
-                offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
-                offlineClientsAdapter.notifyDataSetChanged();
-                lv_clients.setAdapter(offlineClientsAdapter);
-            } else {
-                //offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
-                offlineClientsAdapter.notifyDataSetChanged();
-                // lv_clients.setAdapter(offlineClientsAdapter);
-            }
-        }
+
+        clientsFilter();
+        offlineClientsAdapter.notifyDataSetChanged();
+//        if (clientId != null && !clientId.isEmpty()) {
+//            OfflineClient client = DBHelper.getInstance(getActivity()).getClientByClientId(clientId);
+//            //clientId = null;
+//            if (client == null || (client.getModelBillInquiryV() == null || client.getModelBillInquiryV().size() == 0)) {
+//                offlineBills.remove(selectedClient);
+//                offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
+//                offlineClientsAdapter.notifyDataSetChanged();
+//                lv_clients.setAdapter(offlineClientsAdapter);
+//            } else {
+//                //offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
+//                offlineClientsAdapter.notifyDataSetChanged();
+//                // lv_clients.setAdapter(offlineClientsAdapter);
+//            }
+//        }
     }
 
     @Override

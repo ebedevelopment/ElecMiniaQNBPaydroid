@@ -10,6 +10,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="5dp"
+            android:visibility="gone"
             android:layoutDirection="rtl">
         <TextView
             android:id="@+id/from"
@@ -63,6 +64,7 @@
         android:background="@color/colorPrimary"
         android:textColor="@android:color/white"
         android:textStyle="bold"
+        android:visibility="gone"
         />
 
 
@@ -72,7 +74,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="invisible"
+        android:visibility="gone"
         android:progressTint="@color/colorPrimary"/>
 
 
