@@ -842,9 +842,9 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 });
             }
         } catch (Exception e) {
-           // transData.setDrmData(SendContent.toString());
+            transData.setDrmData(SendContent.toString());
             //update
-           // dataBase.transDataDao().addTransData(transData);
+            dataBase.transDataDao().updateTransData(transData);
             e.printStackTrace();
         }
     }
@@ -1032,7 +1032,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         SendContent.addProperty("CardHolderPhone", transData.getClientMobileNo()); // ????????
         SendContent.addProperty("Signature", "");
         transData.setDrmData(SendContent.toString());
-        dataBase.transDataDao().addTransData(transData);
+        dataBase.transDataDao().updateTransData(transData);
 
     }
 
