@@ -21,7 +21,7 @@ public interface TransBillDao {
     void newTransBillAppend(TransBillEntity transBill);
 
     @Query("Delete From TransBillEntity Where BillUnique = :BillUnique")
-    void deleteTransBill(String BillUnique);
+    void deleteTransBill(long BillUnique);
 
     @Query("Delete From TransBillEntity Where transDataId = :transId")
     void deleteTransBillsByTransData(int transId);

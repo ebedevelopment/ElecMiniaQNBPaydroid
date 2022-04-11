@@ -641,7 +641,7 @@ progressDialog.show();
               offlineBills.addAll(billDataEntities);
               if (!billDataEntities.isEmpty())
               {
-                  String unique =  billDataEntities.get(0).getBillUnique();
+                  long unique =  billDataEntities.get(0).getBillUnique();
               }
 
               offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);

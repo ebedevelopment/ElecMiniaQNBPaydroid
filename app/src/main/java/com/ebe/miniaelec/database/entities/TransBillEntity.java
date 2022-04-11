@@ -23,7 +23,7 @@ public class TransBillEntity {
     @SerializedName("BillUnique")
     @NonNull
     @PrimaryKey
-    private String BillUnique ;
+    private long BillUnique ;
 
 
     @SerializedName("RowNum")
@@ -116,7 +116,7 @@ public class TransBillEntity {
         this.faryCode = data.getFaryCode();
     }
 
-    public TransBillEntity(String billUnique, int rawNum, String sectorName, String branchName, String clientAddress, String clientActivity, String clientPlace, String currentRead, String previousRead, String consumption, String installments, String fees, String payments, double commissionValue, String clientName, String billDate, double billValue, String mntkaCode, String dayCode, String mainCode, String faryCode) {
+    public TransBillEntity(long billUnique, int rawNum, String sectorName, String branchName, String clientAddress, String clientActivity, String clientPlace, String currentRead, String previousRead, String consumption, String installments, String fees, String payments, double commissionValue, String clientName, String billDate, double billValue, String mntkaCode, String dayCode, String mainCode, String faryCode) {
         BillUnique = billUnique;
         this.rawNum = rawNum;
         this.sectorName = sectorName;
@@ -140,7 +140,7 @@ public class TransBillEntity {
         this.faryCode = faryCode;
     }
 
-    public TransBillEntity(int transDataId, String bankTransactionID, String billUnique, int rawNum, double commissionValue, String billDate, double billValue, String clientName) {
+    public TransBillEntity(int transDataId, String bankTransactionID, long billUnique, int rawNum, double commissionValue, String billDate, double billValue, String clientName) {
         this.transDataId = transDataId;
         this.bankTransactionID = bankTransactionID;
         BillUnique = billUnique;
@@ -167,11 +167,11 @@ public class TransBillEntity {
         this.bankTransactionID = bankTransactionID;
     }
 
-    public String getBillUnique() {
+    public long getBillUnique() {
         return BillUnique;
     }
 
-    public void setBillUnique(String billUnique) {
+    public void setBillUnique(long billUnique) {
         BillUnique = billUnique;
     }
 

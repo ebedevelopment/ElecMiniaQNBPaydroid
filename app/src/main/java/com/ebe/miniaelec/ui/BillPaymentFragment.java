@@ -212,7 +212,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                           assert offlineClient != null;
                           phoneNumber = offlineClient.getClientMobileNo();
                           billDetails = new ArrayList<>(clientWithBillData.getBills());
-                         String billUnique = clientWithBillData.getBills().get(0).getBillUnique();
+                         long billUnique = clientWithBillData.getBills().get(0).getBillUnique();
                           prepareBillsToShow(RECEIPT_NO,clientId,inquiryId);
                       }
                   },throwable -> {
@@ -590,7 +590,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         for (TransBillEntity b :
                 transBills) {
             dataBase.billDataDaoDao().deleteClientBill(b.getBillUnique());
-            String unique = b.getBillUnique();
+            long unique = b.getBillUnique();
             b.setBankTransactionID(transData.getBankTransactionID());
             b.setTransDataId(transDataId);
             dataBase.transBillDao().newTransBillAppend(b);

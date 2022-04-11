@@ -21,7 +21,7 @@ public class BillDataEntity {
     @SerializedName("BillUnique")
     @NonNull
     @PrimaryKey
-    private String billUnique;
+    private long billUnique;
 
     @SerializedName("RowNum")
     private int rawNum;
@@ -88,7 +88,7 @@ public class BillDataEntity {
 
     }
 
-    public BillDataEntity(String billUnique, int rawNum, String sectorName, String branchName, String clientAddress, String clientActivity,
+    public BillDataEntity(long billUnique, int rawNum, String sectorName, String branchName, String clientAddress, String clientActivity,
                           String clientPlace, String currentRead, String previousRead, String consumption, String installments,
                           String fees, String payments, double commissionValue, String clientName, String billDate, double billValue) {
         this.billUnique = billUnique;
@@ -129,12 +129,12 @@ public class BillDataEntity {
         this.clientId = clientId;
     }
 
-    public String getBillUnique() {
+    public long getBillUnique() {
         return billUnique;
     }
 
-    public void setBillUnique(String billUnique) {
-        billUnique = billUnique;
+    public void setBillUnique(long billUnique) {
+        this.billUnique = billUnique;
     }
 
     public int getRawNum() {

@@ -629,7 +629,7 @@ dataBase= AppDataBase.getInstance(this);
                        // ArrayList<BillDetails> billDetails = new ArrayList<>();
                        for (int j = 0; j < billsData.length(); j++) {
                            BillDataEntity bill = new Gson().fromJson(billsData.getJSONObject(j).toString(), BillDataEntity.class);
-                           String billUnique = bill.getBillUnique();
+                           long billUnique = bill.getBillUnique();
                            bill.setClient(client.getId());
                            bill.setClientId(client.getSerialNo());
                            if (added >= 0 && (bill.getMainCode() != null && bill.getMntkaCode() != null && bill.getDayCode() != null && bill.getFaryCode() != null)) {

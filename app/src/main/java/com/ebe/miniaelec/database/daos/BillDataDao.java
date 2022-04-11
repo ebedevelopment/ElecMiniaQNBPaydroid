@@ -29,7 +29,7 @@ public interface BillDataDao {
 
 
     @Query("Delete FROM BillDataEntity WHERE billUnique = :billUnique")
-    void deleteClientBill(String billUnique);
+    void deleteClientBill(long billUnique);
 
     @Query("Delete From BillDataEntity Where clientId = :Id")
     void deleteBillByClientId(String Id);
