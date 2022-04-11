@@ -149,6 +149,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         NavOptions.Builder navBuilder = new NavOptions.Builder();
         TransitionInflater inflater = TransitionInflater.from(requireContext());
         compositeDisposable = new CompositeDisposable();
+        offlineClientsAdapter = new AdapterOfflineClients(this.requireActivity(), new ArrayList<>());
 
         transAPI = TransAPIFactory.createTransAPI();
         progressDialog = new SpotsDialog(requireContext(), R.style.ProcessingProgress);
@@ -177,6 +178,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         });
         view.findViewById(R.id.start).setOnClickListener(this);
         setClientList();
+        offlineClientsAdapter.notifyDataSetChanged();
 
         lv_clients.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -415,9 +417,11 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onResume() {
         super.onResume();
+
+        offlineClientsAdapter.notifyDataSetChanged();
         if (clientId != null && !clientId.isEmpty()) {
 
-            //offlineClientsAdapter.notifyDataSetChanged();
+
 
             //clientId = null;
 //           compositeDisposable.add(dataBase.offlineClientsDao().getClientByClientId(clientId).subscribeOn(Schedulers.io())
@@ -635,8 +639,14 @@ progressDialog.show();
           public void onChanged(List<BillDataEntity> billDataEntities) {
               offlineBills = new ArrayList<>();
               offlineBills.addAll(billDataEntities);
+              if (!billDataEntities.isEmpty())
+              {
+                  String unique =  billDataEntities.get(0).getBillUnique();
+              }
+
               offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
               lv_clients.setAdapter(offlineClientsAdapter);
+              offlineClientsAdapter.notifyDataSetChanged();
               progressDialog.dismiss();
           }
       });

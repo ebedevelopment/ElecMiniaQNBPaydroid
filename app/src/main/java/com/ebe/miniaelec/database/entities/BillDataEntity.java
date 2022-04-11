@@ -1,6 +1,7 @@
 package com.ebe.miniaelec.database.entities;
 
 
+import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -9,7 +10,7 @@ import com.google.gson.annotations.SerializedName;
 @Entity(tableName = "BillDataEntity")
 public class BillDataEntity {
 
-    @PrimaryKey(autoGenerate = true)
+
     private int id = 0;
 
 
@@ -18,6 +19,8 @@ public class BillDataEntity {
     String clientId;
 
     @SerializedName("BillUnique")
+    @NonNull
+    @PrimaryKey
     private String billUnique;
 
     @SerializedName("RowNum")
@@ -82,6 +85,7 @@ public class BillDataEntity {
     private String faryCode;
 
     public BillDataEntity() {
+
     }
 
     public BillDataEntity(String billUnique, int rawNum, String sectorName, String branchName, String clientAddress, String clientActivity,

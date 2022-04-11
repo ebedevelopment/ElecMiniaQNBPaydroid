@@ -10,7 +10,7 @@ public class TransDataWithTransBill {
     TransDataEntity transData;
 
     @Relation(
-            parentColumn = "id",
+            parentColumn = "client_id",
             entityColumn = "transDataId"
     )
     List<TransBillEntity> transBills;

@@ -195,7 +195,7 @@ public class FinishPendingTransService extends Service {
 
             JsonArray ModelBillPaymentV = new JsonArray();
 
-            dataBase.transBillDao().getTransBillsByTransData(transData.getClientID())
+            dataBase.transBillDao().getTransBillsByTransData(transData.getId())
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .blockingSubscribe(new Consumer<List<TransBillEntity>>() {
@@ -275,7 +275,7 @@ public class FinishPendingTransService extends Service {
                                    for (TransDataEntity t :
                                            offlineTransData) {
                                        t.setStatus(TransData.STATUS.PAID_PENDING_DRM_REQ.getValue());
-                                       dataBase.transDataDao().addTransData(t);
+                                       dataBase.transDataDao().updateTransData(t);
                                        pendingTransData.add(t);
                                    }
 
@@ -346,7 +346,7 @@ public class FinishPendingTransService extends Service {
                         if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue()) {
                             transData.setStatus(TransData.STATUS.COMPLETED.getValue());
                            compositeDisposable.add(Completable.fromRunnable(
-                                   () -> dataBase.transDataDao().addTransData(transData)).subscribeOn(Schedulers.io())
+                                   () -> dataBase.transDataDao().updateTransData(transData)).subscribeOn(Schedulers.io())
                                    .subscribeWith(new DisposableCompletableObserver() {
                                        @Override
                                        public void onComplete() {
@@ -361,7 +361,7 @@ public class FinishPendingTransService extends Service {
                                    }));
 
                             compositeDisposable.add(
-                                    dataBase.transBillDao().getTransBillsByTransData(transData.getClientID())
+                                    dataBase.transBillDao().getTransBillsByTransData(transData.getId())
                                             .subscribeOn(Schedulers.io())
                                             .subscribe(new Consumer<List<TransBillEntity>>() {
                                                 @Override
@@ -410,10 +410,10 @@ public class FinishPendingTransService extends Service {
                         String ErrorMessage = responseBody.optString("ErrorMessage").trim();
                         if (!ErrorMessage.isEmpty() && ErrorMessage.equals("Approved")) {
                             transData.setStatus(TransData.STATUS.COMPLETED.getValue());
-                            dataBase.transDataDao().addTransData(transData);
+                            dataBase.transDataDao().updateTransData(transData);
 
                            compositeDisposable.add(
-                                   dataBase.transBillDao().getTransBillsByTransData(transData.getClientID())
+                                   dataBase.transBillDao().getTransBillsByTransData(transData.getId())
                                            .subscribeOn(Schedulers.io())
                                            //.observeOn(AndroidSchedulers.mainThread())
                                            .subscribe(new Consumer<List<TransBillEntity>>() {

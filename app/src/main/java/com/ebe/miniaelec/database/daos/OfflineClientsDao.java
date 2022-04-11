@@ -38,6 +38,10 @@ public interface OfflineClientsDao {
     @Query("Select * From OfflineClient Where client_id = :clientId")
    Single<ClientWithBillData> getClientByClientId(String clientId);
 
+    @Transaction
+    @Query("Select * From OfflineClient Where client_id = :clientId")
+    ClientWithBillData getClientByClientIdForAdapter(String clientId);
+
     @Query("Delete From OfflineClient")
     void clearClients();
 }

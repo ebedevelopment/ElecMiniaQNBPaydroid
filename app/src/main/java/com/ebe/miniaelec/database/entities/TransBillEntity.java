@@ -7,9 +7,10 @@ import com.ebe.miniaelec.model.BillData;
 import com.ebe.miniaelec.model.TransData;
 import com.google.gson.annotations.SerializedName;
 
+import androidx.annotation.NonNull;
+
 @Entity
 public class TransBillEntity {
-    @PrimaryKey(autoGenerate = true)
     private int id = 0;
 
     int transDataId;
@@ -20,7 +21,9 @@ public class TransBillEntity {
 
 
     @SerializedName("BillUnique")
-    private String BillUnique;
+    @NonNull
+    @PrimaryKey
+    private String BillUnique ;
 
 
     @SerializedName("RowNum")
@@ -85,6 +88,8 @@ public class TransBillEntity {
     private String faryCode;
 
     public TransBillEntity() {
+
+
     }
 
     public TransBillEntity(BillDataEntity data) {

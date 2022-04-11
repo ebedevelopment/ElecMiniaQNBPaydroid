@@ -27,5 +27,5 @@ public interface TransBillDao {
     void deleteTransBillsByTransData(int transId);
 
     @Query("Select * From TransBillEntity Where transDataId = :transId")
-    Single<List<TransBillEntity>> getTransBillsByTransData(String transId);
+    Single<List<TransBillEntity>> getTransBillsByTransData(int transId);
 }
