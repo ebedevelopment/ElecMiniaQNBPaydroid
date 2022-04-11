@@ -97,7 +97,7 @@ public class NewHomeFragment extends Fragment implements View.OnClickListener {
         });
         view.findViewById(R.id.start).setOnClickListener(this);
         //offlineClients = new ArrayList<>(DBHelper.getInstance(getActivity()).getAllClients());
-        offlineBills = new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBills());
+        offlineBills = new ArrayList<>();
         offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
         offlineClientsAdapter.notifyDataSetChanged();
         lv_clients.setAdapter(offlineClientsAdapter);
@@ -379,7 +379,19 @@ public class NewHomeFragment extends Fragment implements View.OnClickListener {
              sp_day.setAdapter(dataAdapter);
              emptyParams = false;
          }else
+         {
+             offlineBills.clear();
+             offlineClientsAdapter = new AdapterOfflineClients(this.getActivity(),offlineBills);
+             offlineBills.addAll(new ArrayList<>(DBHelper.getInstance(getActivity()).getDistinctBills()));
+            // offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
+             offlineClientsAdapter.notifyDataSetChanged();
+             lv_clients.setAdapter(offlineClientsAdapter);
              emptyParams = true;
+         }
+
+
+         offlineClientsAdapter.notifyDataSetChanged();
+
 
      }
 
