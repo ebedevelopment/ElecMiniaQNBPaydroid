@@ -13,8 +13,6 @@ import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.database.entities.TransBillEntity;
 import com.ebe.miniaelec.database.entities.TransDataEntity;
-import com.ebe.miniaelec.model.TransBill;
-import com.ebe.miniaelec.model.TransData;
 import com.ebe.miniaelec.utils.Utils;
 import com.pax.gl.page.IPage;
 import com.pax.gl.page.PaxGLPage;
@@ -72,12 +70,12 @@ public class PrintReceipt {
         page.addLine().addUnit(BitmapFactory.decodeResource(context.getResources(), R.drawable.untitled), IPage.EAlign.CENTER);
         page.addLine().addUnit("\n", 7);
 
-        if (transData.getPrintCount() > 1 || transData.getStatus() == TransData.STATUS.REPRINT.getValue()) {
+        if (transData.getPrintCount() > 1 || transData.getStatus() == TransDataEntity.STATUS.REPRINT.getValue()) {
             page.addLine().addUnit("إعادة طباعة", 30, IPage.EAlign.CENTER, IPage.ILine.IUnit.TEXT_STYLE_BOLD);
             page.addLine().addUnit("\n", 5);
         }
 
-        if (transData.getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue())
+        if (transData.getPaymentType() == TransDataEntity.PaymentType.OFFLINE_CASH.getValue())
             page.addLine().addUnit("رقم الفاتورة: f-" + transData.getStan(), 28);
         else page.addLine().addUnit("رقم الفاتورة: " + transData.getStan(), 28);
         page.addLine().addUnit("\n", 5);
@@ -133,9 +131,9 @@ public class PrintReceipt {
         page.addLine().addUnit("\n", 5);
 
         double commission = 0;
-        if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue() || transData.getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue()) {
+        if (transData.getPaymentType() == TransDataEntity.PaymentType.CASH.getValue() || transData.getPaymentType() == TransDataEntity.PaymentType.OFFLINE_CASH.getValue()) {
             commission = (transBills.get(index).getCommissionValue());
-        } else if (transData.getPaymentType() == TransData.PaymentType.CARD.getValue()) {
+        } else if (transData.getPaymentType() == TransDataEntity.PaymentType.CARD.getValue()) {
             commission = (transBills.get(index).getCommissionValue())
                     + (transBills.get(index).getBillValue()) * MiniaElectricity.getPrefsManager().getPercentFees();
         }

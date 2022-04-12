@@ -2,7 +2,6 @@ package com.ebe.miniaelec.ui;
 
 import android.os.Bundle;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -17,16 +16,14 @@ import android.widget.ListView;
 
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.DBHelper;
+import com.ebe.miniaelec.database.entities.TransDataEntity;
 import com.ebe.miniaelec.model.CollectedReport;
-import com.ebe.miniaelec.model.TransData;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -78,14 +75,14 @@ disposable = new CompositeDisposable();
                        for (String date :
                                dates) {
                            CollectedReport report = new CollectedReport(date);
-                           report.setOnlineCashAmount(DBHelper.getInstance(requireActivity()).getTotalAmountOfPaymentTypeAndDate(date, TransData.PaymentType.CASH.getValue()));
-                           report.setOnlineCashCount(DBHelper.getInstance(requireActivity()).getTotalCountOfPaymentTypeAndDate(date, TransData.PaymentType.CASH.getValue()));
-                           report.setOfflineCashAmount(DBHelper.getInstance(requireActivity()).getTotalAmountOfPaymentTypeAndDate(date, TransData.PaymentType.OFFLINE_CASH.getValue()));
-                           report.setOfflineCashCount(DBHelper.getInstance(requireActivity()).getTotalCountOfPaymentTypeAndDate(date, TransData.PaymentType.OFFLINE_CASH.getValue()));
-                           report.setCardAmount(DBHelper.getInstance(requireActivity()).getTotalAmountOfPaymentTypeAndDate(date, TransData.PaymentType.CARD.getValue()));
-                           report.setCardCount(DBHelper.getInstance(requireActivity()).getTotalCountOfPaymentTypeAndDate(date, TransData.PaymentType.CARD.getValue()));
-                           report.setWalletAmount(DBHelper.getInstance(requireActivity()).getTotalAmountOfPaymentTypeAndDate(date, TransData.PaymentType.WALLET.getValue()));
-                           report.setWalletCount(DBHelper.getInstance(requireActivity()).getTotalCountOfPaymentTypeAndDate(date, TransData.PaymentType.WALLET.getValue()));
+                           report.setOnlineCashAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CASH.getValue()));
+                           report.setOnlineCashCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CASH.getValue()));
+                           report.setOfflineCashAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.OFFLINE_CASH.getValue()));
+                           report.setOfflineCashCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.OFFLINE_CASH.getValue()));
+                           report.setCardAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CARD.getValue()));
+                           report.setCardCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CARD.getValue()));
+                           report.setWalletAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.WALLET.getValue()));
+                           report.setWalletCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.WALLET.getValue()));
                            reports.add(report);
                        }
                        AdapterTotalCollectedReport adapterBills = new AdapterTotalCollectedReport(requireActivity(), reports);

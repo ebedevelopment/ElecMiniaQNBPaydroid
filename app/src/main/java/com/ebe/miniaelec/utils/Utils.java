@@ -14,13 +14,9 @@ import android.view.animation.AnimationUtils;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.database.PrefsManager;
 import com.ebe.miniaelec.database.entities.TransBillEntity;
-import com.ebe.miniaelec.database.entities.TransDataEntity;
 import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
-import com.ebe.miniaelec.model.TransBill;
-import com.ebe.miniaelec.model.TransData;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.pax.dal.entity.ENavigationKey;
@@ -28,14 +24,12 @@ import com.pax.dal.exceptions.PhoneDevException;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -43,7 +37,6 @@ import java.util.Locale;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import io.reactivex.rxjava3.functions.Action;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 

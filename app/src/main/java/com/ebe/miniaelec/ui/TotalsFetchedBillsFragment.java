@@ -2,7 +2,6 @@ package com.ebe.miniaelec.ui;
 
 import android.os.Bundle;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -17,10 +16,8 @@ import android.widget.TextView;
 
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.database.entities.BillDataEntity;
-import com.ebe.miniaelec.model.BillData;
-import com.ebe.miniaelec.model.Report;
+import com.ebe.miniaelec.database.entities.ReportEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,18 +55,19 @@ public class TotalsFetchedBillsFragment extends Fragment {
 
         database= AppDataBase.getInstance(this.requireActivity());
 
-        ArrayList<Report> report = new ArrayList<Report>(DBHelper.getInstance(requireActivity()).getReports());
+        ArrayList<ReportEntity> report = new ArrayList<ReportEntity>();
         disposable = new CompositeDisposable();
 
        disposable.add(database.reportEntityDaoDao().getReports()
                .subscribeOn(Schedulers.io())
                .observeOn(AndroidSchedulers.mainThread())
-               .subscribe(new Consumer<List<Report>>() {
+               .subscribe(new Consumer<List<ReportEntity>>() {
                    @Override
-                   public void accept(List<Report> reports) throws Throwable {
+                   public void accept(List<ReportEntity> reports) throws Throwable {
+                       report.addAll(reports);
                        double totalAmount = 0;
                        int totalCount = 0;
-                       for (Report r :
+                       for (ReportEntity r :
                                report) {
                            totalAmount += r.getTotalAmount();
                            totalCount += r.getBillsCount();

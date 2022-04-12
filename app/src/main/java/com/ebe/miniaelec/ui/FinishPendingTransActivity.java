@@ -1,48 +1,5 @@
 package com.ebe.miniaelec.ui;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.content.res.Configuration;
-import android.os.Build;
-import android.os.Bundle;
-import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.AppCompatActivity;
-import android.util.Log;
-import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.ListView;
-import android.widget.Toast;
-
-import com.ebe.ebeunifiedlibrary.factory.ITransAPI;
-import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
-import com.ebe.ebeunifiedlibrary.message.BaseResponse;
-import com.ebe.ebeunifiedlibrary.message.TransResponse;
-import com.ebe.ebeunifiedlibrary.message.VoidMsg;
-import com.ebe.ebeunifiedlibrary.sdkconstants.SdkConstants;
-import com.ebe.miniaelec.MiniaElectricity;
-import com.ebe.miniaelec.R;
-import com.ebe.miniaelec.database.BaseDbHelper;
-import com.ebe.miniaelec.database.DBHelper;
-import com.ebe.miniaelec.http.ApiServices;
-import com.ebe.miniaelec.http.RequestListener;
-import com.ebe.miniaelec.model.TransBill;
-import com.ebe.miniaelec.model.TransData;
-import com.ebe.miniaelec.utils.Utils;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Locale;
-
-import dmax.dialog.SpotsDialog;
-
 //public class FinishPendingTransActivity extends AppCompatActivity {
 //
 //    private Activity cntxt;
@@ -114,7 +71,7 @@ import dmax.dialog.SpotsDialog;
 //        bills.setVisibility(View.VISIBLE);
 //        ArrayList<TransData> all = new ArrayList<>(pendingTransData);
 //        all.addAll(offlineTransData);
-//        AdapterBills adapterBills = new AdapterBills(cntxt, all);
+//
 //        bills.setAdapter(adapterBills);
 //        if (offlineTransData.size() > 0) {
 //            handleOfflineBills();

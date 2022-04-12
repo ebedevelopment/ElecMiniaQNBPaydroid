@@ -3,8 +3,6 @@ package com.ebe.miniaelec.database.entities;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-import com.ebe.miniaelec.model.BillData;
-import com.ebe.miniaelec.model.TransData;
 import com.google.gson.annotations.SerializedName;
 
 import androidx.annotation.NonNull;

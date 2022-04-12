@@ -23,8 +23,6 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentOnAttachListener;
 import androidx.lifecycle.Observer;
 import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
@@ -40,19 +38,13 @@ import com.ebe.ebeunifiedlibrary.sdkconstants.SdkConstants;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.database.entities.BillDataEntity;
-import com.ebe.miniaelec.database.entities.ClientWithBillData;
 import com.ebe.miniaelec.database.entities.OfflineClientEntity;
 import com.ebe.miniaelec.database.entities.TransBillEntity;
 import com.ebe.miniaelec.database.entities.TransDataEntity;
 import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
-import com.ebe.miniaelec.model.BillData;
-import com.ebe.miniaelec.model.OfflineClient;
-import com.ebe.miniaelec.model.TransBill;
-import com.ebe.miniaelec.model.TransData;
 import com.ebe.miniaelec.services.FinishPendingTransService;
 import com.ebe.miniaelec.utils.Utils;
 
@@ -64,12 +56,8 @@ import java.util.List;
 
 import dmax.dialog.SpotsDialog;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.functions.Consumer;
-import io.reactivex.rxjava3.functions.Function;
-import io.reactivex.rxjava3.observers.DisposableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
@@ -149,7 +137,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         NavOptions.Builder navBuilder = new NavOptions.Builder();
         TransitionInflater inflater = TransitionInflater.from(requireContext());
         compositeDisposable = new CompositeDisposable();
-        offlineClientsAdapter = new AdapterOfflineClients(this.requireActivity(), new ArrayList<>());
+        offlineBills = new  ArrayList<>();
+        offlineClientsAdapter = new AdapterOfflineClients(this.requireActivity(), offlineBills);
 
         transAPI = TransAPIFactory.createTransAPI();
         progressDialog = new SpotsDialog(requireContext(), R.style.ProcessingProgress);
@@ -490,7 +479,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                                     TransDataEntity transData = transDataWithTransBill.getTransData();
                                     if (transData != null) {
 
-                                        transData.setStatus(TransData.STATUS.COMPLETED.getValue());
+                                        transData.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
                                         for (TransBillEntity bill :
                                                 transDataWithTransBill.getTransBills()) {
                                             dataBase.transBillDao().deleteTransBill(bill.getBillUnique());
@@ -521,7 +510,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                                         TransDataEntity transData = transDataWithTransBill.getTransData();
                                         if (transData != null) {
 
-                                            transData.setStatus(TransData.STATUS.COMPLETED.getValue());
+                                            transData.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
                                             for (TransBillEntity bill :
                                                     transDataWithTransBill.getTransBills()) {
                                                 dataBase.transBillDao().deleteTransBill(bill.getBillUnique());
@@ -637,7 +626,7 @@ progressDialog.show();
       dataBase.billDataDaoDao().getDistinctBills().observe(getViewLifecycleOwner(), new Observer<List<BillDataEntity>>() {
           @Override
           public void onChanged(List<BillDataEntity> billDataEntities) {
-              offlineBills = new ArrayList<>();
+              offlineBills.clear();
               offlineBills.addAll(billDataEntities);
               if (!billDataEntities.isEmpty())
               {
@@ -727,11 +716,12 @@ progressDialog.show();
     private void filterByMntkaIfPosZero() {
 
 
-        offlineBills = new ArrayList<>();
+
 
         dataBase.billDataDaoDao().getDistinctBills().observe(getViewLifecycleOwner(), new Observer<List<BillDataEntity>>() {
             @Override
             public void onChanged(List<BillDataEntity> billDataEntities) {
+                offlineBills.clear();
                 offlineBills.addAll(billDataEntities);
                 offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
                 lv_clients.setAdapter(offlineClientsAdapter);

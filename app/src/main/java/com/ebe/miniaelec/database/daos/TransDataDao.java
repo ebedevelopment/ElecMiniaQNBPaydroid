@@ -11,7 +11,6 @@ import androidx.room.Update;
 
 import com.ebe.miniaelec.database.entities.TransDataEntity;
 import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
-import com.ebe.miniaelec.model.TransData;
 
 import java.util.List;
 

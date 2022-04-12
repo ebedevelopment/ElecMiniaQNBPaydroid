@@ -209,7 +209,7 @@ ApiServices {
                         {
                             hideDialog();
                         }else {
-                            dialogState.setValue(false);
+                            dialogState.postValue(false);
                         }
 
                         if (listener != null)
@@ -225,7 +225,7 @@ ApiServices {
             {
                 hideDialog();
             }else {
-                dialogState.setValue(false);
+                dialogState.postValue(false);
             }
             if (listener != null)
                 listener.onFailure("لقد تعذر الوصول للخادم!");
@@ -404,7 +404,7 @@ ApiServices {
     //service handle offline bills
     public void offlineBillPayment(final JsonArray ModelClintPaymentV, final RequestListener listener) {
         //showDialog();
-        dialogState.setValue(true);
+        dialogState.postValue(true);
         final JsonObject params = new JsonObject();
         params.addProperty("InquiryID", MiniaElectricity.getPrefsManager().getInquiryID());
         params.addProperty("UserSessionID", MiniaElectricity.getPrefsManager().getSessionId());
@@ -425,7 +425,7 @@ ApiServices {
 //                Log.e("onResponse", response.code() + response.message());
                 if (response.isSuccessful()) {
                    // hideDialog();
-                    dialogState.setValue(false);
+                    dialogState.postValue(false);
 
                     try {
                         listener.onSuccess(response.body().string());
@@ -437,7 +437,7 @@ ApiServices {
                     reTry(false,APi.offlineBillsPay(/*url, ModelBillPaymentV*/params), this, listener);
                 } else {
                     //hideDialog();
-                    dialogState.setValue(false);
+                    dialogState.postValue(false);
                     listener.onFailure(response.code() + ": " + response.message());
 
                 }
@@ -445,11 +445,12 @@ ApiServices {
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
-                Log.e("onFailure", t.getMessage() + "");
+                Log.e("offlineBillPayment", t.getMessage() + "");
                 if (isFirst) {
                     reTry(false,APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
                 } else {
                     listener.onFailure("لقد تعذر الوصول للخادم!" + "\n" + t.getMessage());
+                    dialogState.postValue(false);
                     //hideDialog();
                 }
 
@@ -460,7 +461,7 @@ ApiServices {
     //service delete payment
     public void cancelBillPayment(String BankTransactionID, final RequestListener listener) {
        // showDialog();
-        dialogState.setValue(true);
+        dialogState.postValue(true);
         final Map<String, String> params = new HashMap<>();
         params.put("UnitSerialNo", MiniaElectricity.getSerial());
         params.put("BankTransactionID", BankTransactionID);
@@ -470,7 +471,7 @@ ApiServices {
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
                     //hideDialog();
-                    dialogState.setValue(false);
+                    dialogState.postValue(false);
 
                     try {
                         listener.onSuccess(response.body().string());
@@ -483,7 +484,7 @@ ApiServices {
                 } else {
                     listener.onFailure(response.code() + ": " + response.message());
                     //hideDialog();
-                    dialogState.setValue(false);
+                    dialogState.postValue(false);
                 }
 
                 //listener.onFailure(response.code() + ": " + response.message());
@@ -497,7 +498,7 @@ ApiServices {
                 } else {
                     listener.onFailure("لقد تعذر الوصول للخادم!");
                     //hideDialog();
-                    dialogState.setValue(false);
+                    dialogState.postValue(false);
                 }
 
             }

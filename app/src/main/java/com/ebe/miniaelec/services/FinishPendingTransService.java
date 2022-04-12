@@ -10,15 +10,11 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.BaseDbHelper;
-import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.database.entities.TransBillEntity;
 import com.ebe.miniaelec.database.entities.TransDataEntity;
 import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
-import com.ebe.miniaelec.model.TransBill;
-import com.ebe.miniaelec.model.TransData;
 import com.ebe.miniaelec.utils.Utils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -36,11 +32,7 @@ import java.util.Locale;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.SingleObserver;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Action;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -127,7 +119,7 @@ public class FinishPendingTransService extends Service {
 
                 for (TransDataWithTransBill b :
                         transData) {
-                    if (b.getTransData().getClientID() == null || b.getTransData().getClientID().equalsIgnoreCase("null") || (b.getTransData().getStatus() == TransDataEntity.STATUS.DELETED_PENDING_DRM_REQ.getValue() && b.getTransData().getDrmData() == null) || (b.getTransData().getStatus() == TransData.STATUS.DELETED_PENDING_DRM_REQ.getValue() && b.getTransData().getDrmData().equals("null"))) {
+                    if (b.getTransData().getClientID() == null || b.getTransData().getClientID().equalsIgnoreCase("null") || (b.getTransData().getStatus() == TransDataEntity.STATUS.DELETED_PENDING_DRM_REQ.getValue() && b.getTransData().getDrmData() == null) || (b.getTransData().getStatus() == TransDataEntity.STATUS.DELETED_PENDING_DRM_REQ.getValue() && b.getTransData().getDrmData().equals("null"))) {
                         for (TransBillEntity bill :
                                 b.getTransBills()) {
 
@@ -135,10 +127,10 @@ public class FinishPendingTransService extends Service {
                         }
                        dataBase.transDataDao().deleteTransData(b.getTransData());
                     } else {
-                        if (b.getTransData().getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue() && b.getTransData().getStatus() == TransDataEntity.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
+                        if (b.getTransData().getPaymentType() == TransDataEntity.PaymentType.OFFLINE_CASH.getValue() && b.getTransData().getStatus() == TransDataEntity.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
                             offlineTransData.add(b.getTransData());
-                        } else if (b.getTransData().getStatus() != TransData.STATUS.INITIATED.getValue() && b.getTransData().getStatus() != TransData.STATUS.COMPLETED.getValue()
-                                && b.getTransData().getStatus() != TransData.STATUS.CANCELLED.getValue()) {
+                        } else if (b.getTransData().getStatus() != TransDataEntity.STATUS.INITIATED.getValue() && b.getTransData().getStatus() != TransDataEntity.STATUS.COMPLETED.getValue()
+                                && b.getTransData().getStatus() != TransDataEntity.STATUS.CANCELLED.getValue()) {
                             pendingTransData.add(b.getTransData());
                             pendingData.postValue(pendingTransData);
                         } else {
@@ -169,9 +161,7 @@ public class FinishPendingTransService extends Service {
     }
 
     private void setBills() {
-//        ArrayList<TransData> all = new ArrayList<>(pendingTransData);
-//        all.addAll(offlineTransData);
-//        AdapterBills adapterBills = new AdapterBills(this, all);
+
 
 
         if (offlineTransData.size() > 0) {
@@ -242,10 +232,10 @@ public class FinishPendingTransService extends Service {
                                if (!operationStatus.trim().equalsIgnoreCase("successful")) {
                                    if (Error.contains("ليس لديك صلاحيات الوصول للهندسه") || Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول") || userStatus == 0) {
                                        MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                       errorMsg.setValue(Error);
+                                       errorMsg.postValue(Error);
                                        //Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
                                        //startActivity(new Intent(FinishPendingTransActivity.this, LoginActivity.class));
-                                       goToLogin.setValue(true);
+                                       goToLogin.postValue(true);
                                        stopSelf();
                                    } else onFailure("فشل في مزامنة عمليات الدفع\n" + Error);
 
@@ -274,12 +264,12 @@ public class FinishPendingTransService extends Service {
 
                                    for (TransDataEntity t :
                                            offlineTransData) {
-                                       t.setStatus(TransData.STATUS.PAID_PENDING_DRM_REQ.getValue());
+                                       t.setStatus(TransDataEntity.STATUS.PAID_PENDING_DRM_REQ.getValue());
                                        dataBase.transDataDao().updateTransData(t);
                                        pendingTransData.add(t);
                                    }
 
-                                   pendingData.setValue(pendingTransData);
+                                   pendingData.postValue(pendingTransData);
                                    offlineTransData.clear();
                                    onFailure(null);
                                    handlePendingBills();
@@ -294,7 +284,7 @@ public class FinishPendingTransService extends Service {
                        public void onFailure(String failureMsg) {
                            if (failureMsg != null)
                                //Toast.makeText(this, failureMsg, Toast.LENGTH_LONG).show();
-                               errorMsg.setValue(failureMsg);
+                               errorMsg.postValue(failureMsg);
                            MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
 
                        }
@@ -310,20 +300,20 @@ public class FinishPendingTransService extends Service {
             TransDataEntity transData = pendingTransData.get(index);
             index = index + 1;
             indexState.postValue(index);
-            if (TransData.STATUS.PENDING_CASH_PAYMENT_REQ.getValue() == transData.getStatus() ||
-                    TransData.STATUS.PENDING_CARD_PAYMENT_REQ.getValue() == transData.getStatus() ||
-                    TransData.STATUS.PENDING_DELETE_REQ.getValue() == transData.getStatus()) {
+            if (TransDataEntity.STATUS.PENDING_CASH_PAYMENT_REQ.getValue() == transData.getStatus() ||
+                    TransDataEntity.STATUS.PENDING_CARD_PAYMENT_REQ.getValue() == transData.getStatus() ||
+                    TransDataEntity.STATUS.PENDING_DELETE_REQ.getValue() == transData.getStatus()) {
                 //delete the request then send void DRM
                 deletePayment(transData);
-            } else if (TransData.STATUS.PENDING_SALE_REQ.getValue() == transData.getStatus() ||
-                    TransData.STATUS.DELETED_PENDING_VOID_REQ.getValue() == transData.getStatus()) {
+            } else if (TransDataEntity.STATUS.PENDING_SALE_REQ.getValue() == transData.getStatus() ||
+                    TransDataEntity.STATUS.DELETED_PENDING_VOID_REQ.getValue() == transData.getStatus()) {
                 //send void by referenceNo
                 aVoid.postValue(transData);
                 //aVoidReq(transData);
-            } else if (TransData.STATUS.DELETED_PENDING_DRM_REQ.getValue() == transData.getStatus()) {
+            } else if (TransDataEntity.STATUS.DELETED_PENDING_DRM_REQ.getValue() == transData.getStatus()) {
                 //send void DRM
                 sendDRM(true, transData);
-            } else if (TransData.STATUS.PAID_PENDING_DRM_REQ.getValue() == transData.getStatus()) {
+            } else if (TransDataEntity.STATUS.PAID_PENDING_DRM_REQ.getValue() == transData.getStatus()) {
                 //send DRM
                 sendDRM(false, transData);
             } else handlePendingBills();
@@ -343,8 +333,8 @@ public class FinishPendingTransService extends Service {
                     @Override
                     public void onSuccess(String response) {
                         // whatever the response of delete req suppose it is succeeded
-                        if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue()) {
-                            transData.setStatus(TransData.STATUS.COMPLETED.getValue());
+                        if (transData.getPaymentType() == TransDataEntity.PaymentType.CASH.getValue()) {
+                            transData.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
                            compositeDisposable.add(Completable.fromRunnable(
                                    () -> dataBase.transDataDao().updateTransData(transData)).subscribeOn(Schedulers.io())
                                    .subscribeWith(new DisposableCompletableObserver() {
@@ -378,7 +368,7 @@ public class FinishPendingTransService extends Service {
                             );
 
                         } else {
-                            transData.setStatus(TransData.STATUS.DELETED_PENDING_VOID_REQ.getValue());
+                            transData.setStatus(TransDataEntity.STATUS.DELETED_PENDING_VOID_REQ.getValue());
                             //DBHelper.getInstance(cntxt).deleteBillData(billData);
                             // send void request to QNB payment App
                             aVoid.postValue(transData);
@@ -409,7 +399,7 @@ public class FinishPendingTransService extends Service {
                         responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
                         String ErrorMessage = responseBody.optString("ErrorMessage").trim();
                         if (!ErrorMessage.isEmpty() && ErrorMessage.equals("Approved")) {
-                            transData.setStatus(TransData.STATUS.COMPLETED.getValue());
+                            transData.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
                             dataBase.transDataDao().updateTransData(transData);
 
                            compositeDisposable.add(

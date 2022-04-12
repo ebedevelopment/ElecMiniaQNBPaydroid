@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -24,14 +23,10 @@ import android.widget.Toast;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.database.entities.TransBillEntity;
 import com.ebe.miniaelec.database.entities.TransDataEntity;
-import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
-import com.ebe.miniaelec.model.TransBill;
-import com.ebe.miniaelec.model.TransData;
 import com.ebe.miniaelec.print.PrintListener;
 import com.ebe.miniaelec.print.PrintReceipt;
 import com.google.gson.Gson;
@@ -173,7 +168,7 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
                                                        transData.setPaymentType(responseBody.getInt("PayType"));
                                                        transData.setTransDateTime(responseBody.getString("BankDateTime"));
                                                        transData.setClientID(et_clientID.getText().toString().trim());
-                                                       transData.setStatus(TransData.STATUS.REPRINT.getValue());
+                                                       transData.setStatus(TransDataEntity.STATUS.REPRINT.getValue());
                                                        ArrayList<TransBillEntity> billDetails = new ArrayList<>();
                                                        for (int i = 0; i < Objects.requireNonNull(billsData).length(); i++) {
                                                            TransBillEntity bill = new Gson().fromJson(billsData.getJSONObject(i).toString(), TransBillEntity.class);

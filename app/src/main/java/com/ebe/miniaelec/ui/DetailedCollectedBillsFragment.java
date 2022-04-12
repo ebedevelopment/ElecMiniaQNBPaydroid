@@ -1,6 +1,7 @@
 package com.ebe.miniaelec.ui;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,14 +16,14 @@ import androidx.navigation.Navigation;
 
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.DBHelper;
+import com.ebe.miniaelec.database.entities.ReportEntity;
 import com.ebe.miniaelec.model.DetailedReport;
-import com.ebe.miniaelec.model.Report;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -34,6 +35,7 @@ public class DetailedCollectedBillsFragment extends Fragment {
     ListView report_list;
     ArrayList<DetailedReport> reports;
     private AppDataBase dataBase;
+    private CompositeDisposable disposable;
 
 
     public DetailedCollectedBillsFragment() {
@@ -68,38 +70,42 @@ public class DetailedCollectedBillsFragment extends Fragment {
 
         report_list = view.findViewById(R.id.report_list);
         dataBase = AppDataBase.getInstance(this.requireActivity());
+        disposable = new CompositeDisposable();
 
         ArrayList<String> dates = new ArrayList<String>();
-        dates.addAll(DBHelper.getInstance(requireActivity()).getDistinctCollectedDates());
 
-        dataBase.reportEntityDaoDao().getDistinctCollectedDates()
+        disposable.add(dataBase.reportEntityDaoDao().getDistinctCollectedDates()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<List<String>>() {
                     @Override
                     public void accept(List<String> strings) throws Throwable {
 
-                    }
-                });
-        for (String date :
-                dates) {
-            ArrayList<Report> reportsList = new ArrayList<Report>();
-            reportsList.addAll(DBHelper.getInstance(requireActivity()).getReports(date));
-            for (Report r :
-                    reportsList) {
-                DetailedReport report = new DetailedReport(date);
-                report.setAmount(r.getTotalAmount());
-                report.setBankTransactionID(r.getBankTransactionID());
-                report.setClientID(r.getClientID());
-                report.setCollectTime(r.getTransTime());
-                report.setPaymentType(getType(r.getPaymentType()));
-                report.setCount(r.getBillsCount());
-                reports.add(report);
+                        dates.addAll(strings);
+                        for (String date :
+                                dates) {
+                            ArrayList<ReportEntity> reportsList = new ArrayList<ReportEntity>();
+                            reportsList.addAll(dataBase.reportEntityDaoDao().getReportsByDate(date));
+                            for (ReportEntity r :
+                                    reportsList) {
+                                DetailedReport report = new DetailedReport(date);
+                                report.setAmount(r.getTotalAmount());
+                                report.setBankTransactionID(r.getBankTransactionID());
+                                report.setClientID(r.getClientID());
+                                report.setCollectTime(r.getTransTime());
+                                report.setPaymentType(getType(r.getPaymentType()));
+                                report.setCount(r.getBillsCount());
+                                reports.add(report);
 
-            }
-        }
-        AdapterDetailedCollectedReport adapterBills = new AdapterDetailedCollectedReport(requireActivity(), reports);
-        report_list.setAdapter(adapterBills);
+                            }
+                        }
+                        AdapterDetailedCollectedReport adapterBills = new AdapterDetailedCollectedReport(requireActivity(), reports);
+                        report_list.setAdapter(adapterBills);
+                    }
+                },throwable -> {
+                    Log.e("DetailedCollected", "onViewCreated: "+throwable.getLocalizedMessage() );
+                }));
+
     }
 
     private String getType(int type){

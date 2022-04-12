@@ -3,7 +3,6 @@ package com.ebe.miniaelec.database.daos;
 
 import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
-import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
@@ -13,7 +12,6 @@ import com.ebe.miniaelec.database.entities.BillDataEntity;
 
 import java.util.List;
 
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
 

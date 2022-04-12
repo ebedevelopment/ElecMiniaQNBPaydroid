@@ -3,7 +3,6 @@ package com.ebe.miniaelec.database.entities;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
-import java.util.ArrayList;
 
 @Entity(tableName = "TransData")
 public class TransDataEntity {

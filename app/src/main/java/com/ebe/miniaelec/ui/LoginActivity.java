@@ -16,7 +16,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.Observer;
 
 import com.ebe.ebeunifiedlibrary.factory.ITransAPI;
 import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
@@ -27,34 +26,25 @@ import com.ebe.ebeunifiedlibrary.sdkconstants.SdkConstants;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.BaseDbHelper;
-import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.database.entities.TransDataEntity;
 import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
-import com.ebe.miniaelec.model.TransData;
 import com.ebe.miniaelec.utils.Utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 import dmax.dialog.SpotsDialog;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.CompletableObserver;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import io.reactivex.rxjava3.subscribers.DisposableSubscriber;
 import pub.devrel.easypermissions.EasyPermissions;
 
 //import android.util.Log;
@@ -134,11 +124,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         //ArrayList<TransDataEntity> transData = new ArrayList<TransDataEntity>(transDataWithTransBills);
                         for (TransDataWithTransBill b :
                                 transDataWithTransBills) {
-                            if (b.getTransData().getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue() && b.getTransData().getStatus() == TransDataEntity.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
+                            if (b.getTransData().getPaymentType() == TransDataEntity.PaymentType.OFFLINE_CASH.getValue() && b.getTransData().getStatus() == TransDataEntity.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
                                 allowLogin = false;
                                 break;
-                            } else if (b.getTransData().getStatus() != TransData.STATUS.INITIATED.getValue() && b.getTransData().getStatus() != TransData.STATUS.COMPLETED.getValue()
-                                    && b.getTransData().getStatus() != TransData.STATUS.CANCELLED.getValue()) {
+                            } else if (b.getTransData().getStatus() != TransDataEntity.STATUS.INITIATED.getValue() && b.getTransData().getStatus() != TransDataEntity.STATUS.COMPLETED.getValue()
+                                    && b.getTransData().getStatus() != TransDataEntity.STATUS.CANCELLED.getValue()) {
                                 allowLogin = false;
                                 break;
                             }
