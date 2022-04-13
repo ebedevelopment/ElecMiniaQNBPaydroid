@@ -1,4 +1,4 @@
-package com.ebe.miniaelec.ui;
+package com.ebe.miniaelec.ui.billpayment;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -55,6 +55,7 @@ import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
 import com.ebe.miniaelec.data.print.PrintListener;
 import com.ebe.miniaelec.data.print.PrintReceipt;
+import com.ebe.miniaelec.ui.login.LoginActivity;
 import com.ebe.miniaelec.utils.Utils;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;

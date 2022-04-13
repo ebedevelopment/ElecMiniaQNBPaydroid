@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/mainFragment"
-        android:name="com.ebe.miniaelec.ui.MainFragment"
+        android:name="com.ebe.miniaelec.ui.main.MainFragment"
         android:label="@string/client_inquiry"
         tools:layout="@layout/fragment_main" >
         <action
@@ -21,32 +21,32 @@
     </fragment>
     <fragment
         android:id="@+id/billPaymentFragment"
-        android:name="com.ebe.miniaelec.ui.BillPaymentFragment"
+        android:name="com.ebe.miniaelec.ui.billpayment.BillPaymentFragment"
         android:label="@string/pay_bills"
         tools:layout="@layout/fragment_bill_payment" />
     <fragment
         android:id="@+id/onlineReportsFragment"
-        android:name="com.ebe.miniaelec.ui.OnlineReportsFragment"
+        android:name="com.ebe.miniaelec.ui.onlinereports.OnlineReportsFragment"
         android:label="fragment_online_reports"
         tools:layout="@layout/fragment_online_reports" />
     <fragment
         android:id="@+id/reprintFragment"
-        android:name="com.ebe.miniaelec.ui.ReprintFragment"
+        android:name="com.ebe.miniaelec.ui.reprint.ReprintFragment"
         android:label="@string/reprint"
         tools:layout="@layout/fragment_reprint" />
     <fragment
         android:id="@+id/detailedCollectedBillsFragment"
-        android:name="com.ebe.miniaelec.ui.DetailedCollectedBillsFragment"
+        android:name="com.ebe.miniaelec.ui.detailedcollected.DetailedCollectedBillsFragment"
         android:label="@string/collected_detailed"
         tools:layout="@layout/fragment_detailed_collected_bills" />
     <fragment
         android:id="@+id/totalsFetchedBillsFragment"
-        android:name="com.ebe.miniaelec.ui.TotalsFetchedBillsFragment"
+        android:name="com.ebe.miniaelec.ui.totalfetched.TotalsFetchedBillsFragment"
         android:label="@string/total_bills"
         tools:layout="@layout/fragment_totals_fetched_bills" />
     <fragment
         android:id="@+id/totalCollectedBillsFragment"
-        android:name="com.ebe.miniaelec.ui.TotalCollectedBillsFragment"
+        android:name="com.ebe.miniaelec.ui.totalcollected.TotalCollectedBillsFragment"
         android:label="@string/total_collected"
         tools:layout="@layout/fragment_total_collected_bills" />
 </navigation>

@@ -1,4 +1,4 @@
-package com.ebe.miniaelec.ui;
+package com.ebe.miniaelec.ui.totalcollected;
 
 import android.os.Bundle;
 import android.util.Log;

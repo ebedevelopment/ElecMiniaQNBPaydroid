@@ -1,4 +1,4 @@
-package com.ebe.miniaelec.ui;
+package com.ebe.miniaelec.ui.reprint;
 
 import android.content.Context;
 import android.content.res.Configuration;

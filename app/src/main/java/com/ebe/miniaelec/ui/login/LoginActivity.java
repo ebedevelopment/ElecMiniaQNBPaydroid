@@ -1,4 +1,4 @@
-package com.ebe.miniaelec.ui;
+package com.ebe.miniaelec.ui.login;
 
 import android.Manifest;
 import android.app.Activity;
@@ -30,6 +30,7 @@ import com.ebe.miniaelec.data.database.entities.TransDataEntity;
 import com.ebe.miniaelec.data.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
+import com.ebe.miniaelec.ui.MainActivity;
 import com.ebe.miniaelec.utils.Utils;
 
 import org.json.JSONException;

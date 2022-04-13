@@ -1,4 +1,4 @@
-package com.ebe.miniaelec.ui;
+package com.ebe.miniaelec.ui.main;
 
 import android.content.Context;
 import android.content.Intent;
@@ -46,6 +46,7 @@ import com.ebe.miniaelec.data.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
 import com.ebe.miniaelec.ui.adapters.AdapterOfflineClients;
+import com.ebe.miniaelec.ui.login.LoginActivity;
 import com.ebe.miniaelec.ui.services.FinishPendingTransService;
 import com.ebe.miniaelec.utils.Utils;
 
