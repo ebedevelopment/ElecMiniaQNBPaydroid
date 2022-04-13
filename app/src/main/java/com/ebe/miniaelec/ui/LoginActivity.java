@@ -25,11 +25,11 @@ import com.ebe.ebeunifiedlibrary.message.TransResponse;
 import com.ebe.ebeunifiedlibrary.sdkconstants.SdkConstants;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
-import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.entities.TransDataEntity;
-import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
-import com.ebe.miniaelec.http.ApiServices;
-import com.ebe.miniaelec.http.RequestListener;
+import com.ebe.miniaelec.data.database.AppDataBase;
+import com.ebe.miniaelec.data.database.entities.TransDataEntity;
+import com.ebe.miniaelec.data.database.entities.TransDataWithTransBill;
+import com.ebe.miniaelec.data.http.ApiServices;
+import com.ebe.miniaelec.data.http.RequestListener;
 import com.ebe.miniaelec.utils.Utils;
 
 import org.json.JSONException;

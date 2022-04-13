@@ -13,10 +13,10 @@ import android.view.animation.AnimationUtils;
 
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
-import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.PrefsManager;
-import com.ebe.miniaelec.database.entities.TransBillEntity;
-import com.ebe.miniaelec.database.entities.TransDataWithTransBill;
+import com.ebe.miniaelec.data.database.AppDataBase;
+import com.ebe.miniaelec.data.database.PrefsManager;
+import com.ebe.miniaelec.data.database.entities.TransBillEntity;
+import com.ebe.miniaelec.data.database.entities.TransDataWithTransBill;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.pax.dal.entity.ENavigationKey;
@@ -174,26 +174,7 @@ public class Utils {
         return elapsedDays * 24 + elapsedHours;
     }
 
-//    public static void callPermissions(@NonNull final Activity activity, String[] permission, @NonNull Action action, final String failedMsg) {
-//        RxPermissions rxPermissions = new RxPermissions(activity);
-//        List<Observable<Boolean>> permissionList = new ArrayList<>();
-//        for (String s : permission) {
-//            permissionList.add(rxPermissions.request(s));
-//        }
-//        Observable.concat(permissionList)
-//                .subscribe(new Consumer<Boolean>() {
-//                    @Override
-//                    public void accept(Boolean granted) throws Exception {
-//                        if (!granted) {
-//                            Toast.makeText(activity, failedMsg, Toast.LENGTH_LONG).show();
-//                        }
-//                    }
-//                }, new Consumer<Throwable>() {
-//                    @Override
-//                    public void accept(Throwable throwable) throws Exception {
-//                    }
-//                }, action);
-//    }
+
 
     public static void slideDown(Context ctx, View v) {
 

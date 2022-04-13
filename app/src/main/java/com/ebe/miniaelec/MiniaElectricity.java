@@ -5,9 +5,9 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
 
-import com.ebe.miniaelec.database.PrefsManager;
-import com.ebe.miniaelec.http.UnsafeOkHttpClient;
-import com.ebe.miniaelec.http.api.API;
+import com.ebe.miniaelec.data.database.PrefsManager;
+import com.ebe.miniaelec.data.http.UnsafeOkHttpClient;
+import com.ebe.miniaelec.data.http.api.API;
 import com.pax.dal.IDAL;
 import com.pax.dal.IPrinter;
 import com.pax.dal.entity.ETermInfoKey;
@@ -62,80 +62,7 @@ public class MiniaElectricity extends Application {
 
     public static API getApi(String baseUrl, boolean needCert, Context context) {
         if (needCert) {
-               /* // loading CAs from an InputStream
-                CertificateFactory cf = null;
-                try {
-                    cf = CertificateFactory.getInstance("X.509");
-                } catch (CertificateException e) {
-                    e.printStackTrace();
-                }
-                InputStream cert = context.getResources().openRawResource(R.raw.drm_ca);
-                Certificate ca = null;
-                try {
-                    ca = cf.generateCertificate(cert);
-                } catch (CertificateException e) {
-                    e.printStackTrace();
-                } finally {
-                    try {
-                        cert.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
 
-                // creating a KeyStore containing our trusted CAs
-                String keyStoreType = KeyStore.getDefaultType();
-                KeyStore keyStore = null;
-                try {
-                    keyStore = KeyStore.getInstance(keyStoreType);
-                } catch (KeyStoreException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    keyStore.load(null, null);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                } catch (CertificateException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    keyStore.setCertificateEntry("ca", ca);
-                } catch (KeyStoreException e) {
-                    e.printStackTrace();
-                }
-
-                // creating a TrustManager that trusts the CAs in our KeyStore
-                String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
-                TrustManagerFactory tmf = null;
-                try {
-                    tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    tmf.init(keyStore);
-                } catch (KeyStoreException e) {
-                    e.printStackTrace();
-                }
-
-                // creating an SSLSocketFactory that uses our TrustManager
-                SSLContext sslContext = null;
-                try {
-                    sslContext = SSLContext.getInstance("TLS");
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    sslContext.init(null, tmf.getTrustManagers(), null);
-                } catch (KeyManagementException e) {
-                    e.printStackTrace();
-                }
-
-                OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                        .sslSocketFactory(sslContext.getSocketFactory())
-                        .build();*/
             OkHttpClient okHttpClient = UnsafeOkHttpClient.getUnsafeOkHttpClient().newBuilder()
                     .connectTimeout(30, TimeUnit.SECONDS)
                     .readTimeout(30, TimeUnit.SECONDS)

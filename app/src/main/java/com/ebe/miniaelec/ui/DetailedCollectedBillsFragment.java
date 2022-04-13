@@ -15,9 +15,10 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.ebe.miniaelec.R;
-import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.entities.ReportEntity;
-import com.ebe.miniaelec.model.DetailedReport;
+import com.ebe.miniaelec.data.database.AppDataBase;
+import com.ebe.miniaelec.data.database.entities.ReportEntity;
+import com.ebe.miniaelec.domain.model.DetailedReport;
+import com.ebe.miniaelec.ui.adapters.AdapterDetailedCollectedReport;
 
 import java.util.ArrayList;
 import java.util.List;

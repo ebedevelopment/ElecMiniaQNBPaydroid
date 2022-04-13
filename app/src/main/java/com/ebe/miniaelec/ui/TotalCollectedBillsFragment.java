@@ -1,6 +1,11 @@
 package com.ebe.miniaelec.ui;
 
 import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -8,16 +13,11 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ListView;
-
 import com.ebe.miniaelec.R;
-import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.entities.TransDataEntity;
-import com.ebe.miniaelec.model.CollectedReport;
+import com.ebe.miniaelec.data.database.AppDataBase;
+import com.ebe.miniaelec.data.database.entities.TransDataEntity;
+import com.ebe.miniaelec.domain.model.CollectedReport;
+import com.ebe.miniaelec.ui.adapters.AdapterTotalCollectedReport;
 
 import java.util.ArrayList;
 import java.util.List;

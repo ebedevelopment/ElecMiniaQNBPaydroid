@@ -38,7 +38,7 @@
         </activity>
 
 
-        <service android:name=".services.FinishPendingTransService"/>
+        <service android:name=".ui.services.FinishPendingTransService"/>
     </application>
 
 </manifest>

@@ -3,13 +3,6 @@ package com.ebe.miniaelec.ui;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -20,15 +13,21 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
-import com.ebe.miniaelec.database.AppDataBase;
-import com.ebe.miniaelec.database.entities.TransBillEntity;
-import com.ebe.miniaelec.database.entities.TransDataEntity;
-import com.ebe.miniaelec.http.ApiServices;
-import com.ebe.miniaelec.http.RequestListener;
-import com.ebe.miniaelec.print.PrintListener;
-import com.ebe.miniaelec.print.PrintReceipt;
+import com.ebe.miniaelec.data.database.AppDataBase;
+import com.ebe.miniaelec.data.database.entities.TransBillEntity;
+import com.ebe.miniaelec.data.database.entities.TransDataEntity;
+import com.ebe.miniaelec.data.http.ApiServices;
+import com.ebe.miniaelec.data.http.RequestListener;
+import com.ebe.miniaelec.data.print.PrintListener;
+import com.ebe.miniaelec.data.print.PrintReceipt;
 import com.google.gson.Gson;
 
 import org.json.JSONArray;
@@ -135,7 +134,7 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
                                        } else {
                                            transDataEntity.setPrintCount(2);
 
-                                           dataBase.transDataDao().addTransData(transDataEntity);
+                                           dataBase.transDataDao().updateTransData(transDataEntity);
                                            new PrintReceipt(requireActivity(), transBillEntities,transDataEntity, new PrintListener() {
                                                @Override
                                                public void onFinish() {
