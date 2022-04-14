@@ -79,10 +79,10 @@ disposable = new CompositeDisposable();
                            report.setOnlineCashCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CASH.getValue()));
                            report.setOfflineCashAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.OFFLINE_CASH.getValue()));
                            report.setOfflineCashCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.OFFLINE_CASH.getValue()));
-                           report.setCardAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CARD.getValue()));
-                           report.setCardCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CARD.getValue()));
-                           report.setWalletAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.WALLET.getValue()));
-                           report.setWalletCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.WALLET.getValue()));
+                          // report.setCardAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CARD.getValue()));
+                          // report.setCardCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CARD.getValue()));
+                          // report.setWalletAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.WALLET.getValue()));
+                          // report.setWalletCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.WALLET.getValue()));
                            reports.add(report);
                        }
                        AdapterTotalCollectedReport adapterBills = new AdapterTotalCollectedReport(requireActivity(), reports);

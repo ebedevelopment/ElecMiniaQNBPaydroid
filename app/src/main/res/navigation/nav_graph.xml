@@ -23,7 +23,12 @@
         android:id="@+id/billPaymentFragment"
         android:name="com.ebe.miniaelec.ui.billpayment.BillPaymentFragment"
         android:label="@string/pay_bills"
-        tools:layout="@layout/fragment_bill_payment" />
+        tools:layout="@layout/fragment_bill_payment" >
+        <action
+            android:id="@+id/action_billPaymentFragment_to_mainFragment"
+            app:destination="@id/mainFragment"
+            app:popUpTo="@id/mainFragment" />
+    </fragment>
     <fragment
         android:id="@+id/onlineReportsFragment"
         android:name="com.ebe.miniaelec.ui.onlinereports.OnlineReportsFragment"

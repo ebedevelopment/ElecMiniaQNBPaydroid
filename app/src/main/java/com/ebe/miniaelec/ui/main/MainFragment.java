@@ -75,7 +75,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     AdapterOfflineClients offlineClientsAdapter;
     Spinner sp_mntka, sp_day, sp_main, sp_fary;
     ArrayList<String> mntakaList, dayList, mainList, faryList;
-    int selectesMntka, selectedDay, selectedMain, selectedFary, selectedClient;
+    Integer selectesMntka, selectedDay, selectedMain, selectedFary, selectedClient;
     private String clientId = "";
     TextView tv_search;
     LinearLayout ll_filters;
@@ -115,13 +115,23 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         mainList = new ArrayList<>();
         faryList = new ArrayList<>();
 
+
+
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+        if (savedInstanceState != null)
+        {
+            selectesMntka = savedInstanceState.getInt("mntka");
+            selectedDay = savedInstanceState.getInt("day");
+            selectedMain = savedInstanceState.getInt("main");
+            selectedFary = savedInstanceState.getInt("fary");
+        }
 
+        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_main, container, false);
     }
 
@@ -265,6 +275,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
+                if (selectesMntka != null)
+                parent.setSelection(selectesMntka);
             }
         });
         sp_day.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -279,6 +291,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
+                if (selectedDay != null)
+                    parent.setSelection(selectedDay);
             }
         });
         sp_main.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -293,6 +307,9 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
+
+                if (selectedMain != null)
+                    parent.setSelection(selectedMain);
 
             }
         });
@@ -309,6 +326,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
+                if (selectedFary != null)
+                    parent.setSelection(selectedFary);
             }
         });
         tv_search.setOnClickListener(new View.OnClickListener() {
@@ -630,11 +649,6 @@ progressDialog.show();
           public void onChanged(List<BillDataEntity> billDataEntities) {
               offlineBills.clear();
               offlineBills.addAll(billDataEntities);
-              if (!billDataEntities.isEmpty())
-              {
-                  long unique =  billDataEntities.get(0).getBillUnique();
-              }
-
               offlineClientsAdapter = new AdapterOfflineClients(getActivity(), offlineBills);
               lv_clients.setAdapter(offlineClientsAdapter);
               offlineClientsAdapter.notifyDataSetChanged();
@@ -908,5 +922,17 @@ progressDialog.show();
 
    }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
 
+        if (selectesMntka != null)
+        outState.putInt("mntka",selectesMntka);
+        if (selectedDay != null)
+        outState.putInt("day",selectedDay);
+        if (selectedMain != null)
+        outState.putInt("main",selectedMain);
+        if (selectedFary != null)
+        outState.putInt("fary",selectedFary);
+    }
 }

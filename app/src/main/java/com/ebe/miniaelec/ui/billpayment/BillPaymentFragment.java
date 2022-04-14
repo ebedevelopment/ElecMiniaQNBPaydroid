@@ -123,7 +123,8 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                     transData.setStatus(TransDataEntity.STATUS.CANCELLED.getValue());
                 }
                 if (navController != null)
-                    navController.popBackStack(R.id.mainFragment,true);
+                   // navController.popBackStack(R.id.mainFragment,true);
+                navController.navigateUp();
             }
         });
     }
@@ -195,7 +196,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                           OfflineClientEntity offlineClient = clientWithBillData.getClient();
                           if (offlineClient == null) {
                               Toast.makeText(cntxt, "رقم الاشتراك غير صحيح!", Toast.LENGTH_SHORT).show();
-                              navController.popBackStack();
+                              navController.navigateUp();
 
                           }
                           assert offlineClient != null;
@@ -433,7 +434,8 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                                        //sendCashDRM(false);
                                                        transData.setPrintCount(1);
                                                        dataBase.transDataDao().updateTransData(transData);
-                                                       navController.popBackStack();
+                                                       //navController.popBackStack();
+                                                       navController.navigateUp();
                                                    }
 
                                                    @Override
