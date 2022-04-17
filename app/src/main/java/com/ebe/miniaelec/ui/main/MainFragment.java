@@ -24,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
@@ -88,6 +89,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
     int index = 0;
 
+    MainFragmentViewModel viewModel;
+
 
     public MainFragment() {
         // Required empty public constructor
@@ -123,13 +126,11 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        if (savedInstanceState != null)
-        {
-            selectesMntka = savedInstanceState.getInt("mntka");
-            selectedDay = savedInstanceState.getInt("day");
-            selectedMain = savedInstanceState.getInt("main");
-            selectedFary = savedInstanceState.getInt("fary");
-        }
+
+
+
+
+
 
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_main, container, false);
@@ -138,6 +139,9 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+
+        viewModel = new ViewModelProvider(requireActivity(),new MainViewModelFactory(requireActivity().getApplication())).get(MainFragmentViewModel.class);
 
         dataBase = AppDataBase.getInstance(requireContext());
         et_clientID = view.findViewById(R.id.client_id);
@@ -220,25 +224,38 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
 
 
-       compositeDisposable.add(dataBase.billDataDaoDao().getDistinctMntka()
-               .subscribeOn(Schedulers.io())
-               .observeOn(AndroidSchedulers.mainThread())
-               .subscribe(new Consumer<List<String>>() {
-                   @Override
-                   public void accept(List<String> strings) throws Throwable {
-                       if (strings != null)
-                           mntakaList.clear();
-                           mntakaList.add(getString(R.string.place));
-                       mntakaList.addAll(strings);
-                       ArrayAdapter<String> mntkaAdapter = new ArrayAdapter<>(getActivity(),
-                               android.R.layout.simple_spinner_dropdown_item, mntakaList);
-                       mntkaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                       sp_mntka.setAdapter(mntkaAdapter);
-                   }
-               },throwable -> {
-                   Log.e("getDistinctMntka", "onViewCreated: "+throwable.getLocalizedMessage() );
-               }));
+//       compositeDisposable.add(dataBase.billDataDaoDao().getDistinctMntka()
+//               .subscribeOn(Schedulers.io())
+//               .observeOn(AndroidSchedulers.mainThread())
+//               .subscribe(new Consumer<List<String>>() {
+//                   @Override
+//                   public void accept(List<String> strings) throws Throwable {
+//                       if (strings != null)
+//
+//                   }
+//               },throwable -> {
+//                   Log.e("getDistinctMntka", "onViewCreated: "+throwable.getLocalizedMessage() );
+//               }));
 
+       viewModel.getMntkaList();
+
+       viewModel.mntkas.observe(getViewLifecycleOwner(), new Observer<List<String>>() {
+           @Override
+           public void onChanged(List<String> strings) {
+               if (!strings.isEmpty())
+                   mntakaList.clear();
+               mntakaList.add(getString(R.string.place));
+               mntakaList.addAll(strings);
+               ArrayAdapter<String> mntkaAdapter = new ArrayAdapter<>(getActivity(),
+                       android.R.layout.simple_spinner_dropdown_item, mntakaList);
+               mntkaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+               sp_mntka.setAdapter(mntkaAdapter);
+               if (selectesMntka != null)
+               {
+                   sp_mntka.setSelection(selectesMntka);
+               }
+           }
+       });
 
 
 
@@ -261,29 +278,42 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                 android.R.layout.simple_spinner_dropdown_item, faryList);
         faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sp_fary.setAdapter(faryAdapter);
+
+
+
         sp_mntka.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectesMntka = position;
-                if (position != 0) {
+
+
+                 if(position != 0) {
+                     selectesMntka = position;
                     filterByMntka();
-                } else {
-                    filterByMntkaIfPosZero();
-                }
+
+                }else if (selectesMntka != null && selectesMntka == 0 )
+                 {
+                     filterByMntkaIfPosZero();
+
+                 }
+
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
-                if (selectesMntka != null)
-                parent.setSelection(selectesMntka);
+
+
+
             }
         });
         sp_day.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectedDay = position;
-                if (position != 0) {
+
+
+                 if (position != 0)
+                {
+                    selectedDay = position;
                     filterByDay();
                 }
             }
@@ -291,16 +321,14 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
-                if (selectedDay != null)
-                    parent.setSelection(selectedDay);
             }
         });
         sp_main.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectedMain = position;
-                if (position != 0) {
 
+                if (position != 0) {
+                    selectedMain = position;
                     filterByMain();
                 }
             }
@@ -308,16 +336,15 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
-                if (selectedMain != null)
-                    parent.setSelection(selectedMain);
 
             }
         });
         sp_fary.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectedFary = position;
+
                 if (position != 0) {
+                    selectedFary = position;
                     filterByFary();
 
                 }
@@ -326,8 +353,6 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
-                if (selectedFary != null)
-                    parent.setSelection(selectedFary);
             }
         });
         tv_search.setOnClickListener(new View.OnClickListener() {
@@ -427,7 +452,6 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onResume() {
         super.onResume();
-
         offlineClientsAdapter.notifyDataSetChanged();
         if (clientId != null && !clientId.isEmpty()) {
 
@@ -457,6 +481,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
         }
         }
+
+
 
     private void aVoidReq(TransDataEntity transData) {
         VoidMsg.Request request = new VoidMsg.Request();
@@ -488,7 +514,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                 if (transResponse.getRspCode() == 0 || transResponse.getRspCode() == -15
                         || transResponse.getRspCode() == -16 || transResponse.getRspCode() == -17 || transResponse.getRspCode() == -18) {
 
-                    compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(pendingTransData.get(index - 1).getReferenceNo())
+                    int refNumber = pendingTransData.get(index - 1).getReferenceNo();
+                    compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(refNumber)
                             .subscribeOn(Schedulers.io())
                             .onErrorReturn(throwable->{
                                 Log.d(null, "onActivityResult: "+throwable.getMessage());
@@ -630,6 +657,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         Intent intent = new Intent(requireContext(), FinishPendingTransService.class);
 
         requireActivity().stopService(intent);
+        viewModel.saveFilterParams(selectesMntka,selectedDay,selectedMain,selectedFary);
 
     }
 
@@ -709,6 +737,8 @@ progressDialog.show();
                                android.R.layout.simple_spinner_dropdown_item, dayList);
                        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                        sp_day.setAdapter(dataAdapter);
+                       if (selectedDay != null)
+                           sp_day.setSelection(selectedDay);
                    }
                },throwable -> {
                    Log.e("filterByMntka", "filterByMntka: "+throwable.getLocalizedMessage() );
@@ -743,20 +773,6 @@ progressDialog.show();
                 lv_clients.setAdapter(offlineClientsAdapter);
             }
         });
-
-//        compositeDisposable.add(dataBase.billDataDaoDao().getDistinctBills()
-//                .subscribeOn(Schedulers.io())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribe(new Consumer<List<BillDataEntity>>() {
-//                    @Override
-//                    public void accept(List<BillDataEntity> billDataEntities) throws Throwable {
-//                        offlineBills.addAll(billDataEntities);
-//                        offlineClientsAdapter = new AdapterOfflineClients(requireActivity(), offlineBills);
-//                        lv_clients.setAdapter(offlineClientsAdapter);
-//                    }
-//                },throwable -> {
-//                    Log.e("filterByMntkaZero", "filterByMntkaIfPosZero: "+throwable.getLocalizedMessage() );
-//                }));
 
         dayList = new ArrayList<>();
         mainList = new ArrayList<>();
@@ -819,6 +835,8 @@ progressDialog.show();
                                 android.R.layout.simple_spinner_dropdown_item, mainList);
                         dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                         sp_main.setAdapter(dataAdapter);
+                        if (selectedMain != null)
+                        sp_main.setSelection(selectedMain);
                     }
                 },throwable -> {
                     Log.e("filterByDay", "filterByDay: "+throwable.getLocalizedMessage() );
@@ -869,6 +887,8 @@ progressDialog.show();
                                android.R.layout.simple_spinner_dropdown_item, faryList);
                        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                        sp_fary.setAdapter(dataAdapter);
+                       if (selectedFary != null)
+                           sp_fary.setSelection(selectedFary);
 
                    }
                },throwable -> {
@@ -922,17 +942,5 @@ progressDialog.show();
 
    }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
 
-        if (selectesMntka != null)
-        outState.putInt("mntka",selectesMntka);
-        if (selectedDay != null)
-        outState.putInt("day",selectedDay);
-        if (selectedMain != null)
-        outState.putInt("main",selectedMain);
-        if (selectedFary != null)
-        outState.putInt("fary",selectedFary);
-    }
 }
