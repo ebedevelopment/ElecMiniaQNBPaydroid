@@ -276,8 +276,6 @@ public class Utils {
                         }
                     }, throwable -> {
                         Log.e(null, "copyBillsFromDB: " + throwable.getLocalizedMessage());
-                    }, () -> {
-                        compositeDisposable.dispose();
                     }));
 
         } catch (Exception e) {

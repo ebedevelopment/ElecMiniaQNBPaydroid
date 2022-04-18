@@ -14,7 +14,6 @@ import com.ebe.miniaelec.data.database.entities.TransDataWithTransBill;
 
 import java.util.List;
 
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
 @Dao
@@ -32,7 +31,7 @@ public interface TransDataDao {
 
     @Query("Select * From TransData")
     @Transaction
-    Flowable<List<TransDataWithTransBill>> getAllTrans();
+    Single<List<TransDataWithTransBill>> getAllTrans();
 
     @Query("Select * From TransData")
     @Transaction

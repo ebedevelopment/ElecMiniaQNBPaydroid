@@ -16,7 +16,7 @@ public interface ReportEntityDao {
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void addReport(ReportEntity report);
+    long addReport(ReportEntity report);
 
     @Query("Select DISTINCT transDate From Reports")
     Single<List<String>> getDistinctCollectedDates();
@@ -32,6 +32,9 @@ public interface ReportEntityDao {
 
     @Query("Select * From Reports")
     Single<List<ReportEntity>> getReports();
+
+    @Query("Select DISTINCT paymentType From Reports")
+    List<Integer> getPaymentsTypes();
 
 
 

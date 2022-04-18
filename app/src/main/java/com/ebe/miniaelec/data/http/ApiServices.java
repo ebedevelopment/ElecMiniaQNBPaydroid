@@ -16,8 +16,13 @@ import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import dmax.dialog.SpotsDialog;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -195,42 +200,50 @@ ApiServices {
             Utils.switchSimCard(1);
         final int[] counter = {0};
         //Log.e("counter0", String.valueOf(counter[0]));
+        boolean Error = false;
         while (!Utils.checkConnection(MiniaElectricity.getInstance()) && counter[0] < 15) {
-            new Thread() {
+            Completable.fromRunnable(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        sleep(2000);
+
                         //Log.e("counter", String.valueOf(counter[0]));
                         counter[0]++;
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+
+                }
+            }).subscribeOn(Schedulers.io())
+                    //.observeOn(AndroidSchedulers.mainThread())
+                    .delay(2000, TimeUnit.MILLISECONDS).subscribe(new DisposableCompletableObserver() {
+                @Override
+                public void onComplete() {
+                    isFirst = false;
+                    if (!Utils.checkConnection(MiniaElectricity.getInstance())) {
                         if (isView)
                         {
                             hideDialog();
                         }else {
                             dialogState.postValue(false);
                         }
-
                         if (listener != null)
                             listener.onFailure("لقد تعذر الوصول للخادم!");
-
-                    }
+                    } else
+                        call.enqueue(callback);
                 }
-            }.start();
+
+                @Override
+                public void onError(@NonNull Throwable e) {
+                    if (isView)
+                    {
+                        hideDialog();
+                    }else {
+                        dialogState.postValue(false);
+                    }
+
+                    if (listener != null)
+                        listener.onFailure("لقد تعذر الوصول للخادم!");
+                }
+            });
         }
-        isFirst = false;
-        if (!Utils.checkConnection(MiniaElectricity.getInstance())) {
-            if (isView)
-            {
-                hideDialog();
-            }else {
-                dialogState.postValue(false);
-            }
-            if (listener != null)
-                listener.onFailure("لقد تعذر الوصول للخادم!");
-        } else
-            call.enqueue(callback);
+
     }
 
     //main fragment

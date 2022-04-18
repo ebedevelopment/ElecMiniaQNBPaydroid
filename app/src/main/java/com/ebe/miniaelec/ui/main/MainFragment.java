@@ -76,7 +76,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     AdapterOfflineClients offlineClientsAdapter;
     Spinner sp_mntka, sp_day, sp_main, sp_fary;
     ArrayList<String> mntakaList, dayList, mainList, faryList;
-    Integer selectesMntka, selectedDay, selectedMain, selectedFary, selectedClient;
+    Integer selectesMntka, selectedDay, selectedMain, selectedFary, selectedClient =0;
     private String clientId = "";
     TextView tv_search;
     LinearLayout ll_filters;
@@ -84,6 +84,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     NavController navController;
     private SpotsDialog progressDialog;
     public ITransAPI transAPI;
+    ArrayAdapter<String> daysAdapter;
 
     ArrayList<TransDataEntity> pendingTransData;
 
@@ -129,6 +130,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
 
 
+        viewModel = new ViewModelProvider(requireActivity(),new MainViewModelFactory(requireActivity().getApplication())).get(MainFragmentViewModel.class);
 
 
 
@@ -141,7 +143,6 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         super.onViewCreated(view, savedInstanceState);
 
 
-        viewModel = new ViewModelProvider(requireActivity(),new MainViewModelFactory(requireActivity().getApplication())).get(MainFragmentViewModel.class);
 
         dataBase = AppDataBase.getInstance(requireContext());
         et_clientID = view.findViewById(R.id.client_id);
@@ -262,7 +263,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
         dayList = new ArrayList<>();
         dayList.add(getString(R.string.daily));
-        ArrayAdapter<String> daysAdapter = new ArrayAdapter<>(getActivity(),
+        daysAdapter = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_dropdown_item, dayList);
         daysAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sp_day.setAdapter(daysAdapter);
@@ -286,14 +287,18 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
 
-                 if(position != 0) {
+
                      selectesMntka = position;
+
+                 if (selectesMntka > 0)
+                 {
+
                     filterByMntka();
 
-                }else if (selectesMntka != null && selectesMntka == 0 )
-                 {
-                     filterByMntkaIfPosZero();
+                }else {
 
+
+                          filterByMntkaIfPosZero();
                  }
 
             }
@@ -314,6 +319,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                  if (position != 0)
                 {
                     selectedDay = position;
+                    if (dayList.size() > 1)
                     filterByDay();
                 }
             }
@@ -662,6 +668,17 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+
+       selectesMntka = viewModel.mntka;
+       selectedDay = viewModel.day;
+       selectedMain = viewModel.main;
+       selectedFary = viewModel.fary;
+
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
         compositeDisposable.dispose();
@@ -737,8 +754,14 @@ progressDialog.show();
                                android.R.layout.simple_spinner_dropdown_item, dayList);
                        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                        sp_day.setAdapter(dataAdapter);
+
+
                        if (selectedDay != null)
+                       {
                            sp_day.setSelection(selectedDay);
+
+                       }
+
                    }
                },throwable -> {
                    Log.e("filterByMntka", "filterByMntka: "+throwable.getLocalizedMessage() );
@@ -779,6 +802,11 @@ progressDialog.show();
         faryList = new ArrayList<>();
         dayList = new ArrayList<>();
         dayList.add(getString(R.string.daily));
+        selectedDay = 0;
+        selectedMain = 0;
+        selectesMntka = 0;
+        selectedFary = 0;
+
         ArrayAdapter<String> daysAdapter = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_dropdown_item, dayList);
         daysAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);

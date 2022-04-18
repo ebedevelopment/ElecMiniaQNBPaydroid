@@ -75,10 +75,18 @@ disposable = new CompositeDisposable();
                        for (String date :
                                dates) {
                            CollectedReport report = new CollectedReport(date);
-                           report.setOnlineCashAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CASH.getValue()));
-                           report.setOnlineCashCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CASH.getValue()));
-                           report.setOfflineCashAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.OFFLINE_CASH.getValue()));
-                           report.setOfflineCashCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.OFFLINE_CASH.getValue()));
+                           List<Integer> types = dataBase.reportEntityDaoDao().getPaymentsTypes();
+                           if (types.contains(1))
+                           {
+                               report.setOnlineCashAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CASH.getValue()));
+                               report.setOnlineCashCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CASH.getValue()));
+                           }else if (types.contains(4))
+                           {
+                               report.setOfflineCashAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.OFFLINE_CASH.getValue()));
+                               report.setOfflineCashCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.OFFLINE_CASH.getValue()));
+                           }
+
+
                           // report.setCardAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CARD.getValue()));
                           // report.setCardCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CARD.getValue()));
                           // report.setWalletAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.WALLET.getValue()));

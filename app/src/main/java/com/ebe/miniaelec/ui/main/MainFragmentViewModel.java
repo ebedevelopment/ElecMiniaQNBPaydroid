@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
 import com.ebe.miniaelec.data.database.AppDataBase;
+import com.ebe.miniaelec.data.database.entities.BillDataEntity;
 import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.repositories.MainRepositoryImpl;
 import com.ebe.miniaelec.domain.MainRepository;
@@ -22,6 +23,7 @@ public class MainFragmentViewModel extends AndroidViewModel {
 
    public Integer mntka,day,main,fary = 0;
    MutableLiveData<List<String>> mntkas = new MutableLiveData<>(new ArrayList<>());
+   MutableLiveData<List<BillDataEntity>> offlineBills = new MutableLiveData<>(new ArrayList<>());
     private AppDataBase dataBase;
     private ApiServices services;
     private MainRepository repository;
@@ -60,6 +62,18 @@ public class MainFragmentViewModel extends AndroidViewModel {
                },throwable -> {
                    Log.e("getDistinctMntka", "onViewCreated: "+throwable.getLocalizedMessage() );
                }));
+    }
+
+
+    public void filterByMantka(String mntka)
+    {
+       disposable.add(repository.getDistinctBillsOfMntka(mntka).subscribe(new Consumer<List<BillDataEntity>>() {
+           @Override
+           public void accept(List<BillDataEntity> billDataEntities) throws Throwable {
+
+               offlineBills.setValue(billDataEntities);
+           }
+       }));
     }
 
 

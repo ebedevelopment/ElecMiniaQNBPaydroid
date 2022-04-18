@@ -51,6 +51,7 @@ import com.ebe.miniaelec.data.database.entities.OfflineClientEntity;
 import com.ebe.miniaelec.data.database.entities.ReportEntity;
 import com.ebe.miniaelec.data.database.entities.TransBillEntity;
 import com.ebe.miniaelec.data.database.entities.TransDataEntity;
+import com.ebe.miniaelec.data.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
 import com.ebe.miniaelec.data.print.PrintListener;
@@ -70,6 +71,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import dmax.dialog.SpotsDialog;
@@ -153,6 +155,12 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
         cntxt = requireContext();
         dataBase = AppDataBase.getInstance(cntxt);
+        dataBase.transDataDao().getAllTrans().subscribeOn(Schedulers.io()).subscribe(new Consumer<List<TransDataWithTransBill>>() {
+            @Override
+            public void accept(List<TransDataWithTransBill> transDataWithTransBills) throws Throwable {
+                Log.e("trans", "accept: "+ transDataWithTransBills.size() );
+            }
+        });
         progressDialog = new SpotsDialog(cntxt, R.style.ProcessingProgress);
         progressDialog.setCancelable(false);
         setStatusBarColor();
@@ -420,8 +428,10 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                    Completable.fromRunnable(new Runnable() {
                         @Override
                         public void run() {
-                            dataBase.reportEntityDaoDao().addReport(new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID()));
+                            ReportEntity report = new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID());
+                           dataBase.reportEntityDaoDao().addReport(report);
                             deleteBills();
+                            Log.e("addReport", "run: "+report );
                         }
                     }).subscribeOn(Schedulers.io())
                            .observeOn(AndroidSchedulers.mainThread())
