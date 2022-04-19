@@ -271,7 +271,6 @@ public class FinishPendingTransService extends Service {
 
                                    pendingData.postValue(pendingTransData);
                                    offlineTransData.clear();
-                                   onFailure(null);
                                    handlePendingBills();
                                }
                            } catch (JSONException e) {
@@ -284,6 +283,7 @@ public class FinishPendingTransService extends Service {
                        public void onFailure(String failureMsg) {
                            if (failureMsg != null)
                                //Toast.makeText(this, failureMsg, Toast.LENGTH_LONG).show();
+
                                errorMsg.postValue(failureMsg);
                            MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
 
@@ -296,7 +296,7 @@ public class FinishPendingTransService extends Service {
 
 
     private void handlePendingBills() {
-        if (index < pendingTransData.size() && Utils.checkConnection(MiniaElectricity.getInstance())) {
+        if (index < pendingTransData.size() && Utils.checkConnection(this)) {
             TransDataEntity transData = pendingTransData.get(index);
             index = index + 1;
             indexState.postValue(index);

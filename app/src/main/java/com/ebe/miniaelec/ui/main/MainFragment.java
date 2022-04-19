@@ -3,6 +3,8 @@ package com.ebe.miniaelec.ui.main;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -415,44 +417,55 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     }
 
     private void inquiry() {
-        new ApiServices(requireActivity(), false).billInquiry(clientId, new RequestListener() {
-            @Override
-            public void onSuccess(String response) {
-                try {
-                    JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
-                    String Error = responseBody.optString("Error").trim();
-                    //Log.e("response", response);
-                    if (!Error.isEmpty()) {
-                        onFailure("فشل في الاستعلام!\n" + Error);
-                        if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
-                            MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                            startActivity(new Intent(requireActivity(), LoginActivity.class));
-                            requireActivity().finish();
+        if (Utils.checkConnection(this.requireActivity()))
+        {
+            new ApiServices(requireActivity(), false).billInquiry(clientId, new RequestListener() {
+                @Override
+                public void onSuccess(String response) {
+                    try {
+                        JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                        String Error = responseBody.optString("Error").trim();
+                        //Log.e("response", response);
+                        if (!Error.isEmpty()) {
+                            onFailure("فشل في الاستعلام!\n" + Error);
+                            if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
+                                MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                                startActivity(new Intent(requireActivity(), LoginActivity.class));
+                                requireActivity().finish();
+                            }
+                        } else {
+
+                            Bundle bundle = new Bundle();
+                            bundle.putString("response", response);
+                            bundle.putString("clientID", clientId);
+                            // fragment.setArguments(bundle);
+                            bundle.putBoolean("offline", false);
+                            et_clientID.setText("");
+                            clientId ="";
+                            navController.navigate(R.id.billPaymentFragment, bundle);
+
+                            // MainActivity.fragmentTransaction(fragment, "BillPayment");
                         }
-                    } else {
-
-                        Bundle bundle = new Bundle();
-                        bundle.putString("response", response);
-                        bundle.putString("clientID", clientId);
-                        // fragment.setArguments(bundle);
-                        bundle.putBoolean("offline", false);
-                        et_clientID.setText("");
-                        navController.navigate(R.id.billPaymentFragment, bundle);
-
-                        // MainActivity.fragmentTransaction(fragment, "BillPayment");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        onFailure(e.getMessage());
                     }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    onFailure(e.getMessage());
                 }
-            }
 
-            @Override
-            public void onFailure(String failureMsg) {
-                Toast.makeText(getActivity(), failureMsg, Toast.LENGTH_SHORT).show();
-                et_clientID.setText("");
-            }
-        });
+                @Override
+                public void onFailure(String failureMsg) {
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getActivity(), failureMsg, Toast.LENGTH_SHORT).show();
+                            et_clientID.setText("");
+                        }
+                    });
+
+                }
+            });
+        }
+
     }
 
     @Override
@@ -628,6 +641,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                         progressDialog.dismiss();
 
                         FinishPendingTransService.goToPayment.setValue(false);
+
 
                     }
 

@@ -47,7 +47,7 @@ public class Utils {
     public static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss";
     public static final String DATE_PATTERN2 = "dd/MM/yyyy";
 
-    private static CompositeDisposable compositeDisposable = new CompositeDisposable();
+    public static CompositeDisposable compositeDisposable = new CompositeDisposable();
 
 
     public static void switchSimCard(int simNo) {

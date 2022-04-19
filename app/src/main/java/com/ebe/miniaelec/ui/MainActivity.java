@@ -102,6 +102,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         disposable = new CompositeDisposable();
 
 
+
         getBaseContext().getResources().updateConfiguration(config,
                 getBaseContext().getResources().getDisplayMetrics());
         setContentView(R.layout.activity_main);
@@ -197,7 +198,7 @@ dataBase= AppDataBase.getInstance(this);
                                    public void accept(Long aLong) throws Throwable {
                                        if ((MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 ||
 
-                                               (isAfterLogin && aLong == 0))) {
+                                               (isAfterLogin && aLong == 0 && Utils.checkConnection(MainActivity.this)))) {
                                            getClientsData();
                                        }
                                    }
@@ -689,7 +690,9 @@ dataBase= AppDataBase.getInstance(this);
     protected void onDestroy() {
         super.onDestroy();
         disposable.dispose();
-        if (observer!=null)
+        if (Utils.compositeDisposable!=null)
+            Utils.compositeDisposable.dispose();
+        if (observer != null)
             observer.dispose();
     }
 }

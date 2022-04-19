@@ -80,7 +80,7 @@ disposable = new CompositeDisposable();
                            {
                                report.setOnlineCashAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CASH.getValue()));
                                report.setOnlineCashCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.CASH.getValue()));
-                           }else if (types.contains(4))
+                           } if (types.contains(4))
                            {
                                report.setOfflineCashAmount(dataBase.reportEntityDaoDao().getTotalAmountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.OFFLINE_CASH.getValue()));
                                report.setOfflineCashCount(dataBase.reportEntityDaoDao().getTotalCountOfPaymentTypeAndDate(date, TransDataEntity.PaymentType.OFFLINE_CASH.getValue()));
@@ -98,7 +98,7 @@ disposable = new CompositeDisposable();
                    }
                },throwable -> {
                    Log.e("total Collected", "onViewCreated: "+ throwable.getLocalizedMessage() );
-               }));
+               } ));
 
 
 

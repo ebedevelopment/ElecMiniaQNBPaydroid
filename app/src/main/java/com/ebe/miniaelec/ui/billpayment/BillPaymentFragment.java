@@ -125,8 +125,13 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                     transData.setStatus(TransDataEntity.STATUS.CANCELLED.getValue());
                 }
                 if (navController != null)
-                   // navController.popBackStack(R.id.mainFragment,true);
-                navController.navigateUp();
+                {
+                    navController.navigateUp();
+                    // navController.popBackStack(R.id.mainFragment,true);
+
+                }
+
+
             }
         });
     }
@@ -158,7 +163,8 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         dataBase.transDataDao().getAllTrans().subscribeOn(Schedulers.io()).subscribe(new Consumer<List<TransDataWithTransBill>>() {
             @Override
             public void accept(List<TransDataWithTransBill> transDataWithTransBills) throws Throwable {
-                Log.e("trans", "accept: "+ transDataWithTransBills.size() );
+               List<TransDataWithTransBill> lst =transDataWithTransBills;
+                Log.e("trans", "accept: "+ transDataWithTransBills.size());
             }
         });
         progressDialog = new SpotsDialog(cntxt, R.style.ProcessingProgress);

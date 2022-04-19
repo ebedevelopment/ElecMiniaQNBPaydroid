@@ -215,18 +215,7 @@ ApiServices {
                     .delay(2000, TimeUnit.MILLISECONDS).subscribe(new DisposableCompletableObserver() {
                 @Override
                 public void onComplete() {
-                    isFirst = false;
-                    if (!Utils.checkConnection(MiniaElectricity.getInstance())) {
-                        if (isView)
-                        {
-                            hideDialog();
-                        }else {
-                            dialogState.postValue(false);
-                        }
-                        if (listener != null)
-                            listener.onFailure("لقد تعذر الوصول للخادم!");
-                    } else
-                        call.enqueue(callback);
+
                 }
 
                 @Override
@@ -240,9 +229,23 @@ ApiServices {
 
                     if (listener != null)
                         listener.onFailure("لقد تعذر الوصول للخادم!");
+
                 }
             });
         }
+
+        isFirst = false;
+        if (!Utils.checkConnection(MiniaElectricity.getInstance())) {
+            if (isView)
+            {
+                hideDialog();
+            }else {
+                dialogState.postValue(false);
+            }
+            if (listener != null)
+                listener.onFailure("لقد تعذر الوصول للخادم!");
+        } else
+            call.enqueue(callback);
 
     }
 
