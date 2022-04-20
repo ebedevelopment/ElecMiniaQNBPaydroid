@@ -185,7 +185,7 @@ public class FinishPendingTransService extends Service {
 
             JsonArray ModelBillPaymentV = new JsonArray();
 
-            dataBase.transBillDao().getTransBillsByTransData(transData.getId())
+            dataBase.transBillDao().getTransBillsByTransData(transData.getClientID())
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .blockingSubscribe(new Consumer<List<TransBillEntity>>() {
@@ -351,7 +351,7 @@ public class FinishPendingTransService extends Service {
                                    }));
 
                             compositeDisposable.add(
-                                    dataBase.transBillDao().getTransBillsByTransData(transData.getId())
+                                    dataBase.transBillDao().getTransBillsByTransData(transData.getClientID())
                                             .subscribeOn(Schedulers.io())
                                             .subscribe(new Consumer<List<TransBillEntity>>() {
                                                 @Override
@@ -403,7 +403,7 @@ public class FinishPendingTransService extends Service {
                             dataBase.transDataDao().updateTransData(transData);
 
                            compositeDisposable.add(
-                                   dataBase.transBillDao().getTransBillsByTransData(transData.getId())
+                                   dataBase.transBillDao().getTransBillsByTransData(transData.getClientID())
                                            .subscribeOn(Schedulers.io())
                                            //.observeOn(AndroidSchedulers.mainThread())
                                            .subscribe(new Consumer<List<TransBillEntity>>() {

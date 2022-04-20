@@ -449,6 +449,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                                                    public void onFinish() {
                                                        //sendCashDRM(false);
                                                        transData.setPrintCount(1);
+
                                                        dataBase.transDataDao().updateTransData(transData);
                                                        //navController.popBackStack();
                                                        navController.navigateUp();
@@ -606,7 +607,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
             dataBase.billDataDaoDao().deleteClientBill(b.getBillUnique());
             long unique = b.getBillUnique();
             b.setBankTransactionID(transData.getBankTransactionID());
-            b.setTransDataId(transDataId);
+            b.setTransDataId(transData.getClientID());
             dataBase.transBillDao().newTransBillAppend(b);
         }
            ClientWithBillData clientWithBillData = dataBase.offlineClientsDao().getClientByClientIdForAdapter(transData.getClientID());
@@ -942,7 +943,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 for (int i = 0; i < cb_bills.length; i++) {
                     if (cb_bills[i].isChecked()) {
                         TransBillEntity transBillEntity = new TransBillEntity(billDetails.get(i));
-                        transBillEntity.setTransDataId(transDataId);
+                        transBillEntity.setTransDataId(transData.getClientID());
                         transBills.add(transBillEntity);
 
                     } else break;

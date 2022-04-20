@@ -10,7 +10,7 @@ import com.google.gson.annotations.SerializedName;
 public class TransBillEntity {
     private int id = 0;
 
-    int transDataId;
+    String transDataId;
 
 
     String bankTransactionID;
@@ -137,7 +137,7 @@ public class TransBillEntity {
         this.faryCode = faryCode;
     }
 
-    public TransBillEntity(int transDataId, String bankTransactionID, long billUnique, int rawNum, double commissionValue, String billDate, double billValue, String clientName) {
+    public TransBillEntity(String transDataId, String bankTransactionID, long billUnique, int rawNum, double commissionValue, String billDate, double billValue, String clientName) {
         this.transDataId = transDataId;
         this.bankTransactionID = bankTransactionID;
         BillUnique = billUnique;
@@ -148,11 +148,11 @@ public class TransBillEntity {
         this.clientName = clientName;
     }
 
-    public int getTransDataId() {
+    public String getTransDataId() {
         return transDataId;
     }
 
-    public void setTransDataId(int transDataId) {
+    public void setTransDataId(String transDataId) {
         this.transDataId = transDataId;
     }
 

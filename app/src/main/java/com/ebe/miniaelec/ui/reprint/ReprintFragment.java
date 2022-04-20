@@ -119,6 +119,7 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
                 .map(response -> {
 
                     transBillEntities.addAll(response.getTransBills());
+                    Log.e("transBills", "reprint: "+transBillEntities.size() );
                     return response.getTransData();
                 })
                 .subscribe(new Consumer<TransDataEntity>() {
@@ -133,6 +134,7 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
                                            navController.popBackStack(R.id.mainFragment, false);
                                        } else {
                                            transDataEntity.setPrintCount(2);
+
 
                                            dataBase.transDataDao().updateTransData(transDataEntity);
                                            new PrintReceipt(requireActivity(), transBillEntities,transDataEntity, new PrintListener() {
@@ -172,7 +174,7 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
                                                        for (int i = 0; i < Objects.requireNonNull(billsData).length(); i++) {
                                                            TransBillEntity bill = new Gson().fromJson(billsData.getJSONObject(i).toString(), TransBillEntity.class);
                                                            billDetails.add(bill);
-                                                           bill.setTransDataId(transData.getId());
+                                                           bill.setTransDataId(transData.getClientID());
                                                        }
 
                                                        int printCount = responseBody.getInt("PrintCount");
