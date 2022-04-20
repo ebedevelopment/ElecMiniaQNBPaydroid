@@ -45,13 +45,13 @@ public interface BillDataDao {
     Flowable<List<String>> getDistinctMntka();
 
     @Query("Select DISTINCT dayCode From BillDataEntity Where mntkaCode = :mntka ")
-    Single<List<String>> getDistinctDaysOfMntka(String mntka);
+    Flowable<List<String>> getDistinctDaysOfMntka(String mntka);
 
     @Query("Select DISTINCT mainCode From BillDataEntity Where mntkaCode = :mntka and dayCode = :day")
-    Single<List<String>> getDistinctMainsOfMntkaAndDay(String mntka, String day);
+    Flowable<List<String>> getDistinctMainsOfMntkaAndDay(String mntka, String day);
 
     @Query("Select DISTINCT faryCode From BillDataEntity Where mntkaCode = :mntka and dayCode = :day and mainCode = :main")
-   Single<List<String>> getDistinctFaryOfMntkaAndDayAndMain(String mntka, String day, String main);
+   Flowable<List<String>> getDistinctFaryOfMntkaAndDayAndMain(String mntka, String day, String main);
 
     @Query("Select * From BillDataEntity Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc  ")
     LiveData<List<BillDataEntity>> getDistinctBills();

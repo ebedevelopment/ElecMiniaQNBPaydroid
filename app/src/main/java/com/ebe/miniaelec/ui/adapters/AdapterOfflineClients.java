@@ -1,135 +1,161 @@
 package com.ebe.miniaelec.ui.adapters;
 
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.data.database.AppDataBase;
 import com.ebe.miniaelec.data.database.entities.BillDataEntity;
 import com.ebe.miniaelec.data.database.entities.ClientWithBillData;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
-public class AdapterOfflineClients extends BaseAdapter {
+public class AdapterOfflineClients extends ListAdapter<BillDataEntity,AdapterOfflineClients.ViewHolder>   {
 
-    public static ViewHolder holder;
-    private final Context context;
-    private final ArrayList<BillDataEntity> rows;
-    private int position;
-    private AppDataBase dataBase;
-    private CompositeDisposable disposable;
 
-    public AdapterOfflineClients(Context c, ArrayList<BillDataEntity> data) {
-        rows = data;
-        context = c;
+    public static BillClickListener billClickListener;
+    private static AppDataBase dataBase;
+    private static CompositeDisposable disposable;
+
+
+
+
+    private AdapterOfflineClients(@NonNull DiffUtil.ItemCallback<BillDataEntity> diffCallback,Context context) {
+        super(diffCallback);
         dataBase = AppDataBase.getInstance(context);
         disposable = new CompositeDisposable();
-    }
-
-
-
-    @Override
-    public int getCount() {
-        return rows.size();
-    }
-
-    @Override
-    public Object getItem(int position) {
-        return position;
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        holder = null;
-        // view = convertView;
-        this.position = position;
-        if (convertView == null) {
-            LayoutInflater inflater = ((Activity) context).getLayoutInflater();
-            convertView = inflater.inflate(R.layout.client_item, parent, false);
-            holder = new ViewHolder();
-
-            holder.main_code = (TextView) convertView.findViewById(R.id.main_code);
-            holder.fary_code = (TextView) convertView.findViewById(R.id.fary_code);
-            holder.client_name = (TextView) convertView.findViewById(R.id.client_name);
-            holder.client_id = (TextView) convertView.findViewById(R.id.client_id);
-            holder.bills_amount = (TextView) convertView.findViewById(R.id.bills_amount);
-            holder.bills_count = (TextView) convertView.findViewById(R.id.bills_count);
-
-            convertView.setTag(holder);
-        } else {
-            holder = (ViewHolder) convertView.getTag();
-        }
-        //  final int temp = (int) getItem(position);
-    //    this.position = (int) getItem(position);
-        setRow();
-        return convertView;
 
     }
 
-    private void setRow() {
-        holder.main_code.setText(rows.get(position).getMainCode());
-        holder.fary_code.setText(rows.get(position).getFaryCode());
-        holder.client_name.setText(rows.get(position).getClientName());
-        holder.client_id.setText(rows.get(position).getClientId());
-
-        ClientWithBillData clientWithBillData =  dataBase.offlineClientsDao().getClientByClientIdForAdapter(rows.get(position).getClientId());
-                List<BillDataEntity> bills = clientWithBillData.getBills();
-        holder.bills_count.setText("ع: " + bills.size());
-        double total = 0;
-        for (BillDataEntity b :
-                bills) {
-            total += b.getBillValue();
-            total += b.getCommissionValue();
-        }
-        holder.bills_amount.setText("ق: " + total);
-
-//       disposable.add(dataBase.offlineClientsDao().getClientByClientId(rows.get(position).getClientId())
-//               .subscribeOn(AndroidSchedulers.mainThread())
-//               .observeOn(AndroidSchedulers.mainThread())
-//               .subscribe(new Consumer<ClientWithBillData>() {
-//                   @Override
-//                   public void accept(ClientWithBillData clientWithBillData) throws Throwable {
-//                       List<BillDataEntity> bills = clientWithBillData.getBills();
-//                       holder.bills_count.setText("ع: " + bills.size());
-//                       double total = 0;
-//                       for (BillDataEntity b :
-//                               bills) {
-//                           total += b.getBillValue();
-//                           total += b.getCommissionValue();
-//                       }
-//                       holder.bills_amount.setText("ق: " + total);
-//                   }
-//               },throwable -> {
-//                   Log.e("offlineClientsAdapter", "setRow: "+throwable.getLocalizedMessage() );
-//               }));
-
-
-
-
-    }
-
-
-    public void disposeOfflineClients()
+    public static AdapterOfflineClients getInstance(Context context)
     {
-        this.disposable.dispose();
+
+        return new AdapterOfflineClients(new AdapterOfflineClients.diffUtil(),context);
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.client_item,parent,false);
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+
+        BillDataEntity bill = getItem(position);
+        holder.bind(bill);
+    }
+
+   public void disposeAdapterDisposable()
+    {
+        disposable.clear();
     }
 
 
-    private static class ViewHolder {
+    public static interface BillClickListener
+    {
+        public abstract void onClick(String id);
+    }
+
+    protected static class ViewHolder extends RecyclerView.ViewHolder {
         TextView main_code, fary_code, client_name, client_id, bills_count, bills_amount;
+        LinearLayout container;
+
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            main_code = itemView.findViewById(R.id.main_code);
+            fary_code = itemView.findViewById(R.id.fary_code);
+            client_name = itemView.findViewById(R.id.client_name);
+            client_id = itemView.findViewById(R.id.client_id);
+            bills_count = itemView.findViewById(R.id.bills_amount);
+            bills_amount = itemView.findViewById(R.id.bills_count);
+            container = itemView.findViewById(R.id.item_container);
+
+        }
+
+        void bind(BillDataEntity billDataEntity)
+        {
+            main_code.setText(billDataEntity.getMainCode());
+           fary_code.setText(billDataEntity.getFaryCode());
+            client_name.setText(billDataEntity.getClientName());
+            client_id.setText(billDataEntity.getClientId());
+            container.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    billClickListener.onClick(billDataEntity.getClientId());
+                }
+            });
+              //mainThreadImpl
+//            ClientWithBillData clientWithBillData =  dataBase.offlineClientsDao().getClientByClientIdForAdapter(billDataEntity.getClientId());
+//            List<BillDataEntity> bills = clientWithBillData.getBills();
+//            bills_count.setText("ع: " + bills.size());
+//            double total = 0;
+//            for (BillDataEntity b :
+//                    bills) {
+//                total += b.getBillValue();
+//                total += b.getCommissionValue();
+//            }
+//            bills_amount.setText("ق: " + total);
+
+
+
+
+            //background Thread impl
+          disposable.add(dataBase.offlineClientsDao().getClientByClientId(billDataEntity.getClientId())
+                  .subscribeOn(Schedulers.computation())
+                  .observeOn(AndroidSchedulers.mainThread())
+                  .subscribe(new Consumer<ClientWithBillData>() {
+                      @Override
+                      public void accept(ClientWithBillData clientWithBillData) throws Throwable {
+                          List<BillDataEntity> bills = clientWithBillData.getBills();
+                          bills_count.setText("ع: " + bills.size());
+                          double total = 0;
+                          for (BillDataEntity b :
+                                  bills) {
+                              total += b.getBillValue();
+                              total += b.getCommissionValue();
+                          }
+                          bills_amount.setText("ق: " + total);
+                      }
+                  },throwable -> {
+                      Log.e("offlineClientsAdapter", "setRow: "+throwable.getLocalizedMessage() );
+                  }));
+
+        }
+    }
+
+    private static class diffUtil extends DiffUtil.ItemCallback<BillDataEntity>
+    {
+
+
+        @Override
+        public boolean areItemsTheSame(@NonNull BillDataEntity oldItem, @NonNull BillDataEntity newItem) {
+            return oldItem.getBillUnique() == newItem.getBillUnique();
+        }
+
+        @SuppressLint("DiffUtilEquals")
+        @Override
+        public boolean areContentsTheSame(@NonNull BillDataEntity oldItem, @NonNull BillDataEntity newItem) {
+            return oldItem.equals(newItem);
+        }
     }
 }

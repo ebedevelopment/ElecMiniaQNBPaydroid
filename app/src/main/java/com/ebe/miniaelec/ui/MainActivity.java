@@ -618,16 +618,12 @@ dataBase= AppDataBase.getInstance(this);
                        int finalI = i;
                        long added = dataBase.offlineClientsDao().addOfflineClient(client);
                        JSONArray billsData = ModelSerialNoV.getJSONObject(finalI).optJSONArray("ModelBillInquiryV");
-                       // ArrayList<BillDetails> billDetails = new ArrayList<>();
                        for (int j = 0; j < billsData.length(); j++) {
                            BillDataEntity bill = new Gson().fromJson(billsData.getJSONObject(j).toString(), BillDataEntity.class);
-                           long billUnique = bill.getBillUnique();
                            bill.setClient(client.getId());
                            bill.setClientId(client.getSerialNo());
                            if (added >= 0 && (bill.getMainCode() != null && bill.getMntkaCode() != null && bill.getDayCode() != null && bill.getFaryCode() != null)) {
 
-
-                               billUnique = bill.getBillUnique();
                                dataBase.billDataDaoDao().newOfflineBillAppend(bill);
 
 
@@ -644,7 +640,7 @@ dataBase= AppDataBase.getInstance(this);
 
 
            }
-       }).subscribeOn(Schedulers.io())
+       }).subscribeOn(Schedulers.computation())
               .observeOn(AndroidSchedulers.mainThread())
                .subscribeWith(new DisposableCompletableObserver() {
                    @Override
@@ -679,10 +675,6 @@ dataBase= AppDataBase.getInstance(this);
         MiniaElectricity.getPrefsManager().setOfflineBillCount(0);
         MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
         progressDialog.dismiss();
-       // navController.navigate(R.id.mainFragment);
-
-
-
 
     }
 

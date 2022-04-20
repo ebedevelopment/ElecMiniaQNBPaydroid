@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
     <LinearLayout
@@ -190,12 +191,14 @@
             android:textSize="20sp" />
     </LinearLayout>
 
-    <ListView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/clients"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/activity_medium_margin"
         android:layout_marginTop="@dimen/activity_medium_margin"
         android:layout_marginEnd="@dimen/activity_medium_margin"
-        android:dividerHeight="2dp" />
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+
+        />
 </LinearLayout>

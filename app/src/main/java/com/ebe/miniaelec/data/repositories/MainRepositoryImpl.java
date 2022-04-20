@@ -86,21 +86,21 @@ public class MainRepositoryImpl implements MainRepository {
     }
 
     @Override
-    public Single<List<String>> getDistinctDaysOfMntka(String mntka) {
+    public Flowable<List<String>> getDistinctDaysOfMntka(String mntka) {
         return dataBase.billDataDaoDao().getDistinctDaysOfMntka(mntka)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
     @Override
-    public Single<List<String>> getDistinctMainsOfMntkaAndDay(String mntka, String day) {
+    public Flowable<List<String>> getDistinctMainsOfMntkaAndDay(String mntka, String day) {
         return dataBase.billDataDaoDao().getDistinctMainsOfMntkaAndDay(mntka, day)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
     @Override
-    public Single<List<String>> getDistinctFaryOfMntkaAndDayAndMain(String mntka, String day, String main) {
+    public Flowable<List<String>> getDistinctFaryOfMntkaAndDayAndMain(String mntka, String day, String main) {
         return dataBase.billDataDaoDao().getDistinctFaryOfMntkaAndDayAndMain(mntka, day, main)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());

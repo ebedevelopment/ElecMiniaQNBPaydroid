@@ -25,9 +25,9 @@ public interface MainRepository {
     //BillData
    // void newOfflineBillAppend(BillDataEntity bill);
     Flowable<List<String>> getDistinctMntka();
-    Single<List<String>> getDistinctDaysOfMntka(String mntka);
-    Single<List<String>> getDistinctMainsOfMntkaAndDay(String mntka, String day);
-    Single<List<String>> getDistinctFaryOfMntkaAndDayAndMain(String mntka, String day, String main);
+    Flowable<List<String>> getDistinctDaysOfMntka(String mntka);
+    Flowable<List<String>> getDistinctMainsOfMntkaAndDay(String mntka, String day);
+    Flowable<List<String>> getDistinctFaryOfMntkaAndDayAndMain(String mntka, String day, String main);
     LiveData<List<BillDataEntity>> getDistinctBills();
     Single<List<BillDataEntity>> getDistinctBillsOfMntka(String mntka);
     Single<List<BillDataEntity>> getDistinctBillsByMntkaAndDay(String mntka, String day);
