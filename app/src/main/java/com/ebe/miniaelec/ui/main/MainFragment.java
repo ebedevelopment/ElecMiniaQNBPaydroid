@@ -184,55 +184,11 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
         view.findViewById(R.id.start).setOnClickListener(this);
         setClientList();
 
-//        lv_clients.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                selectedClient = position;
-//                clientId = offlineBills.get(position).getClientId();
-//
-//                if (Utils.checkConnection(requireActivity())) {
-//
-//                    if (!MiniaElectricity.getPrefsManager().isLoggedIn()) {
-//                        requireActivity().finish();
-//                    }
-//
-//
-//                    if (progressDialog != null) {
-//
-//                        progressDialog.show();
-//                    }
-//
-//                    Log.d("Pressed", "onItemClick: clicked ");
-//
-//                    requireActivity().startService(new Intent(requireContext(), FinishPendingTransService.class));
-//                } else {
-//                    Bundle bundle = new Bundle();
-//                    bundle.putString("clientID", clientId);
-//                    bundle.putBoolean("offline", true);
-//                    et_clientID.setText("");
-//                    navController.navigate(R.id.billPaymentFragment, bundle);
-//
-//                }
-//            }
-//        });
         sp_mntka = view.findViewById(R.id.mntka);
         sp_day = view.findViewById(R.id.day);
         sp_main = view.findViewById(R.id.main_code);
         sp_fary = view.findViewById(R.id.fary_code);
 
-
-//       compositeDisposable.add(dataBase.billDataDaoDao().getDistinctMntka()
-//               .subscribeOn(Schedulers.io())
-//               .observeOn(AndroidSchedulers.mainThread())
-//               .subscribe(new Consumer<List<String>>() {
-//                   @Override
-//                   public void accept(List<String> strings) throws Throwable {
-//                       if (strings != null)
-//
-//                   }
-//               },throwable -> {
-//                   Log.e("getDistinctMntka", "onViewCreated: "+throwable.getLocalizedMessage() );
-//               }));
 
         viewModel.getMntkaList();
 
@@ -268,6 +224,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
 
                     //viewModel.filterByMantka(mntakaList.get(selectesMntka));
                     filterByMntka();
+                    getDistinctDaysOfMntka();
 
                 } else {
 
@@ -291,7 +248,11 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                 if (position != 0) {
                     selectedDay = position;
                     if (dayList.size() > 1)
+                    {
                         filterByDay();
+                        getDistinctMains();
+                    }
+
                 }
             }
 
@@ -304,9 +265,11 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
+
                 if (position != 0) {
                     selectedMain = position;
                     filterByMain();
+                    getDistictFaryList();
                 }
             }
 
@@ -439,7 +402,6 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
     @Override
     public void onResume() {
         super.onResume();
-        offlineClientsAdapter.notifyDataSetChanged();
         if (clientId != null && !clientId.isEmpty()) {
 
         }
@@ -706,6 +668,11 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                     Log.e("filterByMntka", "filterByMntka: " + throwable.getLocalizedMessage());
                 }));
 
+
+    }
+
+    void getDistinctDaysOfMntka()
+    {
         dayList = new ArrayList<>();
         dayList.add(getString(R.string.daily));
         compositeDisposable.add(dataBase.billDataDaoDao().getDistinctDaysOfMntka(mntakaList.get(selectesMntka))
@@ -731,20 +698,6 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                 }, throwable -> {
                     Log.e("filterByMntka", "filterByMntka: " + throwable.getLocalizedMessage());
                 }));
-
-        mainList = new ArrayList<>();
-        mainList.add(getString(R.string.main_code));
-        ArrayAdapter<String> mainAdapter = new ArrayAdapter<>(getActivity(),
-                android.R.layout.simple_spinner_dropdown_item, mainList);
-        mainAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sp_main.setAdapter(mainAdapter);
-        faryList = new ArrayList<>();
-        faryList.add(getString(R.string.fary_code));
-        ArrayAdapter<String> faryAdapter = new ArrayAdapter<>(getActivity(),
-                android.R.layout.simple_spinner_dropdown_item, faryList);
-        faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sp_fary.setAdapter(faryAdapter);
-
     }
 
     private void filterByMntkaIfPosZero() {
@@ -761,33 +714,47 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
             }
         });
 
-        dayList = new ArrayList<>();
-        mainList = new ArrayList<>();
-        faryList = new ArrayList<>();
+        selectesMntka = 0;
+
+        resetDaysList();
+        resetMainList();
+        resetFary();
+
+
+
+    }
+
+    void resetDaysList()
+    {
+        selectedDay = 0;
         dayList = new ArrayList<>();
         dayList.add(getString(R.string.daily));
-        selectedDay = 0;
-        selectedMain = 0;
-        selectesMntka = 0;
-        selectedFary = 0;
-
         ArrayAdapter<String> daysAdapter = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_dropdown_item, dayList);
         daysAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sp_day.setAdapter(daysAdapter);
+    }
+
+    void resetMainList()
+    {
+        selectedMain = 0;
         mainList = new ArrayList<>();
         mainList.add(getString(R.string.main_code));
         ArrayAdapter<String> mainAdapter = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_dropdown_item, mainList);
         mainAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sp_main.setAdapter(mainAdapter);
+    }
+
+    void resetFary()
+    {
+        selectedFary = 0;
         faryList = new ArrayList<>();
         faryList.add(getString(R.string.fary_code));
         ArrayAdapter<String> faryAdapter = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_dropdown_item, faryList);
         faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sp_fary.setAdapter(faryAdapter);
-
     }
 
     void filterByDay() {
@@ -811,6 +778,10 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                 }));
 
 
+    }
+
+    void getDistinctMains()
+    {
         mainList = new ArrayList<>();
         mainList.add(getString(R.string.main_code));
         compositeDisposable.add(dataBase.billDataDaoDao().getDistinctMainsOfMntkaAndDay(mntakaList.get(selectesMntka), dayList.get(selectedDay))
@@ -831,16 +802,6 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                 }, throwable -> {
                     Log.e("filterByDay", "filterByDay: " + throwable.getLocalizedMessage());
                 }));
-
-
-        faryList = new ArrayList<>();
-        faryList.add(getString(R.string.fary_code));
-        ArrayAdapter<String> faryAdapter = new ArrayAdapter<>(requireActivity(),
-                android.R.layout.simple_spinner_dropdown_item, faryList);
-        faryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sp_fary.setAdapter(faryAdapter);
-
-
     }
 
     void filterByMain() {
@@ -864,6 +825,10 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                 }));
 
 
+    }
+
+    void getDistictFaryList()
+    {
         faryList = new ArrayList<>();
         faryList.add(getString(R.string.fary_code));
 
@@ -885,8 +850,6 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                 }, throwable -> {
                     Log.e("filterByMain", "filterByMain: " + throwable.getLocalizedMessage());
                 }));
-
-
     }
 
     void filterByFary() {
