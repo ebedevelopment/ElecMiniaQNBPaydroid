@@ -2,6 +2,7 @@ package com.ebe.miniaelec.data.database.daos;
 
 
 import androidx.lifecycle.LiveData;
+import androidx.paging.PagingSource;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
@@ -55,6 +56,9 @@ public interface BillDataDao {
 
     @Query("Select * From BillDataEntity Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc  ")
     LiveData<List<BillDataEntity>> getDistinctBills();
+
+    @Query("Select * From BillDataEntity Group by faryCode ,clientName, mainCode,clientId Order by mainCode Asc  ")
+    PagingSource<Integer,BillDataEntity> getDistinctBillsPaged();
 
 
     @Query("Select * From BillDataEntity Where mntkaCode = :mntka Group by faryCode ,clientName, mainCode,clientId")

@@ -5,7 +5,12 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.paging.Pager;
+import androidx.paging.PagingConfig;
+import androidx.paging.PagingData;
+import androidx.paging.PagingLiveData;
 
 import com.ebe.miniaelec.data.database.AppDataBase;
 import com.ebe.miniaelec.data.database.entities.BillDataEntity;
@@ -76,6 +81,14 @@ public class MainFragmentViewModel extends AndroidViewModel {
        }));
     }
 
+    public LiveData<PagingData<BillDataEntity>> getPagedBillsData()
+    {
+        Pager<Integer,BillDataEntity> pager = new Pager<>(new PagingConfig(50, 20, false, 80, PagingConfig.MAX_SIZE_UNBOUNDED), () -> repository.getPagedBills());
+        return PagingLiveData.getLiveData(pager);
+
+
+
+    }
 
     @Override
     protected void onCleared() {

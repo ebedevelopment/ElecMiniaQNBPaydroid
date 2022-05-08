@@ -5,6 +5,7 @@ import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.paging.PagingSource;
 
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.data.database.AppDataBase;
@@ -109,6 +110,11 @@ public class MainRepositoryImpl implements MainRepository {
     @Override
     public LiveData<List<BillDataEntity>> getDistinctBills() {
         return dataBase.billDataDaoDao().getDistinctBills();
+    }
+
+    @Override
+    public PagingSource<Integer, BillDataEntity> getPagedBills() {
+        return dataBase.billDataDaoDao().getDistinctBillsPaged();
     }
 
     @Override

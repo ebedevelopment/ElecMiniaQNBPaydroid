@@ -29,6 +29,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
+import androidx.paging.PagingData;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.transition.TransitionInflater;
 
@@ -49,6 +50,7 @@ import com.ebe.miniaelec.data.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
 import com.ebe.miniaelec.ui.adapters.AdapterOfflineClients;
+import com.ebe.miniaelec.ui.adapters.PagingClientsAdapter;
 import com.ebe.miniaelec.ui.login.LoginActivity;
 import com.ebe.miniaelec.ui.services.FinishPendingTransService;
 import com.ebe.miniaelec.utils.Utils;
@@ -66,7 +68,7 @@ import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 
-public class MainFragment extends Fragment implements View.OnClickListener,AdapterOfflineClients.BillClickListener {
+public class MainFragment extends Fragment implements View.OnClickListener,AdapterOfflineClients.BillClickListener,PagingClientsAdapter.BillClickListener {
 
 
     EditText et_clientID, et_clientName;
@@ -87,6 +89,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
     private SpotsDialog progressDialog;
     public ITransAPI transAPI;
     ArrayAdapter<String> daysAdapter;
+    PagingClientsAdapter pagingAdapter;
 
     ArrayList<TransDataEntity> pendingTransData;
 
@@ -155,6 +158,8 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
         offlineClientsAdapter = AdapterOfflineClients.getInstance(this.requireActivity());
         AdapterOfflineClients.billClickListener = this;
         offlineClientsAdapter.submitList(offlineBills);
+        pagingAdapter = PagingClientsAdapter.getInstance(this.requireActivity());
+        PagingClientsAdapter.billClickListener = this;
 
         transAPI = TransAPIFactory.createTransAPI();
         progressDialog = new SpotsDialog(requireContext(), R.style.ProcessingProgress);
@@ -634,14 +639,24 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
         offlineBills = new ArrayList<>();
         progressDialog.show();
 
-        dataBase.billDataDaoDao().getDistinctBills().observe(getViewLifecycleOwner(), new Observer<List<BillDataEntity>>() {
+//        dataBase.billDataDaoDao().getDistinctBills().observe(getViewLifecycleOwner(), new Observer<List<BillDataEntity>>() {
+//            @Override
+//            public void onChanged(List<BillDataEntity> billDataEntities) {
+//                offlineBills.clear();
+//                offlineBills.addAll(billDataEntities);
+//                offlineClientsAdapter = AdapterOfflineClients.getInstance(MainFragment.this.requireActivity());
+//                offlineClientsAdapter.submitList(offlineBills);
+//                lv_clients.setAdapter(offlineClientsAdapter);
+//                progressDialog.dismiss();
+//            }
+//        });
+
+        viewModel.getPagedBillsData().observe(getViewLifecycleOwner(), new Observer<PagingData<BillDataEntity>>() {
             @Override
-            public void onChanged(List<BillDataEntity> billDataEntities) {
-                offlineBills.clear();
-                offlineBills.addAll(billDataEntities);
-                offlineClientsAdapter = AdapterOfflineClients.getInstance(MainFragment.this.requireActivity());
-                offlineClientsAdapter.submitList(offlineBills);
-                lv_clients.setAdapter(offlineClientsAdapter);
+            public void onChanged(PagingData<BillDataEntity> billDataEntityPagingData) {
+                PagingClientsAdapter pagingClientsAdapter = PagingClientsAdapter.getInstance(MainFragment.this.requireActivity());
+                pagingClientsAdapter.submitData(MainFragment.this.getLifecycle(),billDataEntityPagingData);
+                lv_clients.setAdapter(pagingClientsAdapter);
                 progressDialog.dismiss();
             }
         });
@@ -703,14 +718,25 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
     private void filterByMntkaIfPosZero() {
 
 
-        dataBase.billDataDaoDao().getDistinctBills().observe(getViewLifecycleOwner(), new Observer<List<BillDataEntity>>() {
+//        dataBase.billDataDaoDao().getDistinctBills().observe(getViewLifecycleOwner(), new Observer<List<BillDataEntity>>() {
+//            @Override
+//            public void onChanged(List<BillDataEntity> billDataEntities) {
+//                offlineBills.clear();
+//                offlineBills.addAll(billDataEntities);
+//                offlineClientsAdapter = AdapterOfflineClients.getInstance(MainFragment.this.requireActivity());
+//                offlineClientsAdapter.submitList(offlineBills);
+//                lv_clients.setAdapter(offlineClientsAdapter);
+//            }
+//        });
+
+        viewModel.getPagedBillsData().observe(getViewLifecycleOwner(), new Observer<PagingData<BillDataEntity>>() {
             @Override
-            public void onChanged(List<BillDataEntity> billDataEntities) {
+            public void onChanged(PagingData<BillDataEntity> billDataEntityPagingData) {
                 offlineBills.clear();
-                offlineBills.addAll(billDataEntities);
-                offlineClientsAdapter = AdapterOfflineClients.getInstance(MainFragment.this.requireActivity());
-                offlineClientsAdapter.submitList(offlineBills);
-                lv_clients.setAdapter(offlineClientsAdapter);
+                //offlineBills.addAll(billDataEntityPagingData.);
+                PagingClientsAdapter pagingClientsAdapter = PagingClientsAdapter.getInstance(MainFragment.this.requireActivity());
+                pagingClientsAdapter.submitData(MainFragment.this.getLifecycle(),billDataEntityPagingData );
+                lv_clients.setAdapter(pagingClientsAdapter);
             }
         });
 

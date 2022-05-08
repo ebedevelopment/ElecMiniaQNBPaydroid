@@ -1,6 +1,7 @@
 package com.ebe.miniaelec.domain;
 
 import androidx.lifecycle.LiveData;
+import androidx.paging.PagingSource;
 
 import com.ebe.miniaelec.data.database.entities.BillDataEntity;
 import com.ebe.miniaelec.data.database.entities.TransDataEntity;
@@ -29,6 +30,7 @@ public interface MainRepository {
     Flowable<List<String>> getDistinctMainsOfMntkaAndDay(String mntka, String day);
     Flowable<List<String>> getDistinctFaryOfMntkaAndDayAndMain(String mntka, String day, String main);
     LiveData<List<BillDataEntity>> getDistinctBills();
+    PagingSource<Integer,BillDataEntity> getPagedBills();
     Single<List<BillDataEntity>> getDistinctBillsOfMntka(String mntka);
     Single<List<BillDataEntity>> getDistinctBillsByMntkaAndDay(String mntka, String day);
     Single<List<BillDataEntity>> getDistinctBillsByMntkaDayAndMain(String mntka, String day, String main);
