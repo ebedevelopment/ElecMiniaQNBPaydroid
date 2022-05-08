@@ -123,13 +123,14 @@ public class DBHelper {
 
     }
 
-    public void newOfflineBillAppend(BillData bill) {
+    public boolean newOfflineBillAppend(BillData bill) {
         try {
             RuntimeExceptionDao<BillData, Integer> dao = getClientBillsDataDao();
-            dao.create(bill);
+            return dao.create(bill) == 1;
             //Log.e(TAG, "create " + dao.create(bill));
         } catch (RuntimeException e) {
             e.printStackTrace();
+            return false;
         }
     }
 

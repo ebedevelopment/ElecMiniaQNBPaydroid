@@ -10,7 +10,7 @@ android {
         applicationId "com.ebe.miniaelec"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 30 // next test version 25, production 23
+        versionCode 32 // next test version 25, production 23
         versionName String.format("1.0.%02d", versionCode) + "." + releaseTime()
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }

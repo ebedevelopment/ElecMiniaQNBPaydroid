@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -148,7 +149,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         @Override
                         public void onSuccess(String response) {
                             try {
-                                //Log.e("response", response);
+                                Log.e("response", response);
                                 JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
                                 String UserSessionID = responseBody.optString("UserSessionID").trim();
                                 String Error = responseBody.optString("Error").trim();
