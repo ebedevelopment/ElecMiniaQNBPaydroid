@@ -92,10 +92,12 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
     PagingClientsAdapter pagingAdapter;
 
     ArrayList<TransDataEntity> pendingTransData;
+    boolean dataState = false;
+    boolean lateDataState = false;
 
     int index = 0;
 
-    MainFragmentViewModel viewModel;
+    MainViewModel viewModel;
 
 
     public MainFragment() {
@@ -132,7 +134,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                              Bundle savedInstanceState) {
 
 
-        viewModel = new ViewModelProvider(requireActivity(), new MainViewModelFactory(requireActivity().getApplication())).get(MainFragmentViewModel.class);
+        viewModel = new ViewModelProvider(requireActivity(), new MainViewModelFactory(requireActivity().getApplication())).get(MainViewModel.class);
 
 
         // Inflate the layout for this fragment
@@ -187,7 +189,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
             }
         });
         view.findViewById(R.id.start).setOnClickListener(this);
-        setClientList();
+       // setClientList();
 
         sp_mntka = view.findViewById(R.id.mntka);
         sp_day = view.findViewById(R.id.day);
@@ -233,7 +235,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
 
                 } else {
 
-
+                    if (lateDataState)
                     filterByMntkaIfPosZero();
                 }
 
@@ -273,8 +275,12 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
 
                 if (position != 0) {
                     selectedMain = position;
-                    filterByMain();
-                    getDistictFaryList();
+                    if (mainList.size() > 1)
+                    {
+                        filterByMain();
+                        getDistictFaryList();
+                    }
+
                 }
             }
 
@@ -290,7 +296,11 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
 
                 if (position != 0) {
                     selectedFary = position;
-                    filterByFary();
+                    if (faryList.size() >1)
+                    {
+                        filterByFary();
+                    }
+
 
                 }
             }
@@ -602,6 +612,35 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                 }
             }
         });
+
+        viewModel.insertionState.observe(getViewLifecycleOwner(), new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                dataState = aBoolean;
+                if (dataState)
+                {
+                    setClientList();
+                    viewModel.PostInsertionState.setValue(true);
+                    viewModel.insertionState.setValue(false);
+                }
+
+
+
+            }
+        });
+
+        viewModel.PostInsertionState.observe(getViewLifecycleOwner(), new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                lateDataState = aBoolean;
+                if (lateDataState)
+                {
+                    setClientList();
+                    viewModel.PostInsertionState.removeObservers(getViewLifecycleOwner());
+                }
+
+            }
+        });
     }
 
 
@@ -637,7 +676,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
     void setClientList() {
 
         offlineBills = new ArrayList<>();
-        progressDialog.show();
+
 
 //        dataBase.billDataDaoDao().getDistinctBills().observe(getViewLifecycleOwner(), new Observer<List<BillDataEntity>>() {
 //            @Override
@@ -651,15 +690,34 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
 //            }
 //        });
 
-        viewModel.getPagedBillsData().observe(getViewLifecycleOwner(), new Observer<PagingData<BillDataEntity>>() {
-            @Override
-            public void onChanged(PagingData<BillDataEntity> billDataEntityPagingData) {
-                PagingClientsAdapter pagingClientsAdapter = PagingClientsAdapter.getInstance(MainFragment.this.requireActivity());
-                pagingClientsAdapter.submitData(MainFragment.this.getLifecycle(),billDataEntityPagingData);
-                lv_clients.setAdapter(pagingClientsAdapter);
-                progressDialog.dismiss();
-            }
-        });
+//        viewModel.getPagedBillsData().observe(getViewLifecycleOwner(), new Observer<PagingData<BillDataEntity>>() {
+//            @Override
+//            public void onChanged(PagingData<BillDataEntity> billDataEntityPagingData) {
+//                pagingAdapter = PagingClientsAdapter.getInstance(MainFragment.this.requireActivity());
+//                pagingAdapter.submitData(MainFragment.this.getLifecycle(),billDataEntityPagingData);
+//                    progressDialog.dismiss();
+//                lv_clients.setAdapter(pagingAdapter);
+//
+//
+//            }
+//        });
+
+        progressDialog.show();
+        compositeDisposable.add(viewModel.getPagedBillsData().subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<PagingData<BillDataEntity>>() {
+                    @Override
+                    public void accept(PagingData<BillDataEntity> billDataEntityPagingData) throws Throwable {
+                        offlineBills.clear();
+                        pagingAdapter = PagingClientsAdapter.getInstance(MainFragment.this.requireActivity());
+                        pagingAdapter.submitData(MainFragment.this.getLifecycle(),billDataEntityPagingData );
+
+
+                        lv_clients.setAdapter(pagingAdapter);
+                        progressDialog.dismiss();
+
+                    }
+                }));
 
     }
 
@@ -729,16 +787,22 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
 //            }
 //        });
 
-        viewModel.getPagedBillsData().observe(getViewLifecycleOwner(), new Observer<PagingData<BillDataEntity>>() {
-            @Override
-            public void onChanged(PagingData<BillDataEntity> billDataEntityPagingData) {
-                offlineBills.clear();
-                //offlineBills.addAll(billDataEntityPagingData.);
-                PagingClientsAdapter pagingClientsAdapter = PagingClientsAdapter.getInstance(MainFragment.this.requireActivity());
-                pagingClientsAdapter.submitData(MainFragment.this.getLifecycle(),billDataEntityPagingData );
-                lv_clients.setAdapter(pagingClientsAdapter);
-            }
-        });
+        progressDialog.show();
+        compositeDisposable.add(viewModel.getPagedBillsData().subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<PagingData<BillDataEntity>>() {
+                    @Override
+                    public void accept(PagingData<BillDataEntity> billDataEntityPagingData) throws Throwable {
+                        offlineBills.clear();
+                        pagingAdapter = PagingClientsAdapter.getInstance(MainFragment.this.requireActivity());
+                        pagingAdapter.submitData(MainFragment.this.getLifecycle(),billDataEntityPagingData );
+
+
+                        lv_clients.setAdapter(pagingAdapter);
+                        progressDialog.dismiss();
+
+                    }
+                }));
 
         selectesMntka = 0;
 

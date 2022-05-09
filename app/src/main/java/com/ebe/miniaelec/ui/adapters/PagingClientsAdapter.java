@@ -2,6 +2,7 @@ package com.ebe.miniaelec.ui.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,7 +21,10 @@ import com.ebe.miniaelec.data.database.entities.ClientWithBillData;
 
 import java.util.List;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class PagingClientsAdapter extends PagingDataAdapter<BillDataEntity, PagingClientsAdapter.ViewHolder> {
 
@@ -100,41 +104,41 @@ public class PagingClientsAdapter extends PagingDataAdapter<BillDataEntity, Pagi
                 }
             });
             //mainThreadImpl
-            ClientWithBillData clientWithBillData =  dataBase.offlineClientsDao().getClientByClientIdForAdapter(billDataEntity.getClientId());
-            List<BillDataEntity> bills = clientWithBillData.getBills();
-            bills_count.setText("ع: " + bills.size());
-            double total = 0;
-            for (BillDataEntity b :
-                    bills) {
-                total += b.getBillValue();
-                total += b.getCommissionValue();
-            }
-            bills_amount.setText("ق: " + total);
+//            ClientWithBillData clientWithBillData =  dataBase.offlineClientsDao().getClientByClientIdForAdapter(billDataEntity.getClientId());
+//            List<BillDataEntity> bills = clientWithBillData.getBills();
+//            bills_count.setText("ع: " + bills.size());
+//            double total = 0;
+//            for (BillDataEntity b :
+//                    bills) {
+//                total += b.getBillValue();
+//                total += b.getCommissionValue();
+//            }
+//            bills_amount.setText("ق: " + total);
 
 
 
 
             //background Thread impl
-//          disposable.add(dataBase.offlineClientsDao().getClientByClientId(billDataEntity.getClientId())
-//                  .subscribeOn(Schedulers.computation())
-//                  .observeOn(AndroidSchedulers.mainThread())
-//                  .subscribe(new Consumer<ClientWithBillData>() {
-//                      @Override
-//                      public void accept(ClientWithBillData clientWithBillData) throws Throwable {
-//                          List<BillDataEntity> bills = clientWithBillData.getBills();
-//                          bills_count.setText("ع: " + bills.size());
-//                          double total = 0;
-//                          for (BillDataEntity b :
-//                                  bills) {
-//                              total += b.getBillValue();
-//                              total += b.getCommissionValue();
-//                          }
-//                          bills_amount.setText("ق: " + total);
-//                      }
-//                  },throwable -> {
-//                      Log.e("offlineClientsAdapter", "setRow: "+throwable.getLocalizedMessage() );
-//                  }));
-//
+          disposable.add(dataBase.offlineClientsDao().getClientByClientId(billDataEntity.getClientId())
+                  .subscribeOn(Schedulers.computation())
+                  .observeOn(AndroidSchedulers.mainThread())
+                  .subscribe(new Consumer<ClientWithBillData>() {
+                      @Override
+                      public void accept(ClientWithBillData clientWithBillData) throws Throwable {
+                          List<BillDataEntity> bills = clientWithBillData.getBills();
+                          bills_count.setText("ع: " + bills.size());
+                          double total = 0;
+                          for (BillDataEntity b :
+                                  bills) {
+                              total += b.getBillValue();
+                              total += b.getCommissionValue();
+                          }
+                          bills_amount.setText("ق: " + total);
+                      }
+                  },throwable -> {
+                      Log.e("offlineClientsAdapter", "setRow: "+throwable.getLocalizedMessage() );
+                  }));
+
         }
     }
 

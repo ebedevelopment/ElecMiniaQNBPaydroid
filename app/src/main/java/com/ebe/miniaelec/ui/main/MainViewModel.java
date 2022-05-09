@@ -5,12 +5,11 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.paging.Pager;
 import androidx.paging.PagingConfig;
 import androidx.paging.PagingData;
-import androidx.paging.PagingLiveData;
+import androidx.paging.rxjava3.PagingRx;
 
 import com.ebe.miniaelec.data.database.AppDataBase;
 import com.ebe.miniaelec.data.database.entities.BillDataEntity;
@@ -21,14 +20,17 @@ import com.ebe.miniaelec.domain.MainRepository;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.functions.Consumer;
 
-public class MainFragmentViewModel extends AndroidViewModel {
+public class MainViewModel extends AndroidViewModel {
 
    public Integer mntka,day,main,fary = 0;
    MutableLiveData<List<String>> mntkas = new MutableLiveData<>(new ArrayList<>());
    MutableLiveData<List<BillDataEntity>> offlineBills = new MutableLiveData<>(new ArrayList<>());
+   public MutableLiveData<Boolean> insertionState = new MutableLiveData<>(false);
+    public MutableLiveData<Boolean> PostInsertionState = new MutableLiveData<>(false);
     private AppDataBase dataBase;
     private ApiServices services;
     private MainRepository repository;
@@ -36,7 +38,7 @@ public class MainFragmentViewModel extends AndroidViewModel {
 
 
 
-    public MainFragmentViewModel(@NonNull Application application) {
+    public MainViewModel(@NonNull Application application) {
         super(application);
         this.dataBase = AppDataBase.getInstance(application);
         this.services = new ApiServices(application,false);
@@ -81,10 +83,10 @@ public class MainFragmentViewModel extends AndroidViewModel {
        }));
     }
 
-    public LiveData<PagingData<BillDataEntity>> getPagedBillsData()
+    public Flowable<PagingData<BillDataEntity>> getPagedBillsData()
     {
-        Pager<Integer,BillDataEntity> pager = new Pager<>(new PagingConfig(50, 20, false, 80, PagingConfig.MAX_SIZE_UNBOUNDED), () -> repository.getPagedBills());
-        return PagingLiveData.getLiveData(pager);
+        Pager<Integer,BillDataEntity> pager = new Pager<>(new PagingConfig(50, 20, false, 80, 90), () -> repository.getPagedBills());
+        return PagingRx.getFlowable(pager);
 
 
 
@@ -95,4 +97,6 @@ public class MainFragmentViewModel extends AndroidViewModel {
         super.onCleared();
         disposable.dispose();
     }
+
+
 }

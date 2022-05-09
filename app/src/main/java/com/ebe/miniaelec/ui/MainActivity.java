@@ -27,6 +27,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentOnAttachListener;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
 import androidx.navigation.fragment.NavHostFragment;
@@ -51,6 +52,8 @@ import com.ebe.miniaelec.data.http.RequestListener;
 import com.ebe.miniaelec.data.print.PrintListener;
 import com.ebe.miniaelec.data.print.PrintReceipt;
 import com.ebe.miniaelec.ui.login.LoginActivity;
+import com.ebe.miniaelec.ui.main.MainViewModel;
+import com.ebe.miniaelec.ui.main.MainViewModelFactory;
 import com.ebe.miniaelec.ui.services.FinishPendingTransService;
 import com.ebe.miniaelec.utils.Utils;
 import com.google.android.material.navigation.NavigationView;
@@ -92,6 +95,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private AppDataBase dataBase;
     CompositeDisposable disposable;
     DisposableCompletableObserver observer;
+    MainViewModel viewModel;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Configuration config = new Configuration();
         config.locale = loc;
         disposable = new CompositeDisposable();
+        viewModel = new ViewModelProvider(this, new MainViewModelFactory(this.getApplication())).get(MainViewModel.class);
 
 
 
@@ -200,6 +206,9 @@ dataBase= AppDataBase.getInstance(this);
 
                                                (isAfterLogin && aLong == 0 && Utils.checkConnection(MainActivity.this)))) {
                                            getClientsData();
+                                       }else
+                                       {
+                                           viewModel.PostInsertionState.setValue(true);
                                        }
                                    }
                                },throwable -> {
@@ -468,6 +477,15 @@ dataBase= AppDataBase.getInstance(this);
                     JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
                     String Error = responseBody.optString("Error").trim();
                     String InquiryID = responseBody.optString("InquiryID").trim();
+                    JSONArray ModelSerialNoV = responseBody.optJSONArray("ModelSerialNoV");
+                    int totalBills = 0;
+                    if (ModelSerialNoV != null)
+                    {
+                        for (int i = 0; i < ModelSerialNoV.length(); i++) {
+                            totalBills += Objects.requireNonNull(ModelSerialNoV.getJSONObject(i).optJSONArray("ModelBillInquiryV")).length();
+                        }
+                    }
+
                     if (!Error.isEmpty()) {
                         onFailure("فشل في تحميل بيانات المشتركين!\n" + Error);
                         if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول") || Error.contains("ليس لديك صلاحيات الوصول للهندسه")) {
@@ -477,7 +495,15 @@ dataBase= AppDataBase.getInstance(this);
                         }
                     } else if (!InquiryID.isEmpty()) {
                         MiniaElectricity.getPrefsManager().setInquiryID(InquiryID);
-                         insertInDB(responseBody);
+                        if (responseBody.getInt("BillCount") == totalBills)
+                        {
+                            insertInDB(responseBody);
+                        }else
+                        {
+
+                            onFailure("فشل في تحميل بيانات المشتركين!");
+                        }
+
                     } else onFailure("فشل في تحميل بيانات المشتركين!");
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -646,6 +672,7 @@ dataBase= AppDataBase.getInstance(this);
                    @Override
                    public void onComplete() {
                        postDataInsertion(responseBody,progressDialog);
+                       viewModel.insertionState.setValue(true);
 
                    }
 
