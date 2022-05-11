@@ -399,6 +399,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             } else {
                 onNavigationItemSelected(nvNavigation.getMenu().getItem(0));
                 int flag = MiniaElectricity.getPrefsManager().getOfflineBillStatus();
+                Log.e("status", "onActivityResult: "+flag );
                 Log.d("Flag", "onActivityResult:  " + flag);
                 if ((MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 ||
                         (!isAfterLogin && DBHelper.getInstance(cntxt).offlineClientsCount() == 0 && MiniaElectricity.getPrefsManager().getOfflineBillStatus() != 2))) {
