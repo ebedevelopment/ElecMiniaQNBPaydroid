@@ -714,4 +714,28 @@ dataBase= AppDataBase.getInstance(this);
         if (observer != null)
             observer.dispose();
     }
+
+    private void stoppingDialog()
+    {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(cntxt);
+        alertDialog.setMessage(cntxt.getString(R.string.err_get_bills));
+        alertDialog.setCancelable(false);
+        alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.try_again),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        getClientsData();
+                    }
+                });
+        alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.logout), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+                MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                cntxt.startActivity(new Intent(cntxt, LoginActivity.class));
+                cntxt.finish();
+            }
+        });
+
+        alertDialog.show();
+    }
 }

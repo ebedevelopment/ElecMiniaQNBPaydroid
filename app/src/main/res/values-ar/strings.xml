@@ -121,5 +121,6 @@
     <string name="From">من</string>
     <string name="to">الي</string>
     <string name="show_filtered_reports">عرض</string>
+    <string name="err_get_bills">تعذر الحصول على فواتير</string>
 
 </resources>
