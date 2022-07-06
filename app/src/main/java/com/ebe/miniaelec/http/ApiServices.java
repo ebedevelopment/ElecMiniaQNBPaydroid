@@ -41,9 +41,9 @@ public class
 ApiServices {
 
     private SpotsDialog progressDialog;
-    private static final String baseURL = //"http://10.224.246.181:3000/";
+    private static final String baseURL = "http://10.224.246.181:3000/";
             //"http://10.26.23.2:3000/";
-            "http://10.224.246.171:3000";
+//            "http://10.224.246.171:3000";
     private static final String QNB_DRM_URL = "https://10.224.246.181:6001";//"https://10.224.246.181:5020";
     API APi;
 

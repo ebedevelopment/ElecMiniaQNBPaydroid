@@ -131,9 +131,9 @@ public class MiniaElectricity extends Application {
                         .sslSocketFactory(sslContext.getSocketFactory())
                         .build();*/
             OkHttpClient okHttpClient = UnsafeOkHttpClient.getUnsafeOkHttpClient().newBuilder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .connectTimeout(90, TimeUnit.SECONDS)
+                    .readTimeout(90, TimeUnit.SECONDS)
+                    .writeTimeout(90, TimeUnit.SECONDS)
                     .build();
             api = new Retrofit.Builder()
                     .baseUrl(baseUrl)
@@ -142,9 +142,9 @@ public class MiniaElectricity extends Application {
                     .build().create(API.class);
         } else {
             OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .connectTimeout(90, TimeUnit.SECONDS)
+                    .readTimeout(90, TimeUnit.SECONDS)
+                    .writeTimeout(90, TimeUnit.SECONDS)
                     .build();
             api = new Retrofit.Builder()
                     .baseUrl(baseUrl)
