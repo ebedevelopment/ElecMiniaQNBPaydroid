@@ -16,6 +16,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
 
 import com.ebe.ebeunifiedlibrary.factory.ITransAPI;
 import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
@@ -31,12 +32,14 @@ import com.ebe.miniaelec.data.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
 import com.ebe.miniaelec.ui.MainActivity;
+import com.ebe.miniaelec.ui.services.FinishPendingTransService;
 import com.ebe.miniaelec.utils.Utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
@@ -44,6 +47,7 @@ import dmax.dialog.SpotsDialog;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import pub.devrel.easypermissions.EasyPermissions;
@@ -62,6 +66,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     DisposableCompletableObserver observer;
     private ApiServices services;
     private volatile boolean allowLogin;
+    boolean pendingTransState = true;
+    int serviceCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +84,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         cntxt = this;
         dataBase = AppDataBase.getInstance(cntxt);
         disposable = new CompositeDisposable();
+        addObservers();
         Utils.enableHomeRecentKey(false);
         Utils.enableStatusBar(false);
         String[] permissions = {Manifest.permission.ACCESS_NETWORK_STATE,
@@ -232,14 +239,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                               }).subscribe());
 
                                     }
-                                /*startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                                finish();*/
 
-                                   ParamsMsg.Request request = new ParamsMsg.Request();
-                                    transAPI = TransAPIFactory.createTransAPI();
-                                    request.setCategory(SdkConstants.CATEGORY_VOID);
-                                    request.setPackageName(MiniaElectricity.getPrefsManager().getPackageName());
-                                             transAPI.startTrans(cntxt, request);
+
+                                    checkPendingTrans();
 
 
                                 } else onFailure("فشل في عملية تسجيل الدخول!");
@@ -322,4 +324,104 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         if (observer !=null)
         observer.dispose();
     }
+
+    private void checkPendingTrans() {
+        ArrayList<TransDataEntity> transDataEntities= new ArrayList<>();
+        disposable.add(AppDataBase.getInstance(cntxt).transDataDao().getAllTrans().subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(response->
+                {
+
+                    for(TransDataWithTransBill b : response)
+                    {
+
+                        if (b.getTransData().getPaymentType() == TransDataEntity.PaymentType.OFFLINE_CASH.getValue() && b.getTransData().getStatus() == TransDataEntity.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
+                            pendingTransState = false;
+                        } else if (b.getTransData().getStatus() != TransDataEntity.STATUS.INITIATED.getValue() && b.getTransData().getStatus() != TransDataEntity.STATUS.COMPLETED.getValue()
+                                && b.getTransData().getStatus() != TransDataEntity.STATUS.CANCELLED.getValue()) {
+                            pendingTransState =false;
+                        }
+
+                    }
+
+
+                    return pendingTransState;
+
+
+                })
+                .subscribe(new Consumer<Boolean>() {
+                    @Override
+                    public void accept(Boolean aBoolean) throws Throwable {
+
+                        if (aBoolean)
+                        {
+                            ParamsMsg.Request request = new ParamsMsg.Request();
+                            transAPI = TransAPIFactory.createTransAPI();
+                            request.setCategory(SdkConstants.CATEGORY_VOID);
+                            request.setPackageName(MiniaElectricity.getPrefsManager().getPackageName());
+                            transAPI.startTrans(cntxt, request);
+                        }else
+                        {
+
+                            if (serviceCount ==0)
+                                startService(new Intent(cntxt, FinishPendingTransService.class));
+                            else
+                            {
+                                Toast.makeText(cntxt, "فشل في عملية تسجيل الدخول",Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    }
+                }));
+    }
+
+
+    private void addObservers()
+    {
+        FinishPendingTransService.loadingState.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (aBoolean)
+                {
+                    services.showDialog();
+                }else
+                {
+                    services.hideDialog();
+                }
+            }
+        });
+
+        FinishPendingTransService.drmLoadingState.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (aBoolean)
+                {
+                    services.showDialog();
+                }else
+                {
+                    services.hideDialog();
+                }
+            }
+        });
+
+        FinishPendingTransService.serviceState.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (!aBoolean)
+                {
+                    serviceCount=1;
+                    if (!MiniaElectricity.getPrefsManager().isLoggedIn()) {
+                        finish();
+                    } else {
+
+                        checkPendingTrans();
+
+                    }
+                }
+
+            }
+        });
+
+    }
+
+
 }

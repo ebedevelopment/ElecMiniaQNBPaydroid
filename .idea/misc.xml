@@ -3,6 +3,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/drawable/toast_bg.xml" value="0.1575" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/activity_bill_payment.xml" value="0.21145833333333333" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/activity_finish_pending_trans.xml" value="0.22826086956521738" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/activity_login.xml" value="0.21145833333333333" />
@@ -35,6 +36,7 @@
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/fragment_total_collected_bills.xml" value="0.10104166666666667" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/fragment_totals_fetched_bills.xml" value="0.2" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/report_item.xml" value="0.1625" />
+        <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/toast_layout.xml" value="0.14895833333333333" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/layout/total_collected_item.xml" value="0.1625" />
         <entry key="..\:/Users/pc/AndroidStudioProjects/ElecMiniaQNBPaydroid/app/src/main/res/menu/drawer_menu.xml" value="0.228125" />
       </map>

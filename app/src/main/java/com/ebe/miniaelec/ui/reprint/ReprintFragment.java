@@ -119,7 +119,7 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
                 .map(response -> {
 
                     transBillEntities.addAll(response.getTransBills());
-                    Log.e("transBills", "reprint: "+transBillEntities.size() );
+                    Log.e("transBills", "reprint: "+transBillEntities.size());
                     return response.getTransData();
                 })
                 .subscribe(new Consumer<TransDataEntity>() {
