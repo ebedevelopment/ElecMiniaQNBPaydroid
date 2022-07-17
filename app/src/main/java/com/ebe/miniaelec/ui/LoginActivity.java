@@ -2,10 +2,12 @@ package com.ebe.miniaelec.ui;
 
 import android.Manifest;
 import android.app.Activity;
+import android.arch.lifecycle.Observer;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -46,6 +48,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private SpotsDialog progressDialog;
     public ITransAPI transAPI;
     static int FINISH_PENDING_TRANS_START = 999;
+     int billsStatus = -1;
+    boolean syncState = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +57,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         Locale loc = MiniaElectricity.getLocal();
         Configuration config = new Configuration();
         config.locale = loc;
+        FinishPendingTransActivity.finishPendingState.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(@Nullable Boolean aBoolean) {
+                if (aBoolean != null)
+                    syncState = aBoolean;
+            }
+        });
         getBaseContext().getResources().updateConfiguration(config,
                 getBaseContext().getResources().getDisplayMetrics());
         setContentView(R.layout.activity_login);
@@ -156,7 +167,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                 JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
                                 String UserSessionID = responseBody.optString("UserSessionID").trim();
                                 String Error = responseBody.optString("Error").trim();
-                                int billsStatus = responseBody.optInt("UserNewBillStatus");
+                                 billsStatus = responseBody.optInt("UserNewBillStatus");
 //                                    Log.e("UserSessionID", UserSessionID);
 //                                    Log.e("Error", Error+"//////");
                                 if (!Error.isEmpty()) {

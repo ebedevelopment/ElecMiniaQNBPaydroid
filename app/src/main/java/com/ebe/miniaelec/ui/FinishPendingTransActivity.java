@@ -1,6 +1,7 @@
 package com.ebe.miniaelec.ui;
 
 import android.app.Activity;
+import android.arch.lifecycle.MutableLiveData;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
@@ -52,12 +53,13 @@ public class FinishPendingTransActivity extends AppCompatActivity {
     private ListView bills;
     public ITransAPI transAPI;
     private int index;
-
+    public static MutableLiveData<Boolean> finishPendingState = new MutableLiveData<Boolean>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Locale loc = MiniaElectricity.getLocal();
         Configuration config = new Configuration();
+        finishPendingState.setValue(true);
         config.locale = loc;
         getBaseContext().getResources().updateConfiguration(config,
                 getBaseContext().getResources().getDisplayMetrics());
@@ -166,6 +168,8 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                                     MiniaElectricity.getPrefsManager().setLoggedStatus(false);
                                     ToastUtils.showMessage(FinishPendingTransActivity.this, Error);
 //                                    Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
+                                    finishPendingState.setValue(false);
+                                 //   Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
                                     startActivity(new Intent(FinishPendingTransActivity.this, LoginActivity.class));
                                     finish();
                                 } else onFailure("فشل في مزامنة عمليات الدفع\n" + Error);
@@ -203,6 +207,8 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                         if (failureMsg != null)
 //                            Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
                             ToastUtils.showMessage(FinishPendingTransActivity.this,failureMsg);
+                       //     Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                        finishPendingState.setValue(false);
                         MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
                         handlePendingBills();
                     }
@@ -259,6 +265,8 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                     public void onFailure(String failureMsg) {
                       //  Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
                         ToastUtils.showMessage(FinishPendingTransActivity.this,failureMsg);
+                     //   Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                        finishPendingState.setValue(false);
                         handlePendingBills();
                     }
                 });
@@ -359,6 +367,7 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                 @Override
                 public void onFailure(String failureMsg) {
                     Log.i("failureMsg", failureMsg);
+                    finishPendingState.setValue(false);
                     handlePendingBills();
                 }
             });
@@ -383,6 +392,7 @@ public class FinishPendingTransActivity extends AppCompatActivity {
         BaseResponse baseResponse = transAPI.onResult(requestCode, resultCode, data);
         if (baseResponse == null) {
             //Log.e("onActivityResult", "null");
+            finishPendingState.setValue(false);
             handlePendingBills();
         } else {
             boolean isTransResponse = baseResponse instanceof TransResponse;
