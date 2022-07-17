@@ -19,7 +19,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
@@ -28,6 +27,7 @@ import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
 import com.ebe.miniaelec.model.BillData;
 import com.ebe.miniaelec.model.OfflineClient;
+import com.ebe.miniaelec.utils.ToastUtils;
 import com.ebe.miniaelec.utils.Utils;
 
 import org.json.JSONException;
@@ -321,8 +321,8 @@ public class NewHomeFragment extends Fragment implements View.OnClickListener {
 
                 clientsFilter();
                 if (emptyParams) {
-                    Toast.makeText(getActivity(), "أدخل رقم الاشتراك او اسم العميل بشكل صحيح!", Toast.LENGTH_SHORT).show();
-
+//                    Toast.makeText(getActivity(), "أدخل رقم الاشتراك او اسم العميل بشكل صحيح!", Toast.LENGTH_SHORT).show();
+                    ToastUtils.showMessage(getActivity(),"أدخل رقم الاشتراك او اسم العميل بشكل صحيح!");
                 }
             }
         }
@@ -429,7 +429,8 @@ public class NewHomeFragment extends Fragment implements View.OnClickListener {
 
             @Override
             public void onFailure(String failureMsg) {
-                Toast.makeText(getActivity(), failureMsg, Toast.LENGTH_SHORT).show();
+                //  Toast.makeText(getActivity(), failureMsg, Toast.LENGTH_SHORT).show();
+                ToastUtils.showMessage(getActivity(),failureMsg);
                 et_clientID.setText("");
             }
         });

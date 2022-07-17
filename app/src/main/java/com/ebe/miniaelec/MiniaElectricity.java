@@ -13,11 +13,15 @@ import com.pax.dal.IPrinter;
 import com.pax.dal.entity.ETermInfoKey;
 import com.pax.neptunelite.api.NeptuneLiteUser;
 
+import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Response;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -31,15 +35,14 @@ public class MiniaElectricity extends Application {
     public static int TERMINAL_TYPE_ANDROID_POS = 2;
     public static int TERMINAL_TYPE_OTHER = -1;
     private static Handler handler;
+    private HttpLoggingInterceptor logging;
 
     @Override
     public void onCreate() {
         super.onCreate();
         instance = this;
-        handler = new Handler();
-        /*if (Utils.getDefaultDataSubId(MiniaElectricity.getInstance()) != 1) {
-            getDal().getSys().switchSimCard(2);
-        }*/
+        logging = new HttpLoggingInterceptor();
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
     }
 
     public static MiniaElectricity getInstance() {
@@ -134,6 +137,7 @@ public class MiniaElectricity extends Application {
                     .connectTimeout(90, TimeUnit.SECONDS)
                     .readTimeout(90, TimeUnit.SECONDS)
                     .writeTimeout(90, TimeUnit.SECONDS)
+                    .addInterceptor(getInstance().logging)
                     .build();
             api = new Retrofit.Builder()
                     .baseUrl(baseUrl)
@@ -145,6 +149,7 @@ public class MiniaElectricity extends Application {
                     .connectTimeout(90, TimeUnit.SECONDS)
                     .readTimeout(90, TimeUnit.SECONDS)
                     .writeTimeout(90, TimeUnit.SECONDS)
+                    .addInterceptor(getInstance().logging)
                     .build();
             api = new Retrofit.Builder()
                     .baseUrl(baseUrl)

@@ -3,7 +3,6 @@ package com.ebe.miniaelec.http.api;
 import com.google.gson.JsonObject;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.Map;
 
@@ -39,6 +38,9 @@ public interface API {
 
     @GET("api/APILogIns")
     Call<ResponseBody> logIn(@QueryMap Map<String, String> params);
+
+    @GET("api/APIBankQNBKasms")
+    Call<ResponseBody> khasmTypes(@QueryMap Map<String, String> params);
 
     @GET("api/APIBankQNBs")
     Call<ResponseBody> billInquiry(@QueryMap Map<String, String> params);
@@ -85,4 +87,7 @@ public interface API {
     @POST("api/APIBankQNBClints")
     Call<ResponseBody> offlineBillsPay(@Body JsonObject body);
 
+    @Headers({"Content-Type: application/json"})
+    @POST("api/APIBankQNBKasms")
+    Call<ResponseBody> sendDeducts(@Body JsonObject body);
 }

@@ -3,9 +3,6 @@ package com.ebe.miniaelec.http;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.Log;
-import android.widget.Toast;
-
-//import androidx.annotation.NonNull;
 
 import com.ebe.miniaelec.BuildConfig;
 import com.ebe.miniaelec.MiniaElectricity;
@@ -21,6 +18,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,13 +35,14 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+//import androidx.annotation.NonNull;
+
 public class
 ApiServices {
 
     private SpotsDialog progressDialog;
-    private static final String baseURL = "http://10.224.246.181:3000/";
-            //"http://10.26.23.2:3000/";
-//            "http://10.224.246.171:3000";
+    private static final String baseURL = //"http://10.224.246.181:3000/";
+            "http://10.224.246.171:3000";
     private static final String QNB_DRM_URL = "https://10.224.246.181:6001";//"https://10.224.246.181:5020";
     API APi;
 
@@ -84,7 +83,6 @@ ApiServices {
                             }
                             PaymentFragment.setBillData(data.optString("customerNo"), data.optString("customerName"), data.optString("areaName"), billArrayList);
                         } else {
-                            Toast.makeText(MiniaElectricity.getInstance(), responseBody.optString("message"), Toast.LENGTH_LONG).show();
                             MainActivity.fragmentTransaction(new HomeFragment(), null);
                         }
                     } catch (IOException e) {
@@ -136,7 +134,6 @@ ApiServices {
                             }
                             //BuildingBillsFragment.setBillData( data.optString("buildingNo"), billArrayList);
                         } else {
-                            Toast.makeText(MiniaElectricity.getInstance(), responseBody.optString("message"), Toast.LENGTH_LONG).show();
                             MainActivity.fragmentTransaction(new HomeFragment(), null);
                         }
                     } catch (IOException e) {
@@ -180,7 +177,6 @@ ApiServices {
                             ReadCounterMeterFragment.setValidationData(data.optInt("closeDate"), data.optInt("lastMeterValue"),
                                     data.optString("customerNo"));
                         } else {
-                            Toast.makeText(MiniaElectricity.getInstance(), responseBody.optString("message"), Toast.LENGTH_LONG).show();
                             MainActivity.fragmentTransaction(new HomeFragment(), null);
                         }
                     } catch (IOException e) {
@@ -272,7 +268,6 @@ ApiServices {
                         String responseString = response.body() != null ? response.body().string() : "";
                         JSONObject responseBody = new JSONObject(responseString.subSequence(responseString.indexOf("{"), responseString.length()).toString());
                         // Log.i("responseString", responseString);
-                        Toast.makeText(MiniaElectricity.getInstance(), responseBody.optString("message"), Toast.LENGTH_LONG).show();
                         MainActivity.fragmentTransaction(new HomeFragment(), null);
                     } catch (IOException e) {
                         MainActivity.fragmentTransaction(new HomeFragment(), null);
@@ -328,6 +323,9 @@ ApiServices {
         final Map<String, String> params = new HashMap<>();
         params.put("UserName", userName);
         params.put("UserPassWord", userPassword);
+        params.put("UnitSerialNo", MiniaElectricity.getSerial());
+        String version = BuildConfig.VERSION_NAME;
+        params.put("APKVersion", version);
         Call<ResponseBody> call = APi.logIn(params);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -700,4 +698,99 @@ ApiServices {
             }
         });
     }
+
+    public void deductsTypes(final RequestListener listener) {
+        showDialog();
+        final Map<String, String> params = new HashMap<>();
+        params.put("UnitSerialNo", MiniaElectricity.getSerial());
+        params.put("UserSessionID", MiniaElectricity.getPrefsManager().getSessionId());
+        Call<ResponseBody> call = APi.khasmTypes(params);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(@NotNull Call<ResponseBody> call, @NotNull Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    hideDialog();
+                    try {
+                        listener.onSuccess(response.body().string());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        listener.onFailure(e.getMessage() + "");
+                    }
+                } else {
+                    Log.e("failed", response.code() + ": " + response.message());
+                    /*if (isFirst) {
+                        reTry(APi.logIn(params), this, listener);
+                    } else*/
+                    {
+                        hideDialog();
+                        listener.onFailure("لقد تعذر الوصول للخادم!\n" + response.message());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<ResponseBody> call, @NotNull Throwable t) {
+                Log.e("failed", t.getMessage() + "///");
+                /*if (isFirst) {
+                    reTry(APi.logIn(params), this, listener);
+                } else*/
+                {
+                    hideDialog();
+                    listener.onFailure("لقد تعذر الوصول للخادم!\n" + t.getMessage());
+                }
+                // listener.onFailure(t.getMessage() + "");
+            }
+        });
+    }
+    public void sendDeducts(final JsonArray ModelBillKasmV, final RequestListener listener) {
+        showDialog();
+        final JsonObject params = new JsonObject();
+        params.addProperty("InquiryID", MiniaElectricity.getPrefsManager().getInquiryID());
+        params.addProperty("UserSessionID", MiniaElectricity.getPrefsManager().getSessionId());
+        params.addProperty("UnitSerialNo", MiniaElectricity.getSerial());
+        params.addProperty("BillKasmCount", ModelBillKasmV.size());
+        String version = BuildConfig.VERSION_NAME;
+        params.addProperty("APKVersion", version);
+        params.add("ModelBillKasmV", ModelBillKasmV);
+        Call<ResponseBody> call = APi.sendDeducts(params);
+
+//        Log.e("Params", params.toString());
+        Request request = call.request();
+//        Log.e("URL", request.tag().toString());
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+//                Log.e("onResponse", response.code() + response.message());
+                if (response.isSuccessful()) {
+                    hideDialog();
+
+                    try {
+                        listener.onSuccess(response.body().string());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        listener.onFailure(e.getMessage() + "");
+                    }
+                } else if (isFirst) {
+                    reTry(APi.offlineBillsPay(/*url, ModelBillPaymentV*/params), this, listener);
+                } else {
+                    hideDialog();
+                    listener.onFailure(response.code() + ": " + response.message());
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("onFailure", t.getMessage() + "");
+                if (isFirst) {
+                    reTry(APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
+                } else {
+                    listener.onFailure("لقد تعذر الوصول للخادم!" + "\n" + t.getMessage());
+                    hideDialog();
+                }
+
+            }
+        });
+    }
+
 }

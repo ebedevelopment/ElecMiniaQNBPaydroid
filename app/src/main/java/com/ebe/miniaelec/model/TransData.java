@@ -37,6 +37,9 @@ public class TransData {
     @DatabaseField
     private int printCount;
 
+    @DatabaseField
+    private int deductType;
+
     public enum PaymentType {
         CASH(1),
         CARD(2),
@@ -66,7 +69,8 @@ public class TransData {
         COMPLETED(9),
         CANCELLED(10),
         REPRINT(11),
-        PENDING_ONLINE_PAYMENT_REQ(12); //IN CASE OF OFFLINE CASH PAYMENT
+        PENDING_ONLINE_PAYMENT_REQ(12),  //IN CASE OF OFFLINE CASH PAYMENT
+        PENDING_DEDUCT_REQ(13);
 
         private final int value;
 
@@ -195,5 +199,13 @@ public class TransData {
 
     public void setPrintCount(int printCount) {
         this.printCount = printCount;
+    }
+
+    public int getDeductType() {
+        return deductType;
+    }
+
+    public void setDeductType(int deductType) {
+        this.deductType = deductType;
     }
 }

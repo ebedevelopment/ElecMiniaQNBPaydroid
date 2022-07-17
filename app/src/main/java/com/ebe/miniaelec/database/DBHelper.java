@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.ebe.miniaelec.model.BillData;
+import com.ebe.miniaelec.model.DeductType;
 import com.ebe.miniaelec.model.OfflineClient;
 import com.ebe.miniaelec.model.Report;
 import com.ebe.miniaelec.model.TransBill;
@@ -24,6 +25,7 @@ public class DBHelper {
     private RuntimeExceptionDao<BillData, Integer> offlineClientBills = null;
     private RuntimeExceptionDao<TransBill, Integer> transBillsDao = null;
     private RuntimeExceptionDao<Report, Integer> reportDao = null;
+    private RuntimeExceptionDao<DeductType, Integer> deductsDao = null;
 
 
     private BaseDbHelper dbHelper;
@@ -60,6 +62,12 @@ public class DBHelper {
             reportDao = dbHelper.getRuntimeExceptionDao(Report.class);
         }
         return reportDao;
+    }
+    private RuntimeExceptionDao<DeductType, Integer> getDeductsDao() {
+        if (deductsDao == null) {
+            deductsDao = dbHelper.getRuntimeExceptionDao(DeductType.class);
+        }
+        return deductsDao;
     }
 
     private RuntimeExceptionDao<OfflineClient, Integer> getClientsDataDao() {
@@ -610,5 +618,25 @@ public class DBHelper {
             return dao.queryForEq("client_id", clientId).get(0);
         }
         return null;
+    }
+    public boolean addDeductType(final DeductType deductType) {
+        try {
+            RuntimeExceptionDao<DeductType, Integer> dao = getDeductsDao();
+            return dao.create(deductType) == 1;
+        } catch (RuntimeException e) {
+            Log.e(TAG, "", e);
+            return false;
+        }
+    }
+    public List<DeductType> getDeductTypes() {
+        RuntimeExceptionDao<DeductType, Integer> dao = getDeductsDao();
+        try {
+            return dao.queryBuilder()
+                    .query();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Log.e(TAG, "", e);
+            return null;
+        }
     }
 }

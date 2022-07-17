@@ -12,7 +12,6 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.ebe.ebeunifiedlibrary.factory.ITransAPI;
 import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
@@ -28,6 +27,7 @@ import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
 import com.ebe.miniaelec.model.TransBill;
 import com.ebe.miniaelec.model.TransData;
+import com.ebe.miniaelec.utils.ToastUtils;
 import com.ebe.miniaelec.utils.Utils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -164,7 +164,8 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                             if (!operationStatus.trim().equalsIgnoreCase("successful")) {
                                 if (Error.contains("ليس لديك صلاحيات الوصول للهندسه") || Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول") || userStatus == 0) {
                                     MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                    Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
+                                    ToastUtils.showMessage(FinishPendingTransActivity.this, Error);
+//                                    Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
                                     startActivity(new Intent(FinishPendingTransActivity.this, LoginActivity.class));
                                     finish();
                                 } else onFailure("فشل في مزامنة عمليات الدفع\n" + Error);
@@ -178,7 +179,7 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                                     MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
                                 if (billsStatus == 2)
                                 {
-                                    BaseDbHelper.getInstance(cntxt).dropTables();
+                                    BaseDbHelper.getInstance(cntxt).clearOfflineData();
                                 }
                                 // DBHelper.getInstance(cntxt).deleteTransData(offlineTransData);
                                 for (TransData t :
@@ -200,7 +201,8 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(String failureMsg) {
                         if (failureMsg != null)
-                            Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+//                            Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                            ToastUtils.showMessage(FinishPendingTransActivity.this,failureMsg);
                         MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
                         handlePendingBills();
                     }
@@ -255,7 +257,8 @@ public class FinishPendingTransActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(String failureMsg) {
-                        Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                      //  Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                        ToastUtils.showMessage(FinishPendingTransActivity.this,failureMsg);
                         handlePendingBills();
                     }
                 });

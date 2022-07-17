@@ -19,6 +19,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.ebe.miniaelec.model.BillData;
+import com.ebe.miniaelec.model.DeductType;
 import com.ebe.miniaelec.model.OfflineClient;
 import com.ebe.miniaelec.model.Report;
 import com.ebe.miniaelec.model.TransBill;
@@ -37,7 +38,7 @@ public class BaseDbHelper extends OrmLiteSqliteOpenHelper {
     // DB Name
     private static final String DATABASE_NAME = "data.db";
     // DB version
-    private static final int DATABASE_VERSION = 9;
+    private static final int DATABASE_VERSION = 10;
 
     private static BaseDbHelper instance;
 
@@ -54,6 +55,7 @@ public class BaseDbHelper extends OrmLiteSqliteOpenHelper {
             TableUtils.createTableIfNotExists(connectionSource, OfflineClient.class);
             TableUtils.createTableIfNotExists(connectionSource, BillData.class);
             TableUtils.createTableIfNotExists(connectionSource, Report.class);
+            TableUtils.createTableIfNotExists(connectionSource, DeductType.class);
         } catch (SQLException e) {
             Log.e(TAG, "", e);
         }
@@ -64,13 +66,14 @@ public class BaseDbHelper extends OrmLiteSqliteOpenHelper {
                           int newVersion) {
         try {
             for (int i = oldVersion; i < newVersion; ++i) {
-                // TableUtils.dropTable(connectionSource, Report.class, true);
-                TableUtils.dropTable(connectionSource, TransData.class, true);
-                if (oldVersion > 6)
-                    TableUtils.dropTable(connectionSource, TransBill.class, true);
+//                 TableUtils.dropTable(connectionSource, Report.class, true);
+               /* TableUtils.dropTable(connectionSource, TransData.class, true);
+//                if (oldVersion > 6)
+                TableUtils.dropTable(connectionSource, TransBill.class, true);
                 TableUtils.dropTable(connectionSource, OfflineClient.class, true);
                 TableUtils.dropTable(connectionSource, BillData.class, true);
                 TableUtils.dropTable(connectionSource, Report.class, true);
+                TableUtils.dropTable(connectionSource, DeductType.class, true);*/
                 onCreate(sqliteDatabase, connectionSource);
             }
           /*  if (oldVersion < 3) {
@@ -82,13 +85,13 @@ public class BaseDbHelper extends OrmLiteSqliteOpenHelper {
 //                dao.executeRaw("ALTER TABLE `tableName` ADD COLUMN columnName dataType DEFAULT 0;");
 //                dao.updateRaw("UPDATE `tableName` SET columnName = 1 WHERE columnName2 > 0;");
             }*/
-        } catch (SQLException e) {
+        } catch (/*SQLException*/Exception e) {
             Log.e(TAG, "Unable to upgrade database from version " + oldVersion + " to new "
                     + newVersion, e);
         }
     }
 
-    public void dropTables() {
+    public void clearOfflineData() {
         try {
             TableUtils.dropTable(connectionSource, OfflineClient.class, true);
             TableUtils.dropTable(connectionSource, BillData.class, true);
@@ -103,6 +106,17 @@ public class BaseDbHelper extends OrmLiteSqliteOpenHelper {
         try {
             TableUtils.dropTable(connectionSource, Report.class, true);
             TableUtils.createTableIfNotExists(connectionSource, Report.class);
+            return true;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean clearDeducts() {
+        try {
+            TableUtils.dropTable(connectionSource, DeductType.class, true);
+            TableUtils.createTableIfNotExists(connectionSource, DeductType.class);
             return true;
         } catch (SQLException throwables) {
             throwables.printStackTrace();

@@ -18,13 +18,12 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.ebe.ebeunifiedlibrary.factory.ITransAPI;
 import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
@@ -36,16 +35,19 @@ import com.ebe.ebeunifiedlibrary.message.VoidMsg;
 import com.ebe.ebeunifiedlibrary.sdkconstants.SdkConstants;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
+import com.ebe.miniaelec.database.BaseDbHelper;
 import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
 import com.ebe.miniaelec.model.BillData;
+import com.ebe.miniaelec.model.DeductType;
 import com.ebe.miniaelec.model.OfflineClient;
 import com.ebe.miniaelec.model.Report;
 import com.ebe.miniaelec.model.TransBill;
 import com.ebe.miniaelec.model.TransData;
 import com.ebe.miniaelec.print.PrintListener;
 import com.ebe.miniaelec.print.PrintReceipt;
+import com.ebe.miniaelec.utils.ToastUtils;
 import com.ebe.miniaelec.utils.Utils;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -62,15 +64,17 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
+//import android.widget.Toast;
+
 public class BillPaymentActivity extends AppCompatActivity implements View.OnClickListener {
 
     FragmentManager fm;
     Context cntxt;
-    TextView tv_clientID, tv_clientName, tv_billDate, tv_billValue, selected_bills_value;
+    TextView tv_clientID, tv_address, tv_currentMeter, tv_billValue, selected_bills_value;
     String phoneNumber;
-    Button b_pay;
+    Button b_pay, b_deduct;
     LinearLayout ll_paymentMethods, ll_phone_number;
-    EditText et_clientMobileNo;
+    // EditText et_clientMobileNo;
     String trxnTime;
     LinearLayout ll_bills;
     Spinner paymentTypes;
@@ -84,6 +88,7 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
     private ArrayList<BillData> billDetails;
     private boolean offline, allowCancel = true;
     private ArrayList<TransBill> transBills;
+    private ArrayList<DeductType> deductTypes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,22 +102,24 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
         cntxt = BillPaymentActivity.this;
         setStatusBarColor();
         fm = getFragmentManager();
-        tv_billDate = findViewById(R.id.bill_date);
+        tv_address = findViewById(R.id.address);
         tv_billValue = findViewById(R.id.bill_value);
         tv_clientID = findViewById(R.id.client_id);
-        tv_clientName = findViewById(R.id.client_name);
+        tv_currentMeter = findViewById(R.id.current_meter);
         findViewById(R.id.cash_payment).setOnClickListener(this);
         findViewById(R.id.card_payment).setOnClickListener(this);
         findViewById(R.id.wallet_payment).setOnClickListener(this);
         b_pay = findViewById(R.id.pay);
         b_pay.setOnClickListener(this);
+        b_deduct = findViewById(R.id.deduct);
+        b_deduct.setOnClickListener(this);
         ll_paymentMethods = findViewById(R.id.payment_methods);
         ll_phone_number = findViewById(R.id.ll_phone_number);
-        et_clientMobileNo = findViewById(R.id.client_mobile_no);
+        // et_clientMobileNo = findViewById(R.id.client_mobile_no);
         ll_bills = findViewById(R.id.ll_bills);
         paymentTypes = findViewById(R.id.payment_types);
         selected_bills_value = findViewById(R.id.selected_bills_value);
-
+        deductTypes = new ArrayList<>(DBHelper.getInstance(cntxt).getDeductTypes());
         setBillData();
 
     }
@@ -128,7 +135,8 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
             inquiryId = MiniaElectricity.getPrefsManager().getInquiryID();
             OfflineClient offlineClient = DBHelper.getInstance(cntxt).getClientByClientId(clientId);
             if (offlineClient == null) {
-                Toast.makeText(cntxt, "رقم الاشتراك غير صحيح!", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(cntxt, "رقم الاشتراك غير صحيح!", Toast.LENGTH_SHORT).show();
+                ToastUtils.showMessage(this, "رقم الاشتراك غير صحيح!");
                 this.finish();
                 return;
             }
@@ -158,10 +166,13 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
         transData = new TransData((int) RECEIPT_NO, clientId,
                 inquiryId, TransData.STATUS.INITIATED.getValue());
         if (phoneNumber != null && !phoneNumber.isEmpty() && !phoneNumber.equalsIgnoreCase("null")) {
-            ll_phone_number.setVisibility(View.GONE);
-        } else ll_phone_number.setVisibility(View.VISIBLE);
+//            ll_phone_number.setVisibility(View.GONE);
+        } else phoneNumber = "01064030305";
+        //ll_phone_number.setVisibility(View.VISIBLE);
 
         tv_clientID.setText(transData.getClientID());
+        tv_currentMeter.setText(billDetails.get(0).getPreviousRead());
+        tv_address.setText(billDetails.get(billDetails.size() - 1).getClientAddress());
         cb_bills = new CheckBox[billDetails.size()];
 
         for (int i = 0; i < billDetails.size(); i++) {
@@ -189,6 +200,7 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
                         }
                         selectedBillsValue += billDetails.get(finalI).getBillValue() + billDetails.get(finalI).getCommissionValue() +
                                 billDetails.get(finalI).getBillValue() * percentageFees;
+                        tv_currentMeter.setText(billDetails.get(finalI).getCurrentRead());
                     } else {
                         for (int j = finalI; j < cb_bills.length; j++) {
                             if (cb_bills[j].isChecked())
@@ -200,6 +212,10 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
                         selectedBillsValue -= (billDetails.get(finalI).getBillValue() + billDetails.get(finalI).getCommissionValue() +
                                 billDetails.get(finalI).getBillValue() * percentageFees);
                         cb_bills[finalI].setEnabled(true);
+                        if (finalI == 0) {
+                            tv_currentMeter.setText(billDetails.get(0).getPreviousRead());
+                        } else
+                            tv_currentMeter.setText(billDetails.get(finalI - 1).getCurrentRead());
                         //cb_bills[0].setChecked(true);
                     }
                     selected_bills_value.setText(String.valueOf(Utils.decimalFormat(selectedBillsValue)));
@@ -236,49 +252,155 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
     @Override
     public void onClick(View v) {
         int id = v.getId();
-        if (id == R.id.pay) {
-            if (ll_phone_number.getVisibility() == View.VISIBLE && (et_clientMobileNo.getText().toString().trim().isEmpty() ||
-                    et_clientMobileNo.getText().toString().trim().length() < 11 ||
-                    et_clientMobileNo.getText().toString().trim().length() > 16)) {
-                Toast.makeText(cntxt, "برجاء كتابة رقم تليفون العميل بشكل صحيح", Toast.LENGTH_LONG).show();
-            } else {
-                transBills = new ArrayList<>();
-                for (int i = 0; i < cb_bills.length; i++) {
-                    if (cb_bills[i].isChecked()) {
-                        transBills.add(new TransBill(billDetails.get(i)));
-                    } else break;
-                }
-                if (transBills.size() == 0) {
-                    Toast.makeText(cntxt, "يرجى اختيار الفواتير المطلوب سدادها!", Toast.LENGTH_LONG).show();
-                    return;
-                }
-                //b_pay.setVisibility(View.GONE);
-//                transData.setTransBills(transBills);
-                if (ll_phone_number.getVisibility() == View.VISIBLE) {
-                    transData.setClientMobileNo(et_clientMobileNo.getText().toString());
-                } else transData.setClientMobileNo(phoneNumber);
-                //DBHelper.getInstance(cntxt).updateTransData(transData);
-                //ll_paymentMethods.setVisibility(View.GONE);
-                //ll_phone_number.setVisibility(View.GONE);
+        /*if (ll_phone_number.getVisibility() == View.VISIBLE && (et_clientMobileNo.getText().toString().trim().isEmpty() ||
+                et_clientMobileNo.getText().toString().trim().length() < 11 ||
+                et_clientMobileNo.getText().toString().trim().length() > 16)) {
+//            Toast.makeText(cntxt, "برجاء كتابة رقم تليفون العميل بشكل صحيح", Toast.LENGTH_LONG).show();
+            ToastUtils.showMessage(this, "برجاء كتابة رقم تليفون العميل بشكل صحيح");
+        } else*/
+        {
+            transBills = new ArrayList<>();
+            for (int i = 0; i < cb_bills.length; i++) {
+                if (cb_bills[i].isChecked()) {
+                    transBills.add(new TransBill(billDetails.get(i)));
+                } else break;
+            }
+            if (transBills.size() == 0) {
+//                Toast.makeText(cntxt, "يرجى اختيار الفواتير المطلوب سدادها!", Toast.LENGTH_LONG).show();
+                ToastUtils.showMessage(this, "يرجى اختيار الفواتير المطلوب سدادها!");
+                return;
+            }
+            /*if (ll_phone_number.getVisibility() == View.VISIBLE) {
+                transData.setClientMobileNo(et_clientMobileNo.getText().toString());
+            } else*/
+            transData.setClientMobileNo(phoneNumber);
+            if (id == R.id.pay) {
                 if (paymentTypes.getSelectedItemPosition() == 1 && !offline) { // 1 card payment
                     transData.setPaymentType(TransData.PaymentType.CARD.getValue());
                     transData.setStatus(TransData.STATUS.PENDING_SALE_REQ.getValue());
-                    // requestCardPayment();
                     confirmPayment();
                 } else if (paymentTypes.getSelectedItemPosition() == 0) { // 0 cash payment
                     transData.setPaymentType(TransData.PaymentType.CASH.getValue());
                     transData.setStatus(TransData.STATUS.PENDING_CASH_PAYMENT_REQ.getValue());
-                    //requestCashPayment();
                     confirmPayment();
                 } else if (paymentTypes.getSelectedItemPosition() == 2 && !offline) { // 2 wallet payment
 //                    transData.setPaymentType(TransData.PaymentType.WALLET.getValue());
 //                    transData.setStatus(TransData.STATUS.PENDING_QR_SALE_REQ.getValue());
                     //requestCashPayment();
 //                    confirmPayment();
-                    Toast.makeText(cntxt, "هذه الخدمة ستكون متوفرة قريباً", Toast.LENGTH_LONG).show();
+//                    Toast.makeText(cntxt, "هذه الخدمة ستكون متوفرة قريباً", Toast.LENGTH_LONG).show();
+                    ToastUtils.showMessage(this, "هذه الخدمة ستكون متوفرة قريباً");
                 }
+            } else if (id == R.id.deduct) {
+                if (deductTypes.size() > 0) {
+                    selectDeductType();
+                } else if (!offline) {
+                    new ApiServices(cntxt).deductsTypes(new RequestListener() {
+                        @Override
+                        public void onSuccess(String response) {
+                            JSONObject responseBody = null;
+                            try {
+                                responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                                String Error = responseBody.optString("Error").trim();
+                                if (!Error.isEmpty()) {
+                                    JSONArray deducts = new JSONArray(response);
+                                    if (deducts.length() > 0) {
+                                        BaseDbHelper.getInstance(cntxt).clearDeducts();
+                                    }
+                                    for (int i = 0; i < deducts.length(); i++) {
+                                        DeductType deductType = new Gson().fromJson(deducts.get(i).toString(), DeductType.class);
+                                        DBHelper.getInstance(cntxt).addDeductType(deductType);
+                                        deductTypes.add(deductType);
+                                    }
+                                    selectDeductType();
+                                } else
+                                    ToastUtils.showMessage(BillPaymentActivity.this, getString(R.string.err_no_deducts));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                ToastUtils.showMessage(BillPaymentActivity.this, getString(R.string.err_no_deducts));
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(String failureMsg) {
+                            ToastUtils.showMessage(BillPaymentActivity.this, getString(R.string.err_no_deducts));
+                        }
+                    });
+                } else
+                    ToastUtils.showMessage(BillPaymentActivity.this, getString(R.string.err_no_deducts));
             }
         }
+    }
+
+    private void selectDeductType() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(cntxt);
+        alertDialog.setTitle(cntxt.getString(R.string.select_deduct_type));
+        ArrayList<String> types = new ArrayList<>();
+        for (DeductType dt : deductTypes) {
+            types.add(dt.getDeductType());
+        }
+        final Spinner sp_deducts = new Spinner(cntxt);
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>
+                (this, android.R.layout.simple_spinner_item,
+                        types); //selected item will look like a spinner set from XML
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout
+                .simple_spinner_dropdown_item);
+        sp_deducts.setAdapter(spinnerArrayAdapter);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        sp_deducts.setLayoutParams(params);
+        alertDialog.setView(sp_deducts);
+        alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        ToastUtils.showMessage(BillPaymentActivity.this, deductTypes.get(sp_deducts.getSelectedItemPosition()).getDeductType());
+                        transData.setStatus(TransData.STATUS.PENDING_DEDUCT_REQ.getValue());
+                        transData.setDeductType(deductTypes.get(sp_deducts.getSelectedItemPosition()).getDeductId());
+                        if (!DBHelper.getInstance(cntxt).addTransData(transData)) {
+                            ToastUtils.showMessage(BillPaymentActivity.this, "برجاء اعادة المحاولة!");
+                            finish();
+                        } else {
+                            if (offline) {
+                                deleteBills();
+                                finish();
+                            } else {
+                                sendDeductReq();
+                            }
+                        }
+                    }
+                });
+        alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        alertDialog.show();
+    }
+
+    private void sendDeductReq() {
+        // TODO complete scenario and handle deducts in FinishPendingTrans
+        JsonArray ModelBillKasmV = new JsonArray();
+        for (TransBill b :
+                transData.getTransBills()) {
+            JsonObject j = new JsonObject();
+            j.addProperty("BillUnique", b.getBillUnique());
+            j.addProperty("KTID", transData.getDeductType());
+
+            ModelBillKasmV.add(j);
+        }
+        new ApiServices(cntxt).sendDeducts(ModelBillKasmV, new RequestListener() {
+            @Override
+            public void onSuccess(String response) {
+
+            }
+
+            @Override
+            public void onFailure(String failureMsg) {
+
+            }
+        });
     }
 
     private void confirmPayment() {
@@ -318,6 +440,7 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
                         b_pay.setEnabled(false);
+                        b_deduct.setEnabled(false);
                         allowCancel = false;
                         if (transData.getPaymentType() == TransData.PaymentType.CASH.getValue()) {
                             requestCashPayment();
@@ -380,7 +503,8 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
                 }*/
                 sendCashDRM(false);
                 if (!DBHelper.getInstance(cntxt).addTransData(transData)) {
-                    Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
+//                    Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
+                    ToastUtils.showMessage(this, "برجاء اعادة المحاولة!");
                     this.finish();
                 } else {
                     deleteBills();
@@ -405,8 +529,9 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
                     });
                 }
 
-            }else {
-                Toast.makeText(cntxt, "لقد تجاوزت الحد الأقصى لعمليات الدفع دون مزامنة. برجاء مزامنة عمليات الدفع.", Toast.LENGTH_LONG).show();
+            } else {
+                // Toast.makeText(cntxt, "لقد تجاوزت الحد الأقصى لعمليات الدفع دون مزامنة. برجاء مزامنة عمليات الدفع.", Toast.LENGTH_LONG).show();
+                ToastUtils.showMessage(this, "لقد تجاوزت الحد الأقصى لعمليات الدفع دون مزامنة. برجاء مزامنة عمليات الدفع.");
                 // DBHelper.getInstance(cntxt).deleteTransData(transData);
                 finish();
             }
@@ -414,7 +539,8 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
         } else {
             //DBHelper.getInstance(cntxt).updateTransData(transData);
             if (!DBHelper.getInstance(cntxt).addTransData(transData)) {
-                Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
+//                Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
+                ToastUtils.showMessage(this, "برجاء اعادة المحاولة!");
                 this.finish();
             } else {
                 JsonArray ModelBillPaymentV = new JsonArray();
@@ -481,7 +607,8 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
 
                             @Override
                             public void onFailure(String failureMsg) {
-                                Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+//                                Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                                ToastUtils.showMessage(BillPaymentActivity.this, failureMsg);
                                 cancelPaymentRequest();
                             }
                         });
@@ -609,7 +736,8 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
                     } else {
                         transData.setStatus(TransData.STATUS.COMPLETED.getValue());
                         //DBHelper.getInstance(cntxt).deleteTransData(transData);
-                        Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+                        ToastUtils.showMessage(BillPaymentActivity.this, "عملية دفع غير ناجحة!");
                         // DBHelper.getInstance(cntxt).updateTransData(transData);
                         BillPaymentActivity.this.finish();
                     }
@@ -625,14 +753,16 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
                     BillPaymentActivity.this.finish();
                 } else if (transData.getStatus() == TransData.STATUS.PENDING_SALE_REQ.getValue()) {
                     //DBHelper.getInstance(cntxt).deleteTransData(transData);
-                    Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+                    ToastUtils.showMessage(BillPaymentActivity.this, "عملية دفع غير ناجحة!");
                     BillPaymentActivity.this.finish();
                 } else if (transData.getStatus() == TransData.STATUS.PENDING_QR_SALE_REQ.getValue()) {
                     if (baseResponse.getRspCode() == 0) {
 
                     } else {
                         //DBHelper.getInstance(cntxt).deleteTransData(transData);
-                        Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+                        ToastUtils.showMessage(BillPaymentActivity.this, "عملية دفع غير ناجحة!");
                         BillPaymentActivity.this.finish();
                     }
                 }
@@ -724,7 +854,8 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
 
                     @Override
                     public void onFailure(String failureMsg) {
-                        Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+//                        Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                        ToastUtils.showMessage(BillPaymentActivity.this, failureMsg);
                         cancelPaymentRequest();
 
                     }
@@ -755,8 +886,9 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
 
                     @Override
                     public void onFailure(String failureMsg) {
-                        Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
-                        //cancelPaymentRequest(BankTransactionID);
+//                        Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                        ToastUtils.showMessage(BillPaymentActivity.this, failureMsg);
+//cancelPaymentRequest(BankTransactionID);
                     }
                 });
     }

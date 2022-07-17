@@ -8,12 +8,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.ebe.ebeunifiedlibrary.factory.ITransAPI;
 import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
@@ -27,6 +25,7 @@ import com.ebe.miniaelec.database.DBHelper;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
 import com.ebe.miniaelec.model.TransData;
+import com.ebe.miniaelec.utils.ToastUtils;
 import com.ebe.miniaelec.utils.Utils;
 
 import org.json.JSONException;
@@ -40,14 +39,13 @@ import java.util.Locale;
 import dmax.dialog.SpotsDialog;
 import io.reactivex.functions.Action;
 
-//import android.util.Log;
-
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
     private Activity cntxt;
     private EditText et_collector_code, et_password;
     private SpotsDialog progressDialog;
     public ITransAPI transAPI;
+    static int FINISH_PENDING_TRANS_START = 999;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,38 +99,29 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     public void onClick(View v) {
         if (v.getId() == R.id.login) {
             if (et_collector_code.getText().toString().trim().isEmpty()) {
-                Toast.makeText(cntxt, "أدخل اسم المستخدم!", Toast.LENGTH_SHORT).show();
+                ToastUtils.showMessage(cntxt, "أدخل اسم المستخدم!");
+//                Toast.makeText(cntxt, "أدخل اسم المستخدم!", Toast.LENGTH_SHORT).show();
             } else if (et_password.getText().toString().trim().isEmpty()) {
-                Toast.makeText(cntxt, "أدخل كلمة المرور!", Toast.LENGTH_SHORT).show();
+                ToastUtils.showMessage(cntxt,"أدخل كلمة المرور!");
+
+//                Toast.makeText(cntxt, "أدخل كلمة المرور!", Toast.LENGTH_SHORT).show();
             } else {
                 if (MiniaElectricity.getPrefsManager().getCollectorCode().equals(et_collector_code.getText().toString().trim())) {
                     login();
                 } else {
-                    boolean allowLogin = true;
-                    ArrayList<TransData> transData = new ArrayList<>(DBHelper.getInstance(cntxt).getAllTrans());
-                    for (TransData b :
-                            transData) {
-                        if (b.getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue() && b.getStatus() == TransData.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
-                            allowLogin = false;
-                            break;
-                        } else if (b.getStatus() != TransData.STATUS.INITIATED.getValue() && b.getStatus() != TransData.STATUS.COMPLETED.getValue()
-                                && b.getStatus() != TransData.STATUS.CANCELLED.getValue()) {
-                            allowLogin = false;
-                            break;
-                        }
+                    boolean allowLogin = checkPendingTrans();
 
-
-                    }
                     StringBuilder warning = new StringBuilder();
                     if (allowLogin) {
-                        BaseDbHelper.getInstance(this).dropTables();
+                        BaseDbHelper.getInstance(this).clearOfflineData();
                         //DBHelper.getInstance(cntxt).clearOfflineData();
                         login();
                     } else {
                         warning.append("برجاء مزامنة فواتير المحصل السابق ");
                         warning.append(MiniaElectricity.getPrefsManager().getCollectorCode());
                         warning.append("لتمكين تسجيل الدخول.");
-                        Toast.makeText(cntxt, warning.toString(), Toast.LENGTH_LONG).show();
+                        ToastUtils.showMessage(cntxt,warning.toString());
+//                        Toast.makeText(cntxt, warning.toString(), Toast.LENGTH_LONG).show();
                     }
 
 
@@ -142,6 +131,20 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         }
     }
 
+    private boolean checkPendingTrans() {
+        ArrayList<TransData> transData = new ArrayList<>(DBHelper.getInstance(cntxt).getAllTrans());
+        for (TransData b :
+                transData) {
+            if (b.getPaymentType() == TransData.PaymentType.OFFLINE_CASH.getValue() && b.getStatus() == TransData.STATUS.PENDING_ONLINE_PAYMENT_REQ.getValue()) {
+                return false;
+            } else if (b.getStatus() != TransData.STATUS.INITIATED.getValue() && b.getStatus() != TransData.STATUS.COMPLETED.getValue()
+                    && b.getStatus() != TransData.STATUS.CANCELLED.getValue()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void login() {
         if (Utils.checkConnection(this))
             new ApiServices(this, false).logIn(et_collector_code.getText().toString().trim(), et_password.getText().toString().trim(),
@@ -149,7 +152,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         @Override
                         public void onSuccess(String response) {
                             try {
-                                Log.e("response", response);
+//                                Log.e("response", response);
                                 JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
                                 String UserSessionID = responseBody.optString("UserSessionID").trim();
                                 String Error = responseBody.optString("Error").trim();
@@ -166,16 +169,32 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                     MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
 
                                     if (billsStatus == 2) {
-                                        BaseDbHelper.getInstance(cntxt).dropTables();
+                                        BaseDbHelper.getInstance(cntxt).clearOfflineData();
                                     }
                                 /*startActivity(new Intent(LoginActivity.this, MainActivity.class));
                                 finish();*/
-
-                                    ParamsMsg.Request request = new ParamsMsg.Request();
-                                    transAPI = TransAPIFactory.createTransAPI();
-                                    //request.setCategory(SdkConstants.CATEGORY_VOID);
-                                    request.setPackageName(MiniaElectricity.getPrefsManager().getPackageName());
-                                    transAPI.startTrans(cntxt, request);
+/*
+                                    //added to show demo with upper egypt
+                                    MiniaElectricity.getPrefsManager().setLoggedStatus(true);
+                                    MiniaElectricity.getPrefsManager().setTerminalId("00123456");
+                                    MiniaElectricity.getPrefsManager().setMerchantId("000000123456789");
+                                    MiniaElectricity.getPrefsManager().setFixedFees(1);
+                                    MiniaElectricity.getPrefsManager().setPercentFees(1);
+                                    Intent intent = new Intent(cntxt, MainActivity.class);
+                                    Bundle bundle = new Bundle();
+                                    bundle.putBoolean("after_login", true);
+                                    intent.putExtra("params", bundle);
+                                    startActivity(intent);
+                                    finish();*/
+                                    if (checkPendingTrans()) {
+                                        ParamsMsg.Request request = new ParamsMsg.Request();
+                                        transAPI = TransAPIFactory.createTransAPI();
+                                        //request.setCategory(SdkConstants.CATEGORY_VOID);
+                                        request.setPackageName(MiniaElectricity.getPrefsManager().getPackageName());
+                                        transAPI.startTrans(cntxt, request);
+                                    } else {
+                                        startActivityForResult(new Intent(LoginActivity.this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+                                    }
 
                                 } else onFailure("فشل في عملية تسجيل الدخول!");
                             } catch (JSONException e) {
@@ -186,12 +205,14 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
                         @Override
                         public void onFailure(String failureMsg) {
-                            Toast.makeText(LoginActivity.this, failureMsg, Toast.LENGTH_LONG).show();
+                            // Toast.makeText(LoginActivity.this, failureMsg, Toast.LENGTH_LONG).show();
+                            ToastUtils.showMessage(cntxt,failureMsg);
                             et_collector_code.setText("");
                             et_password.setText("");
                         }
                     });
-        else Toast.makeText(cntxt, "لا يوجد اتصال بالانترنت!", Toast.LENGTH_LONG).show();
+        else ToastUtils.showMessage(cntxt, "لا يوجد اتصال بالانترنت");
+//Toast.makeText(cntxt, "لا يوجد اتصال بالانترنت!", Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -199,33 +220,47 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         super.onActivityResult(requestCode, resultCode, data);
 
         progressDialog.dismiss();
-
-        BaseResponse baseResponse = transAPI.onResult(requestCode, resultCode, data);
-        if (baseResponse == null) {
-            Toast.makeText(cntxt, "فشل في تحميل البيانات برجاء المحاولة مرة اخرى", Toast.LENGTH_LONG).show();
-            finish();
-        }
-        boolean isTransResponse = baseResponse instanceof TransResponse;
-        if (isTransResponse) {
-            final ParamsMsg.Response transResponse = (ParamsMsg.Response) baseResponse;
-            //Log.e("response", "//" + transResponse.toString());
-            MiniaElectricity.getPrefsManager().setLoggedStatus(true);
-            MiniaElectricity.getPrefsManager().setTerminalId(transResponse.getTerminalId());
-            MiniaElectricity.getPrefsManager().setMerchantId(transResponse.getMerchantId());
-            MiniaElectricity.getPrefsManager().setFixedFees(transResponse.getFixedFees());
-            MiniaElectricity.getPrefsManager().setPercentFees(transResponse.getPercentFees());
-            MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
-                    .format(new Date(System.currentTimeMillis())));
-            Intent intent = new Intent(cntxt, MainActivity.class);
-            Bundle bundle = new Bundle();
-            bundle.putBoolean("after_login", true);
-            intent.putExtra("params", bundle);
-            startActivity(intent);
-            finish();
-
+        if (requestCode == FINISH_PENDING_TRANS_START) {
+            if (checkPendingTrans()) {
+                ParamsMsg.Request request = new ParamsMsg.Request();
+                transAPI = TransAPIFactory.createTransAPI();
+                //request.setCategory(SdkConstants.CATEGORY_VOID);
+                request.setPackageName(MiniaElectricity.getPrefsManager().getPackageName());
+                transAPI.startTrans(cntxt, request);
+            } else {
+                ToastUtils.showMessage(cntxt, "فشل في عملية تسجيل الدخول");
+                et_collector_code.setText("");
+                et_password.setText("");
+            }
         } else {
-            Toast.makeText(cntxt, "فشل في تحميل البيانات برجاء المحاولة مرة اخرى", Toast.LENGTH_LONG).show();
-        }
+            BaseResponse baseResponse = transAPI.onResult(requestCode, resultCode, data);
+            if (baseResponse == null) {
+                ToastUtils.showMessage(cntxt,"فشل في تحميل البيانات برجاء المحاولة مرة اخرى");
+                //Toast.makeText(cntxt, "فشل في تحميل البيانات برجاء المحاولة مرة اخرى", Toast.LENGTH_LONG).show();
+                finish();
+            }
+            boolean isTransResponse = baseResponse instanceof TransResponse;
+            if (isTransResponse) {
+                final ParamsMsg.Response transResponse = (ParamsMsg.Response) baseResponse;
+                //Log.e("response", "//" + transResponse.toString());
+                MiniaElectricity.getPrefsManager().setLoggedStatus(true);
+                MiniaElectricity.getPrefsManager().setTerminalId(transResponse.getTerminalId());
+                MiniaElectricity.getPrefsManager().setMerchantId(transResponse.getMerchantId());
+                MiniaElectricity.getPrefsManager().setFixedFees(transResponse.getFixedFees());
+                MiniaElectricity.getPrefsManager().setPercentFees(transResponse.getPercentFees());
+                MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+                        .format(new Date(System.currentTimeMillis())));
+                Intent intent = new Intent(cntxt, MainActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putBoolean("after_login", true);
+                intent.putExtra("params", bundle);
+                startActivity(intent);
+                finish();
 
+            } else {
+                ToastUtils.showMessage(cntxt, "فشل في تحميل البيانات برجاء المحاولة مرة اخرى");
+                //Toast.makeText(cntxt, "فشل في تحميل البيانات برجاء المحاولة مرة اخرى", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }

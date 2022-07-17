@@ -139,6 +139,9 @@
     <string name="to">الي</string>
     <string name="show_filtered_reports">عرض</string>
     <string name="err_get_bills">تعذر الحصول على فواتير</string>
+    <string name="deduct">خصم</string>
+    <string name="err_no_deducts">لا يوجد أنواع خصم</string>
+    <string name="select_deduct_type">اختر نوع الخصم</string>
 
     <string-array name="places">
         <item>المنطقة الأولى</item>

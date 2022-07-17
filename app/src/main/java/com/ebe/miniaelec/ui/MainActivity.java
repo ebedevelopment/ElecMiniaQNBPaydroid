@@ -25,7 +25,6 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.ebe.ebeunifiedlibrary.factory.ITransAPI;
 import com.ebe.ebeunifiedlibrary.factory.TransAPIFactory;
@@ -42,9 +41,11 @@ import com.ebe.miniaelec.database.PrefsManager;
 import com.ebe.miniaelec.http.ApiServices;
 import com.ebe.miniaelec.http.RequestListener;
 import com.ebe.miniaelec.model.BillData;
+import com.ebe.miniaelec.model.DeductType;
 import com.ebe.miniaelec.model.OfflineClient;
 import com.ebe.miniaelec.print.PrintListener;
 import com.ebe.miniaelec.print.PrintReceipt;
+import com.ebe.miniaelec.utils.ToastUtils;
 import com.ebe.miniaelec.utils.Utils;
 import com.google.gson.Gson;
 
@@ -104,6 +105,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (bundle != null) {
             isAfterLogin = bundle.getBoolean("after_login");
         }
+        if (isAfterLogin) {
+            updateDeductsTypes();
+        }
         startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
  /*if (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || (isAfterLogin && DBHelper.getInstance(cntxt).offlineClientsCount() == 0)) {
             getClientsData();
@@ -114,6 +118,34 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
+    private void updateDeductsTypes(){
+        new ApiServices(cntxt).deductsTypes(new RequestListener() {
+            @Override
+            public void onSuccess(String response) {
+                JSONObject responseBody = null;
+                try {
+                    responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                    String Error = responseBody.optString("Error").trim();
+                    if (!Error.isEmpty()) {
+                        JSONArray deducts = new JSONArray(response);
+                        if (deducts.length() > 0) {
+                            BaseDbHelper.getInstance(cntxt).clearDeducts();
+                        }
+                        for (int i = 0; i < deducts.length(); i++) {
+                            DeductType deductType = new Gson().fromJson(deducts.get(i).toString(), DeductType.class);
+                            DBHelper.getInstance(cntxt).addDeductType(deductType);
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            @Override
+            public void onFailure(String failureMsg) {
+
+            }
+        });
+    }
     public static void fragmentTransaction(Fragment fragment, String tag) {
         cntxt.getFragmentManager().beginTransaction().setCustomAnimations(
                 R.animator.card_flip_right_in,
@@ -175,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     String Error = responseBody.optString("Error").trim();
                     String InquiryID = responseBody.optString("InquiryID").trim();
                     if (!Error.isEmpty()) {
-                        Toast.makeText(cntxt, ("فشل في تحميل بيانات المشتركين!\n" + Error), Toast.LENGTH_LONG).show();
+                        ToastUtils.showMessage(cntxt, "فشل في تحميل بيانات المشتركين!\n" + Error);// Toast.makeText(cntxt, ("فشل في تحميل بيانات المشتركين!\n" + Error), Toast.LENGTH_LONG).show();
                         Log.e("getClients", ("فشل في تحميل بيانات المشتركين!\n" + Error));
                         if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول") || Error.contains("ليس لديك صلاحيات الوصول للهندسه")) {
                             MiniaElectricity.getPrefsManager().setLoggedStatus(false);
@@ -186,7 +218,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         MiniaElectricity.getPrefsManager().setInquiryID(InquiryID);
                         new InsertInDB(responseBody).execute();
                     } else
-                        Toast.makeText(cntxt, ("فشل في تحميل بيانات المشتركين!\n"), Toast.LENGTH_LONG).show();
+                        ToastUtils.showMessage(cntxt,"فشل في تحميل بيانات المشتركين!\n");
+//                        Toast.makeText(cntxt, ("فشل في تحميل بيانات المشتركين!\n"), Toast.LENGTH_LONG).show();
                 } catch (JSONException e) {
                     e.printStackTrace();
                     onFailure(e.getMessage());
@@ -195,9 +228,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             @Override
             public void onFailure(String failureMsg) {
-                Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                ToastUtils.showMessage(cntxt,failureMsg);//Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
                 Log.e("getClients", failureMsg);
-                cntxt.startActivityForResult(new Intent(cntxt, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
+                //  cntxt.startActivityForResult(new Intent(cntxt, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
             }
         });
     }
@@ -215,7 +248,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 if (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || DBHelper.getInstance(cntxt).offlineClientsCount() == 0)
                     startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
                     //getClientsData();
-                else Toast.makeText(cntxt, "لا يوجد فواتير جديدة", Toast.LENGTH_LONG).show();
+                else
+                    ToastUtils.showMessage(cntxt,"لا يوجد فواتير جديدة");//Toast.makeText(cntxt, "لا يوجد فواتير جديدة", Toast.LENGTH_LONG).show();
                 break;
             case R.id.nav_reports:
                 Intent intent = new Intent(getBaseContext(), WebViewActivity.class);
@@ -273,7 +307,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                         dialog.cancel();
                                         finish();
                                     } else
-                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+                                        ToastUtils.showMessage(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة");
+                                    //Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
                                 }
                             }
                         });
@@ -326,7 +361,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                             }
                                         });
                                     } else
-                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+//                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+                                        ToastUtils.showMessage(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة");
                                 }
                             }
                         });
@@ -366,7 +402,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                     if (String.valueOf(sum).equals(text)) {
                                         Utils.copyBillsFromDB(cntxt);
                                     } else
-                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+                                        ToastUtils.showMessage(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة");
+
+//                                    Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
                                 }
                             }
                         });
@@ -405,7 +443,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     getClientsData();
                 }
                 if (flag == 2) {
-                    BaseDbHelper.getInstance(cntxt).dropTables();
+                    BaseDbHelper.getInstance(cntxt).clearOfflineData();
                 }
                 isAfterLogin = false;
             }
@@ -414,15 +452,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             //when you didn't chose any one
             if (baseResponse == null) {
-                Toast.makeText(cntxt, "حدث خطأ أثناء التسوية!", Toast.LENGTH_LONG).show();
+                //  Toast.makeText(cntxt, "حدث خطأ أثناء التسوية!", Toast.LENGTH_LONG).show();
+                ToastUtils.showMessage(MainActivity.this, "حدث خطأ أثناء التسوية!");
                 return;
             }
             boolean isTransResponse = baseResponse instanceof TransResponse;
             if (!isTransResponse) {
                 if (baseResponse.getRspCode() == 0 || baseResponse.getRspCode() == -15) {
-                    Toast.makeText(cntxt, "تمت التسوية بنجاح", Toast.LENGTH_LONG).show();
+                    //Toast.makeText(cntxt, "تمت التسوية بنجاح", Toast.LENGTH_LONG).show();
+                    ToastUtils.showMessage(MainActivity.this, "تمت التسوية بنجاح");
                     startActivityForResult(new Intent(this, FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
-                } else Toast.makeText(cntxt, "حدث خطأ أثناء التسوية!", Toast.LENGTH_LONG).show();
+                } else //Toast.makeText(cntxt, "حدث خطأ أثناء التسوية!", Toast.LENGTH_LONG).show();
+                    ToastUtils.showMessage(MainActivity.this, "حدث خطأ أثناء التسوية!");
 
             }
         }
@@ -476,7 +517,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 Log.e("BillCount", "" + responseBody.getInt("BillCount") + " ModelSerialNoV.ModelBillInquiryV.length(): " + totalBills);
                 if (responseBody.getInt("BillCount") == totalBills) {
                     success = true;
-                    BaseDbHelper.getInstance(cntxt).dropTables();
+                    BaseDbHelper.getInstance(cntxt).clearOfflineData();
                     for (int i = 0; i < ModelSerialNoV.length(); i++) {
                         OfflineClient client = new OfflineClient();
                         client.setClientMobileNo(ModelSerialNoV.getJSONObject(i).optString("ClientMobileNo"));
@@ -540,7 +581,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 //ArrayList<OfflineClient> offlineClients = new ArrayList<>();
                 fragmentTransaction(new NewHomeFragment(), null);
             } else {
-                BaseDbHelper.getInstance(cntxt).dropTables();
+                BaseDbHelper.getInstance(cntxt).clearOfflineData();
                 AlertDialog.Builder alertDialog = new AlertDialog.Builder(cntxt);
                 alertDialog.setMessage(cntxt.getString(R.string.err_get_bills));
                 alertDialog.setCancelable(false);

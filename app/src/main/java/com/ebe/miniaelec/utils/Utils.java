@@ -63,7 +63,6 @@ public class Utils {
                 e.printStackTrace();
             }
         }
-//            MiniaElectricity.getDal().getSys().switchSimCard(simNo);
 
     }
 
