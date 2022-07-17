@@ -15,7 +15,7 @@ import android.widget.Toast;
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.R;
 
-public class ToastUtils {
+public class CustomDialog {
 
 
     public static final int INT_DISMISS = 1;
@@ -34,7 +34,7 @@ public class ToastUtils {
     private static long currentRequestTime = 0;
     private static AlertDialog alert;
 
-    private ToastUtils() {
+    private CustomDialog() {
         //do nothing
     }
 
@@ -51,23 +51,20 @@ public class ToastUtils {
                 }
             }
         };
-        MiniaElectricity.getInstance().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
-                LayoutInflater inflater = context.getLayoutInflater();
-                alert = alertDialog.create();
-                alert.setCancelable(false);
-                alert.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-                View dialogView = inflater.inflate(R.layout.toast_layout, null);
-                alert.setView(dialogView);
-                TextView textView = (TextView) dialogView.findViewById(R.id.message);
-                textView.setText(msg);
-                alert.show();
-                Message dismissMsg = handler.obtainMessage();
-                dismissMsg.what = INT_DISMISS;
-                handler.sendMessageDelayed(dismissMsg, 5000);
-            }
+        MiniaElectricity.getInstance().runOnUiThread(() -> {
+            AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
+            LayoutInflater inflater = context.getLayoutInflater();
+            alert = alertDialog.create();
+            alert.setCancelable(false);
+            alert.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+            View dialogView = inflater.inflate(R.layout.toast_layout, null);
+            alert.setView(dialogView);
+            TextView textView = (TextView) dialogView.findViewById(R.id.message);
+            textView.setText(msg);
+            alert.show();
+            Message dismissMsg = handler.obtainMessage();
+            dismissMsg.what = INT_DISMISS;
+            handler.sendMessageDelayed(dismissMsg, 5000);
         });
     }
 
