@@ -11,7 +11,6 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,6 +32,7 @@ import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
 import com.ebe.miniaelec.ui.MainActivity;
 import com.ebe.miniaelec.ui.services.FinishPendingTransService;
+import com.ebe.miniaelec.utils.CustomDialog;
 import com.ebe.miniaelec.utils.Utils;
 
 import org.json.JSONException;
@@ -120,9 +120,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     public void onClick(View v) {
         if (v.getId() == R.id.login) {
             if (et_collector_code.getText().toString().trim().isEmpty()) {
-                Toast.makeText(cntxt, "أدخل اسم المستخدم!", Toast.LENGTH_SHORT).show();
+               // Toast.makeText(cntxt, "أدخل اسم المستخدم!", Toast.LENGTH_SHORT).show();
+                CustomDialog.showMessage(this,"أدخل اسم المستخدم!");
             } else if (et_password.getText().toString().trim().isEmpty()) {
-                Toast.makeText(cntxt, "أدخل كلمة المرور!", Toast.LENGTH_SHORT).show();
+               // Toast.makeText(cntxt, "أدخل كلمة المرور!", Toast.LENGTH_SHORT).show();
+                CustomDialog.showMessage(this,"أدخل كلمة المرور!");
             } else {
                 if (MiniaElectricity.getPrefsManager().getCollectorCode().equals(et_collector_code.getText().toString().trim())) {
                     login();
@@ -171,7 +173,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                     @Override
                                     public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
                                     progressDialog.dismiss();
-                                    Toast.makeText(LoginActivity.this,"UnKnownError",Toast.LENGTH_LONG).show();
+                                   CustomDialog.showMessage(LoginActivity.this,"UnKnownError");
 
                                     }
                                 });
@@ -186,7 +188,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         warning.append(MiniaElectricity.getPrefsManager().getCollectorCode());
                         warning.append("لتمكين تسجيل الدخول.");
 
-                        Toast.makeText(cntxt, warning.toString(), Toast.LENGTH_LONG).show();
+                        CustomDialog.showMessage(cntxt, warning.toString());
                     }
 
 
@@ -253,12 +255,12 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
                         @Override
                         public void onFailure(String failureMsg) {
-                            Toast.makeText(LoginActivity.this, failureMsg, Toast.LENGTH_LONG).show();
+                            CustomDialog.showMessage(LoginActivity.this, failureMsg);
                             et_collector_code.setText("");
                             et_password.setText("");
                         }
                     });
-        else Toast.makeText(cntxt, "لا يوجد اتصال بالانترنت!", Toast.LENGTH_LONG).show();
+        else CustomDialog.showMessage(cntxt, "لا يوجد اتصال بالانترنت!");
     }
 
     @Override
@@ -269,7 +271,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         BaseResponse baseResponse = transAPI.onResult(requestCode, resultCode, data);
         if (baseResponse == null) {
-            Toast.makeText(cntxt, "فشل في تحميل البيانات برجاء المحاولة مرة اخرى", Toast.LENGTH_LONG).show();
+            CustomDialog.showMessage(cntxt, "فشل في تحميل البيانات برجاء المحاولة مرة اخرى");
             finish();
         }
         boolean isTransResponse = baseResponse instanceof TransResponse;
@@ -291,7 +293,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             finish();
 
         } else {
-            Toast.makeText(cntxt, "فشل في تحميل البيانات برجاء المحاولة مرة اخرى", Toast.LENGTH_LONG).show();
+            CustomDialog.showMessage(cntxt, "فشل في تحميل البيانات برجاء المحاولة مرة اخرى");
         }
 
     }
@@ -367,7 +369,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                 startService(new Intent(cntxt, FinishPendingTransService.class));
                             else
                             {
-                                Toast.makeText(cntxt, "فشل في عملية تسجيل الدخول",Toast.LENGTH_LONG).show();
+                                CustomDialog.showMessage(cntxt, "فشل في عملية تسجيل الدخول");
                             }
                         }
                     }

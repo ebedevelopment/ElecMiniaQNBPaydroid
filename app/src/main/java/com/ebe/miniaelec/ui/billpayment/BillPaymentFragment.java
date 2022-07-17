@@ -57,6 +57,7 @@ import com.ebe.miniaelec.data.http.RequestListener;
 import com.ebe.miniaelec.data.print.PrintListener;
 import com.ebe.miniaelec.data.print.PrintReceipt;
 import com.ebe.miniaelec.ui.login.LoginActivity;
+import com.ebe.miniaelec.utils.CustomDialog;
 import com.ebe.miniaelec.utils.Utils;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -209,7 +210,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                       public void accept(ClientWithBillData clientWithBillData) throws Throwable {
                           OfflineClientEntity offlineClient = clientWithBillData.getClient();
                           if (offlineClient == null) {
-                              Toast.makeText(cntxt, "رقم الاشتراك غير صحيح!", Toast.LENGTH_SHORT).show();
+                              CustomDialog.showMessage(requireActivity(), "رقم الاشتراك غير صحيح!");
                               navController.navigateUp();
 
                           }
@@ -423,7 +424,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 sendCashDRM(false);
                 transDataId = Math.toIntExact(dataBase.transDataDao().addTransData(transData));
                 if (transDataId < 0) {
-                    Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
+                    CustomDialog.showMessage(requireActivity(), "برجاء اعادة المحاولة!");
                     navController.popBackStack();
                 } else {
 
@@ -473,7 +474,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 }
 
             }else {
-                Toast.makeText(cntxt, "لقد تجاوزت الحد الأقصى لعمليات الدفع دون مزامنة. برجاء مزامنة عمليات الدفع.", Toast.LENGTH_LONG).show();
+                CustomDialog.showMessage(requireActivity(), "لقد تجاوزت الحد الأقصى لعمليات الدفع دون مزامنة. برجاء مزامنة عمليات الدفع.");
                 // DBHelper.getInstance(cntxt).deleteTransData(transData);
                 navController.popBackStack();
             }
@@ -591,7 +592,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
                             @Override
                             public void onFailure(String failureMsg) {
-                                Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                                CustomDialog.showMessage(requireActivity(), failureMsg);
                                 cancelPaymentRequest();
                             }
                         });
@@ -816,7 +817,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
                     @Override
                     public void onFailure(String failureMsg) {
-                        Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                        CustomDialog.showMessage(requireActivity(), failureMsg);
                         cancelPaymentRequest();
 
                     }
@@ -846,7 +847,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 
                     @Override
                     public void onFailure(String failureMsg) {
-                        Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                        CustomDialog.showMessage(requireActivity(), failureMsg);
                         //cancelPaymentRequest(BankTransactionID);
                     }
                 });
@@ -937,7 +938,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
             if (ll_phone_number.getVisibility() == View.VISIBLE && (et_clientMobileNo.getText().toString().trim().isEmpty() ||
                     et_clientMobileNo.getText().toString().trim().length() < 11 ||
                     et_clientMobileNo.getText().toString().trim().length() > 16)) {
-                Toast.makeText(cntxt, "برجاء كتابة رقم تليفون العميل بشكل صحيح", Toast.LENGTH_LONG).show();
+                CustomDialog.showMessage(requireActivity(), "برجاء كتابة رقم تليفون العميل بشكل صحيح");
             } else {
                 transBills = new ArrayList<>();
                 for (int i = 0; i < cb_bills.length; i++) {
@@ -949,7 +950,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                     } else break;
                 }
                 if (transBills.size() == 0) {
-                    Toast.makeText(cntxt, "يرجى اختيار الفواتير المطلوب سدادها!", Toast.LENGTH_LONG).show();
+                    CustomDialog.showMessage(requireActivity(), "يرجى اختيار الفواتير المطلوب سدادها!");
                     return;
                 }
 
@@ -972,7 +973,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
 //                    transData.setStatus(TransData.STATUS.PENDING_QR_SALE_REQ.getValue());
                     //requestCashPayment();
 //                    confirmPayment();
-                    Toast.makeText(cntxt, "هذه الخدمة ستكون متوفرة قريباً", Toast.LENGTH_LONG).show();
+                    CustomDialog.showMessage(requireActivity(), "هذه الخدمة ستكون متوفرة قريباً");
                 }
             }
         }
@@ -1005,7 +1006,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 } else {
                     transData.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
                     //DBHelper.getInstance(cntxt).deleteTransData(transData);
-                    Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+                    CustomDialog.showMessage(requireActivity(), "عملية دفع غير ناجحة!");
                     // DBHelper.getInstance(cntxt).updateTransData(transData);
                     navController.popBackStack();
                 }
@@ -1019,13 +1020,13 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 }
                 navController.popBackStack();
             } else if (transData.getStatus() == TransDataEntity.STATUS.PENDING_SALE_REQ.getValue()) {
-                Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+                CustomDialog.showMessage(requireActivity(), "عملية دفع غير ناجحة!");
                 navController.popBackStack();
             } else if (transData.getStatus() == TransDataEntity.STATUS.PENDING_QR_SALE_REQ.getValue()) {
                 if (baseResponse.getRspCode() == 0) {
 
                 } else {
-                    Toast.makeText(cntxt, "عملية دفع غير ناجحة!", Toast.LENGTH_SHORT).show();
+                    CustomDialog.showMessage(requireActivity(), "عملية دفع غير ناجحة!");
                     navController.popBackStack();
                 }
             }

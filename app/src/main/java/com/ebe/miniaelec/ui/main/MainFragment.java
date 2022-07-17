@@ -18,7 +18,6 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -53,6 +52,7 @@ import com.ebe.miniaelec.ui.adapters.AdapterOfflineClients;
 import com.ebe.miniaelec.ui.adapters.PagingClientsAdapter;
 import com.ebe.miniaelec.ui.login.LoginActivity;
 import com.ebe.miniaelec.ui.services.FinishPendingTransService;
+import com.ebe.miniaelec.utils.CustomDialog;
 import com.ebe.miniaelec.utils.Utils;
 
 import org.json.JSONException;
@@ -358,7 +358,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                 } else if (selectesMntka != 0) {
                     filterByMntka();
                 } else
-                    Toast.makeText(getActivity(), "أدخل رقم الاشتراك او اسم العميل بشكل صحيح!", Toast.LENGTH_SHORT).show();
+                    CustomDialog.showMessage(getActivity(), "أدخل رقم الاشتراك او اسم العميل بشكل صحيح!");
             }
         }
     }
@@ -403,7 +403,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(getActivity(), failureMsg, Toast.LENGTH_SHORT).show();
+                            CustomDialog.showMessage(getActivity(), failureMsg);
                             et_clientID.setText("");
                         }
                     });
@@ -533,7 +533,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
             @Override
             public void onChanged(String s) {
                 if (!s.isEmpty())
-                    Toast.makeText(requireContext(), s, Toast.LENGTH_LONG).show();
+                    CustomDialog.showMessage(requireActivity(), s);
             }
         });
 

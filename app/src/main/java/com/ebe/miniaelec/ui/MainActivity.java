@@ -14,7 +14,6 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -55,6 +54,7 @@ import com.ebe.miniaelec.ui.login.LoginActivity;
 import com.ebe.miniaelec.ui.main.MainViewModel;
 import com.ebe.miniaelec.ui.main.MainViewModelFactory;
 import com.ebe.miniaelec.ui.services.FinishPendingTransService;
+import com.ebe.miniaelec.utils.CustomDialog;
 import com.ebe.miniaelec.utils.Utils;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
@@ -251,7 +251,7 @@ dataBase= AppDataBase.getInstance(this);
                                 if (MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 || aLong == 0)
                                     startService(new Intent(MainActivity.this,FinishPendingTransService.class));
                                     //getClientsData();
-                                else Toast.makeText(cntxt, "لا يوجد فواتير جديدة", Toast.LENGTH_LONG).show();
+                                else CustomDialog.showMessage(cntxt, "لا يوجد فواتير جديدة");
                             }
                         },throwable -> {
                             Log.e("MainActivity", "onMenuItemClick: "+throwable.getLocalizedMessage() );
@@ -307,7 +307,7 @@ dataBase= AppDataBase.getInstance(this);
                                         dialog.cancel();
                                         finish();
                                     } else
-                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+                                        CustomDialog.showMessage(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة");
                                 }
                             }
                         });
@@ -365,7 +365,7 @@ dataBase= AppDataBase.getInstance(this);
                                             }
                                         });
                                     } else
-                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+                                        CustomDialog.showMessage(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة");
                                 }
                             }
                         });
@@ -410,7 +410,7 @@ dataBase= AppDataBase.getInstance(this);
                                     if (String.valueOf(sum).equals(text)) {
                                         Utils.copyBillsFromDB(cntxt,dataBase);
                                     } else
-                                        Toast.makeText(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة", Toast.LENGTH_LONG).show();
+                                       CustomDialog.showMessage(MainActivity.this, "كلمة المرور التي أدخلتها غير صحيحة");
                                 }
                             }
                         });
@@ -513,7 +513,7 @@ dataBase= AppDataBase.getInstance(this);
 
             @Override
             public void onFailure(String failureMsg) {
-                Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                CustomDialog.showMessage(cntxt, failureMsg);
                 Log.e("getClients", failureMsg);
 
                 startService(new Intent(MainActivity.this, FinishPendingTransService.class));
@@ -541,15 +541,15 @@ dataBase= AppDataBase.getInstance(this);
 
             //when you didn't chose any one
             if (baseResponse == null) {
-                Toast.makeText(cntxt, "حدث خطأ أثناء التسوية!", Toast.LENGTH_LONG).show();
+               CustomDialog.showMessage(cntxt, "حدث خطأ أثناء التسوية!");
                 return;
             }
             boolean isTransResponse = baseResponse instanceof TransResponse;
             if (!isTransResponse) {
                 if (baseResponse.getRspCode() == 0 || baseResponse.getRspCode() == -15) {
-                    Toast.makeText(cntxt, "تمت التسوية بنجاح", Toast.LENGTH_LONG).show();
+                    CustomDialog.showMessage(cntxt, "تمت التسوية بنجاح");
                     startService(new Intent(MainActivity.this,FinishPendingTransService.class));
-                } else Toast.makeText(cntxt, "حدث خطأ أثناء التسوية!", Toast.LENGTH_LONG).show();
+                } else CustomDialog.showMessage(cntxt, "حدث خطأ أثناء التسوية!");
 
             }
         }
