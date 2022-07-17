@@ -50,10 +50,12 @@ public class FinishPendingTransActivity extends AppCompatActivity {
     private SpotsDialog progressDialog;
     private ArrayList<TransData> pendingTransData;
     private ArrayList<TransData> offlineTransData;
+    private ArrayList<TransData> deductsTransData;
     private ListView bills;
     public ITransAPI transAPI;
     private int index;
     public static MutableLiveData<Boolean> finishPendingState = new MutableLiveData<Boolean>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,7 +90,9 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                     offlineTransData.add(b);
                 } else if (b.getStatus() != TransData.STATUS.INITIATED.getValue() && b.getStatus() != TransData.STATUS.COMPLETED.getValue()
                         && b.getStatus() != TransData.STATUS.CANCELLED.getValue()) {
-                    pendingTransData.add(b);
+                    if (b.getStatus() == TransData.STATUS.PENDING_DEDUCT_REQ.getValue()) {
+                        deductsTransData.add(b);
+                    } else pendingTransData.add(b);
                 } else {
                     for (TransBill bill :
                             b.getTransBills()) {
@@ -98,7 +102,7 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                 }
             }
         }
-        if ((offlineTransData.size() > 0 || pendingTransData.size() > 0) && Utils.checkConnection(MiniaElectricity.getInstance())) {
+        if ((offlineTransData.size() > 0 || pendingTransData.size() > 0 || deductsTransData.size() > 0) && Utils.checkConnection(MiniaElectricity.getInstance())) {
             setBills();
         } else {
             finishOK();
@@ -121,6 +125,8 @@ public class FinishPendingTransActivity extends AppCompatActivity {
         bills.setAdapter(adapterBills);
         if (offlineTransData.size() > 0) {
             handleOfflineBills();
+        } else if (deductsTransData.size() > 0) {
+            handleDeducts();
         } else
             handlePendingBills();
     }
@@ -169,7 +175,7 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                                     ToastUtils.showMessage(FinishPendingTransActivity.this, Error);
 //                                    Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
                                     finishPendingState.setValue(false);
-                                 //   Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
+                                    //   Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
                                     startActivity(new Intent(FinishPendingTransActivity.this, LoginActivity.class));
                                     finish();
                                 } else onFailure("فشل في مزامنة عمليات الدفع\n" + Error);
@@ -179,10 +185,9 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                                         .format(new Date(System.currentTimeMillis())));
                                 MiniaElectricity.getPrefsManager().setOfflineBillValue(0);
                                 MiniaElectricity.getPrefsManager().setOfflineBillCount(0);
-                               // if (billsStatus != 0)
-                                    MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
-                                if (billsStatus == 2)
-                                {
+                                // if (billsStatus != 0)
+                                MiniaElectricity.getPrefsManager().setOfflineBillsStatus(billsStatus);
+                                if (billsStatus == 2) {
                                     BaseDbHelper.getInstance(cntxt).clearOfflineData();
                                 }
                                 // DBHelper.getInstance(cntxt).deleteTransData(offlineTransData);
@@ -194,7 +199,8 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                                 }
 
                                 offlineTransData.clear();
-                                handlePendingBills();
+//                                handlePendingBills();
+                                handleDeducts();
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -206,14 +212,82 @@ public class FinishPendingTransActivity extends AppCompatActivity {
                     public void onFailure(String failureMsg) {
                         if (failureMsg != null)
 //                            Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
-                            ToastUtils.showMessage(FinishPendingTransActivity.this,failureMsg);
-                       //     Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                            ToastUtils.showMessage(FinishPendingTransActivity.this, failureMsg);
+                        //     Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
                         finishPendingState.setValue(false);
                         MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
-                        handlePendingBills();
+//                        handlePendingBills();
+                        handleDeducts();
                     }
                 });
 
+    }
+
+    private void handleDeducts() {
+        if (deductsTransData.size() == 0) {
+            handlePendingBills();
+        } else {
+            JsonArray ModelBillKasmV = new JsonArray();
+            for (TransData transData :
+                    deductsTransData) {
+
+                for (TransBill b :
+                        transData.getTransBills()) {
+                    JsonObject j = new JsonObject();
+                    j.addProperty("BillUnique", b.getBillUnique());
+                    j.addProperty("KTID", transData.getDeductType());
+                    ModelBillKasmV.add(j);
+                }
+            }
+            new ApiServices(cntxt, false).offlineBillPayment(ModelBillKasmV,
+                    new RequestListener() {
+                        @Override
+                        public void onSuccess(String response) {
+                            try {
+                                JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                                String Error = responseBody.optString("Error").trim();
+                                String operationStatus = responseBody.getString("OperationStatus");
+                                if (!operationStatus.trim().equalsIgnoreCase("successful")) {
+                                    if (Error.contains("ليس لديك صلاحيات الوصول للهندسه") || Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
+                                        MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                                        ToastUtils.showMessage(FinishPendingTransActivity.this, Error);
+//                                    Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
+                                        finishPendingState.setValue(false);
+                                        //   Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
+                                        startActivity(new Intent(FinishPendingTransActivity.this, LoginActivity.class));
+                                        finish();
+                                    } else onFailure("فشل في خصم الفواتير\n" + Error);
+
+                                } else {
+                                    for (TransData t :
+                                            deductsTransData) {
+                                        t.setStatus(TransData.STATUS.COMPLETED.getValue());
+                                        DBHelper.getInstance(cntxt).updateTransData(t);
+                                        for (TransBill b :
+                                                t.getTransBills()) {
+                                            DBHelper.getInstance(cntxt).deleteTransBill(b.getBillUnique());
+                                        }
+                                        DBHelper.getInstance(cntxt).deleteTransData(t);
+                                    }
+
+                                    deductsTransData.clear();
+                                    handlePendingBills();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                onFailure(e.getMessage());
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(String failureMsg) {
+                            if (failureMsg != null)
+                                ToastUtils.showMessage(FinishPendingTransActivity.this, failureMsg);
+                            finishPendingState.setValue(false);
+                            handlePendingBills();
+                        }
+                    });
+        }
     }
 
     private void handlePendingBills() {
@@ -263,9 +337,9 @@ public class FinishPendingTransActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(String failureMsg) {
-                      //  Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
-                        ToastUtils.showMessage(FinishPendingTransActivity.this,failureMsg);
-                     //   Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                        //  Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
+                        ToastUtils.showMessage(FinishPendingTransActivity.this, failureMsg);
+                        //   Toast.makeText(cntxt, failureMsg, Toast.LENGTH_LONG).show();
                         finishPendingState.setValue(false);
                         handlePendingBills();
                     }

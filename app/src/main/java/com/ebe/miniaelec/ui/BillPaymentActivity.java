@@ -393,12 +393,37 @@ public class BillPaymentActivity extends AppCompatActivity implements View.OnCli
         new ApiServices(cntxt).sendDeducts(ModelBillKasmV, new RequestListener() {
             @Override
             public void onSuccess(String response) {
-
+                try {
+                    JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                    String Error = responseBody.optString("Error").trim();
+                    //Log.e("requestCashPayment", response);
+                    if (Error != null && !Error.isEmpty()) {
+                        if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
+                            for (TransBill b :
+                                    transBills) {
+                                DBHelper.getInstance(cntxt).deleteTransBill(b.getBillUnique());
+                            }
+                            DBHelper.getInstance(cntxt).deleteTransData(transData);
+                            MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                            startActivity(new Intent(BillPaymentActivity.this, LoginActivity.class));
+                            BillPaymentActivity.this.finish();
+                        } else onFailure("فشل في تسجيل خصم الفواتير!\n" + Error);
+                    } else {
+                        transData.setStatus(TransData.STATUS.COMPLETED.getValue());
+                        DBHelper.getInstance(cntxt).updateTransData(transData);
+                        deleteBills();
+                        finish();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    onFailure("فشل في تسجيل خصم الفواتير!\n" + e.getMessage());
+                }
             }
 
             @Override
             public void onFailure(String failureMsg) {
-
+                ToastUtils.showMessage(BillPaymentActivity.this, failureMsg);
+                finish();
             }
         });
     }
