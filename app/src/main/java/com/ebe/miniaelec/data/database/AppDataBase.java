@@ -7,18 +7,20 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 import com.ebe.miniaelec.data.database.daos.BillDataDao;
+import com.ebe.miniaelec.data.database.daos.DeductsDao;
 import com.ebe.miniaelec.data.database.daos.OfflineClientsDao;
 import com.ebe.miniaelec.data.database.daos.ReportEntityDao;
 import com.ebe.miniaelec.data.database.daos.TransBillDao;
 import com.ebe.miniaelec.data.database.daos.TransDataDao;
 import com.ebe.miniaelec.data.database.entities.BillDataEntity;
+import com.ebe.miniaelec.data.database.entities.DeductType;
 import com.ebe.miniaelec.data.database.entities.OfflineClientEntity;
 import com.ebe.miniaelec.data.database.entities.ReportEntity;
 import com.ebe.miniaelec.data.database.entities.TransBillEntity;
 import com.ebe.miniaelec.data.database.entities.TransDataEntity;
 
 
-@Database(entities = {BillDataEntity.class, OfflineClientEntity.class, ReportEntity.class, TransBillEntity.class, TransDataEntity.class}, version = 1)
+@Database(entities = {BillDataEntity.class, OfflineClientEntity.class, ReportEntity.class, TransBillEntity.class, TransDataEntity.class, DeductType.class}, version = 2)
 public abstract class AppDataBase extends RoomDatabase {
 
 
@@ -30,6 +32,7 @@ public abstract class AppDataBase extends RoomDatabase {
    public abstract TransBillDao transBillDao();
    public abstract TransDataDao transDataDao();
     public abstract ReportEntityDao reportEntityDaoDao();
+    public abstract DeductsDao deductsDao();
 
 
 

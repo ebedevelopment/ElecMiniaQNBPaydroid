@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -47,6 +48,7 @@ import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.data.database.AppDataBase;
 import com.ebe.miniaelec.data.database.entities.BillDataEntity;
 import com.ebe.miniaelec.data.database.entities.ClientWithBillData;
+import com.ebe.miniaelec.data.database.entities.DeductType;
 import com.ebe.miniaelec.data.database.entities.OfflineClientEntity;
 import com.ebe.miniaelec.data.database.entities.ReportEntity;
 import com.ebe.miniaelec.data.database.entities.TransBillEntity;
@@ -90,15 +92,16 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
     JsonObject SendContent , EMVData;
     AppDataBase dataBase;
     Context cntxt;
-    TextView tv_clientID, tv_clientName, tv_billDate, tv_billValue, selected_bills_value;
+    TextView tv_clientID, tv_address, tv_currentMeter, tv_billValue, selected_bills_value;
     String phoneNumber;
-    Button b_pay;
+    Button b_pay, b_deduct;
     LinearLayout ll_paymentMethods, ll_phone_number;
     EditText et_clientMobileNo;
     String trxnTime;
     LinearLayout ll_bills;
     Spinner paymentTypes;
     NavController navController;
+    private ArrayList<DeductType> deductTypes;
 
     public ITransAPI transAPI;
     //float commission = 0;
@@ -171,11 +174,13 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         progressDialog = new SpotsDialog(cntxt, R.style.ProcessingProgress);
         progressDialog.setCancelable(false);
         setStatusBarColor();
-        //fm = getFragmentManager();
-        tv_billDate = view.findViewById(R.id.bill_date);
-        tv_billValue = view.findViewById(R.id.bill_value);
+        //tv_billDate = view.findViewById(R.id.bill_date);
+       // tv_billValue = view.findViewById(R.id.bill_value);
         tv_clientID = view.findViewById(R.id.client_id);
-        tv_clientName = view.findViewById(R.id.client_name);
+        //tv_clientName = view.findViewById(R.id.client_name);
+        tv_address = view.findViewById(R.id.address);
+        tv_clientID = view.findViewById(R.id.client_id);
+        tv_currentMeter = view.findViewById(R.id.current_meter);
         view.findViewById(R.id.cash_payment).setOnClickListener(this);
         view.findViewById(R.id.card_payment).setOnClickListener(this);
         view.findViewById(R.id.wallet_payment).setOnClickListener(this);
@@ -183,7 +188,8 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         b_pay.setOnClickListener(this);
         ll_paymentMethods = view.findViewById(R.id.payment_methods);
         ll_phone_number = view.findViewById(R.id.ll_phone_number);
-        et_clientMobileNo = view.findViewById(R.id.client_mobile_no);
+        b_deduct = view.findViewById(R.id.deduct);
+        b_deduct.setOnClickListener(this);
         ll_bills = view.findViewById(R.id.ll_bills);
         paymentTypes = view.findViewById(R.id.payment_types);
         selected_bills_value = view.findViewById(R.id.selected_bills_value);
@@ -256,10 +262,12 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 inquiryId, TransDataEntity.STATUS.INITIATED.getValue());
         if (phoneNumber != null && !phoneNumber.isEmpty() && !phoneNumber.equalsIgnoreCase("null")) {
             ll_phone_number.setVisibility(View.GONE);
-        } else ll_phone_number.setVisibility(View.VISIBLE);
+        } else phoneNumber = "01064030305";;
 
         tv_clientID.setText(transData.getClientID());
         cb_bills = new CheckBox[billDetails.size()];
+        tv_currentMeter.setText(billDetails.get(0).getPreviousRead());
+        tv_address.setText(billDetails.get(billDetails.size() - 1).getClientAddress());
 
         for (int i = 0; i < billDetails.size(); i++) {
             CheckBox checkBox = new CheckBox(cntxt);
@@ -286,6 +294,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                         }
                         selectedBillsValue += billDetails.get(finalI).getBillValue() + billDetails.get(finalI).getCommissionValue() +
                                 billDetails.get(finalI).getBillValue() * percentageFees;
+                        tv_currentMeter.setText(billDetails.get(finalI).getCurrentRead());
                     } else {
                         for (int j = finalI; j < cb_bills.length; j++) {
                             if (cb_bills[j].isChecked())
@@ -297,7 +306,11 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                         selectedBillsValue -= (billDetails.get(finalI).getBillValue() + billDetails.get(finalI).getCommissionValue() +
                                 billDetails.get(finalI).getBillValue() * percentageFees);
                         cb_bills[finalI].setEnabled(true);
-                        //cb_bills[0].setChecked(true);
+                        if (finalI == 0) {
+                            tv_currentMeter.setText(billDetails.get(0).getPreviousRead());
+                        } else
+                            tv_currentMeter.setText(billDetails.get(finalI - 1).getCurrentRead());
+
                     }
                     selected_bills_value.setText(String.valueOf(Utils.decimalFormat(selectedBillsValue)));
 
@@ -934,12 +947,6 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
     @Override
     public void onClick(View v) {
         int id = v.getId();
-        if (id == R.id.pay) {
-            if (ll_phone_number.getVisibility() == View.VISIBLE && (et_clientMobileNo.getText().toString().trim().isEmpty() ||
-                    et_clientMobileNo.getText().toString().trim().length() < 11 ||
-                    et_clientMobileNo.getText().toString().trim().length() > 16)) {
-                CustomDialog.showMessage(requireActivity(), "برجاء كتابة رقم تليفون العميل بشكل صحيح");
-            } else {
                 transBills = new ArrayList<>();
                 for (int i = 0; i < cb_bills.length; i++) {
                     if (cb_bills[i].isChecked()) {
@@ -954,30 +961,69 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                     return;
                 }
 
-                if (ll_phone_number.getVisibility() == View.VISIBLE) {
-                    transData.setClientMobileNo(et_clientMobileNo.getText().toString());
-                } else transData.setClientMobileNo(phoneNumber);
-
-                if (paymentTypes.getSelectedItemPosition() == 1 && !offline) { // 1 card payment
-                    transData.setPaymentType(TransDataEntity.PaymentType.CARD.getValue());
-                    transData.setStatus(TransDataEntity.STATUS.PENDING_SALE_REQ.getValue());
-                    // requestCardPayment();
-                    confirmPayment();
-                } else if (paymentTypes.getSelectedItemPosition() == 0) { // 0 cash payment
-                    transData.setPaymentType(TransDataEntity.PaymentType.CASH.getValue());
-                    transData.setStatus(TransDataEntity.STATUS.PENDING_CASH_PAYMENT_REQ.getValue());
-                    //requestCashPayment();
-                    confirmPayment();
-                } else if (paymentTypes.getSelectedItemPosition() == 2 && !offline) { // 2 wallet payment
+                transData.setClientMobileNo(phoneNumber);
+        if (id == R.id.pay)
+        {
+            if (paymentTypes.getSelectedItemPosition() == 1 && !offline) { // 1 card payment
+                transData.setPaymentType(TransDataEntity.PaymentType.CARD.getValue());
+                transData.setStatus(TransDataEntity.STATUS.PENDING_SALE_REQ.getValue());
+                // requestCardPayment();
+                confirmPayment();
+            } else if (paymentTypes.getSelectedItemPosition() == 0) { // 0 cash payment
+                transData.setPaymentType(TransDataEntity.PaymentType.CASH.getValue());
+                transData.setStatus(TransDataEntity.STATUS.PENDING_CASH_PAYMENT_REQ.getValue());
+                //requestCashPayment();
+                confirmPayment();
+            } else if (paymentTypes.getSelectedItemPosition() == 2 && !offline) { // 2 wallet payment
 //                    transData.setPaymentType(TransData.PaymentType.WALLET.getValue());
 //                    transData.setStatus(TransData.STATUS.PENDING_QR_SALE_REQ.getValue());
-                    //requestCashPayment();
+                //requestCashPayment();
 //                    confirmPayment();
-                    CustomDialog.showMessage(requireActivity(), "هذه الخدمة ستكون متوفرة قريباً");
-                }
+                CustomDialog.showMessage(requireActivity(), "هذه الخدمة ستكون متوفرة قريباً");
             }
+        } else if (id == R.id.deduct) {
+            if (deductTypes.size() > 0) {
+                selectDeductType();
+            } else if (!offline) {
+                new ApiServices(cntxt).deductsTypes(new RequestListener() {
+                    @Override
+                    public void onSuccess(String response) {
+                        JSONObject responseBody = null;
+                        try {
+                            responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                            String Error = responseBody.optString("Error").trim();
+                            if (!Error.isEmpty()) {
+                                JSONArray deducts = new JSONArray(response);
+                                if (deducts.length() > 0) {
+                                    dataBase.deductsDao().clearDeducts();
+                                }
+                                for (int i = 0; i < deducts.length(); i++) {
+                                    DeductType deductType = new Gson().fromJson(deducts.get(i).toString(), DeductType.class);
+                                    dataBase.deductsDao().addDeductType(deductType);
+                                    deductTypes.add(deductType);
+                                }
+                                selectDeductType();
+                            } else
+                                CustomDialog.showMessage(requireActivity(), getString(R.string.err_no_deducts));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            CustomDialog.showMessage(requireActivity(), getString(R.string.err_no_deducts));
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(String failureMsg) {
+                        CustomDialog.showMessage(requireActivity(), getString(R.string.err_no_deducts));
+                    }
+                });
+            } else
+                CustomDialog.showMessage(requireActivity(), getString(R.string.err_no_deducts));
         }
     }
+
+
+
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -1100,6 +1146,113 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         SendContent.addProperty("Signature", "");
         transData.setDrmData(SendContent.toString());
         dataBase.transDataDao().updateTransData(transData);
+
+    }
+
+    private void selectDeductType() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(cntxt);
+        alertDialog.setTitle(cntxt.getString(R.string.select_deduct_type));
+        ArrayList<String> types = new ArrayList<>();
+        for (DeductType dt : deductTypes) {
+            types.add(dt.getDeductType());
+        }
+        final Spinner sp_deducts = new Spinner(cntxt);
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>
+                (requireActivity(), android.R.layout.simple_spinner_item,
+                        types); //selected item will look like a spinner set from XML
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout
+                .simple_spinner_dropdown_item);
+        sp_deducts.setAdapter(spinnerArrayAdapter);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        sp_deducts.setLayoutParams(params);
+        alertDialog.setView(sp_deducts);
+        alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
+                (dialog, which) -> {
+                    CustomDialog.showMessage(requireActivity(), deductTypes.get(sp_deducts.getSelectedItemPosition()).getDeductType());
+                    transData.setStatus(TransDataEntity.STATUS.PENDING_DEDUCT_REQ.getValue());
+                    transData.setDeductType(deductTypes.get(sp_deducts.getSelectedItemPosition()).getDeductId());
+                    try {
+                        dataBase.transDataDao().addTransData(transData);
+                        if (offline) {
+                            deleteBills();
+                            navController.navigateUp();
+                        } else {
+                            sendDeductReq();
+                        }
+                    }catch (Exception e)
+                    {
+                        CustomDialog.showMessage(requireActivity(), "برجاء اعادة المحاولة!");
+                        navController.navigateUp();
+                    }
+                });
+        alertDialog.setNegativeButton(cntxt.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        alertDialog.show();
+    }
+
+    private void sendDeductReq() {
+        // TODO complete scenario and handle deducts in FinishPendingTrans
+
+        JsonArray ModelBillKasmV = new JsonArray();
+
+
+        compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(transData.getReferenceNo())
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(transDataWithTransBill -> {
+                    for (TransBillEntity b :
+                            transDataWithTransBill.getTransBills()) {
+                        JsonObject j = new JsonObject();
+                        j.addProperty("BillUnique", b.getBillUnique());
+                        j.addProperty("KTID", transData.getDeductType());
+
+                        ModelBillKasmV.add(j);
+                    }
+
+                    new ApiServices(cntxt).sendDeducts(ModelBillKasmV, new RequestListener() {
+                        @Override
+                        public void onSuccess(String response) {
+                            try {
+                                JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                                String Error = responseBody.optString("Error").trim();
+                                //Log.e("requestCashPayment", response);
+                                if (Error != null && !Error.isEmpty()) {
+                                    if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
+                                        for (TransBillEntity b :
+                                                transBills) {
+                                            dataBase.transBillDao().deleteTransBill(b.getBillUnique());
+                                        }
+                                        dataBase.transDataDao().deleteTransData(transData);
+                                        MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                                        startActivity(new Intent(requireActivity(), LoginActivity.class));
+                                        requireActivity().finish();
+                                    } else onFailure("فشل في تسجيل خصم الفواتير!\n" + Error);
+                                } else {
+                                    transData.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
+                                    dataBase.transDataDao().updateTransData(transData);
+                                    deleteBills();
+                                    navController.navigateUp();
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                onFailure("فشل في تسجيل خصم الفواتير!\n" + e.getMessage());
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(String failureMsg) {
+                            CustomDialog.showMessage(requireActivity(), failureMsg);
+                            navController.navigateUp();
+                        }
+                    });
+                }));
+
 
     }
 

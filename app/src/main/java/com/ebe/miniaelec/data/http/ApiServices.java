@@ -13,6 +13,8 @@ import com.ebe.miniaelec.utils.Utils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -154,6 +156,9 @@ ApiServices {
         final Map<String, String> params = new HashMap<>();
         params.put("UserName", userName);
         params.put("UserPassWord", userPassword);
+        params.put("UnitSerialNo", MiniaElectricity.getSerial());
+        String version = BuildConfig.VERSION_NAME;
+        params.put("APKVersion", version);
         Call<ResponseBody> call = APi.logIn(params);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -562,6 +567,95 @@ ApiServices {
                     listener.onFailure("لقد تعذر تحميل بيانات العملاء!");
                 }
                 // listener.onFailure(t.getMessage() + "");
+            }
+        });
+    }
+
+    public void deductsTypes(final RequestListener listener) {
+        showDialog();
+        final Map<String, String> params = new HashMap<>();
+        params.put("UnitSerialNo", MiniaElectricity.getSerial());
+        params.put("UserSessionID", MiniaElectricity.getPrefsManager().getSessionId());
+        Call<ResponseBody> call = APi.khasmTypes(params);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(@NotNull Call<ResponseBody> call, @NotNull Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    hideDialog();
+                    try {
+                        listener.onSuccess(response.body().string());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        listener.onFailure(e.getMessage() + "");
+                    }
+                } else {
+                    Log.e("failed", response.code() + ": " + response.message());
+                    /*if (isFirst) {
+                        reTry(APi.logIn(params), this, listener);
+                    } else*/
+                    {
+                        hideDialog();
+                        listener.onFailure("لقد تعذر الوصول للخادم!\n" + response.message());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@androidx.annotation.NonNull Call<ResponseBody> call, Throwable t) {
+                hideDialog();
+                listener.onFailure("لقد تعذر الوصول للخادم!\n" + t.getMessage());
+            }
+        });
+    }
+
+
+    public void sendDeducts(final JsonArray ModelBillKasmV, final RequestListener listener) {
+        showDialog();
+        final JsonObject params = new JsonObject();
+        params.addProperty("InquiryID", MiniaElectricity.getPrefsManager().getInquiryID());
+        params.addProperty("UserSessionID", MiniaElectricity.getPrefsManager().getSessionId());
+        params.addProperty("UnitSerialNo", MiniaElectricity.getSerial());
+        params.addProperty("BillKasmCount", ModelBillKasmV.size());
+        String version = BuildConfig.VERSION_NAME;
+        params.addProperty("APKVersion", version);
+        params.add("ModelBillKasmV", ModelBillKasmV);
+        Call<ResponseBody> call = APi.sendDeducts(params);
+
+//        Log.e("Params", params.toString());
+        Request request = call.request();
+//        Log.e("URL", request.tag().toString());
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+//                Log.e("onResponse", response.code() + response.message());
+                if (response.isSuccessful()) {
+                    hideDialog();
+
+                    try {
+                        listener.onSuccess(response.body().string());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        listener.onFailure(e.getMessage() + "");
+                    }
+                } else if (isFirst) {
+                    reTry(true,APi.offlineBillsPay(/*url, ModelBillPaymentV*/params), this, listener);
+                } else {
+                    hideDialog();
+                    listener.onFailure(response.code() + ": " + response.message());
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("onFailure", t.getMessage() + "");
+                if (isFirst) {
+                    reTry(true,APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
+                } else {
+                    listener.onFailure("لقد تعذر الوصول للخادم!" + "\n" + t.getMessage());
+                    hideDialog();
+                }
+
             }
         });
     }

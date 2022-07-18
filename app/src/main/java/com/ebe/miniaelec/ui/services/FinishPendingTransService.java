@@ -6,7 +6,10 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ServiceLifecycleDispatcher;
 
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.data.database.AppDataBase;
@@ -15,6 +18,7 @@ import com.ebe.miniaelec.data.database.entities.TransDataEntity;
 import com.ebe.miniaelec.data.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
+import com.ebe.miniaelec.ui.login.LoginActivity;
 import com.ebe.miniaelec.utils.Utils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -37,8 +41,9 @@ import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
-public class FinishPendingTransService extends Service {
+public class FinishPendingTransService extends Service implements LifecycleOwner {
 
+    private ServiceLifecycleDispatcher serviceLifecycleDispatcher=new ServiceLifecycleDispatcher(this);
     private ArrayList<TransDataEntity> pendingTransData = new ArrayList<>();
     private ArrayList<TransDataEntity> offlineTransData;
     public static MutableLiveData<String> errorMsg = new MutableLiveData<String>("");
@@ -47,6 +52,7 @@ public class FinishPendingTransService extends Service {
     public static MutableLiveData<Boolean> goToPayment = new MutableLiveData<>(false);
     public static MutableLiveData<ArrayList<TransDataEntity>> pendingData = new MutableLiveData<ArrayList<TransDataEntity>>(new ArrayList<>());
     public static MutableLiveData<Boolean> serviceState = new MutableLiveData<>(true);
+    private ArrayList<TransDataEntity> deductsTransData;
 
     private static int index = 0;
     ApiServices services;
@@ -66,14 +72,28 @@ public class FinishPendingTransService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        serviceLifecycleDispatcher.onServicePreSuperOnBind();
+
         return null;
     }
 
+    @Override
+    public void onCreate() {
+       serviceLifecycleDispatcher.onServicePreSuperOnCreate();
+        super.onCreate();
+    }
+
+    @Override
+    public void onStart(Intent intent, int startId) {
+        serviceLifecycleDispatcher.onServicePreSuperOnStart();
+        super.onStart(intent, startId);
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         services = new ApiServices(this, false);
          drmServices = new ApiServices(this, true);
+        serviceLifecycleDispatcher.onServicePreSuperOnStart();
 
         loadingState = services.dialogState;
         drmLoadingState = drmServices.dialogState;
@@ -131,8 +151,14 @@ public class FinishPendingTransService extends Service {
                             offlineTransData.add(b.getTransData());
                         } else if (b.getTransData().getStatus() != TransDataEntity.STATUS.INITIATED.getValue() && b.getTransData().getStatus() != TransDataEntity.STATUS.COMPLETED.getValue()
                                 && b.getTransData().getStatus() != TransDataEntity.STATUS.CANCELLED.getValue()) {
-                            pendingTransData.add(b.getTransData());
-                            pendingData.postValue(pendingTransData);
+                            if (b.getTransData().getStatus() == TransDataEntity.STATUS.PENDING_DEDUCT_REQ.getValue()) {
+                                deductsTransData.add(b.getTransData());
+                            }else
+                            {
+                                pendingTransData.add(b.getTransData());
+                                pendingData.postValue(pendingTransData);
+                            }
+
                         } else {
                             for (TransBillEntity bill :
                                     b.getTransBills()) {
@@ -142,7 +168,7 @@ public class FinishPendingTransService extends Service {
                         }
                     }
                 }
-                if ((offlineTransData.size() > 0 || pendingTransData.size() > 0) && Utils.checkConnection(MiniaElectricity.getInstance())) {
+                if ((offlineTransData.size() > 0 || pendingTransData.size() > 0 || deductsTransData.size() > 0) && Utils.checkConnection(MiniaElectricity.getInstance())) {
                     setBills();
                 } else {
                     goToPayment.postValue(true);
@@ -167,6 +193,8 @@ public class FinishPendingTransService extends Service {
         if (offlineTransData.size() > 0) {
             prepareOfflineBills();
             handleOfflineBills();
+        }else if (deductsTransData.size() > 0) {
+            handleDeducts();
         } else
             handlePendingBills();
     }
@@ -271,7 +299,8 @@ public class FinishPendingTransService extends Service {
 
                                    pendingData.postValue(pendingTransData);
                                    offlineTransData.clear();
-                                   handlePendingBills();
+                                  // handlePendingBills();
+                                   handleDeducts();
                                }
                            } catch (JSONException e) {
                                e.printStackTrace();
@@ -286,6 +315,7 @@ public class FinishPendingTransService extends Service {
 
                                errorMsg.postValue(failureMsg);
                            MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
+                           handleDeducts();
 
                        }
                    });
@@ -444,10 +474,105 @@ public class FinishPendingTransService extends Service {
 
     }
 
+    private void handleDeducts() {
+        if (deductsTransData.size() == 0) {
+            handlePendingBills();
+        } else {
+            JsonArray ModelBillKasmV = new JsonArray();
+            for (TransDataEntity transData :
+                    deductsTransData) {
+
+                compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(transData.getReferenceNo())
+                        .subscribeOn(Schedulers.io())
+                        .subscribe(new Consumer<TransDataWithTransBill>() {
+                            @Override
+                            public void accept(TransDataWithTransBill transDataWithTransBill) throws Throwable {
+                                for (TransBillEntity b :
+                                        transDataWithTransBill.getTransBills()) {
+                                    JsonObject j = new JsonObject();
+                                    j.addProperty("BillUnique", b.getBillUnique());
+                                    j.addProperty("KTID", transData.getDeductType());
+                                    ModelBillKasmV.add(j);
+                                }
+
+
+
+                            }
+                        }, throwable -> {
+                            errorMsg.setValue(throwable.getMessage());
+                        }));
+
+
+            }
+            new ApiServices(this, false).offlineBillPayment(ModelBillKasmV,
+                    new RequestListener() {
+                        @Override
+                        public void onSuccess(String response) {
+                            try {
+                                JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                                String Error = responseBody.optString("Error").trim();
+                                String operationStatus = responseBody.getString("OperationStatus");
+                                if (!operationStatus.trim().equalsIgnoreCase("successful")) {
+                                    if (Error.contains("ليس لديك صلاحيات الوصول للهندسه") || Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
+                                        MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                                        //ToastUtils.showMessage(FinishPendingTransActivity.this, Error);
+                                        errorMsg.setValue(Error);
+//                                    Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
+
+                                        //   Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
+                                        startActivity(new Intent(FinishPendingTransService.this, LoginActivity.class));
+                                        serviceState.setValue(false);
+                                       stopSelf();
+                                    } else onFailure("فشل في خصم الفواتير\n" + Error);
+
+                                } else {
+                                    for (TransDataEntity t :
+                                            deductsTransData) {
+                                        t.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
+                                        dataBase.transDataDao().updateTransData(t);
+
+                                        compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(t.getReferenceNo())
+                                                .subscribeOn(Schedulers.io())
+                                                .subscribe(transDataWithTransBill -> {
+                                                    for (TransBillEntity b :
+                                                            transDataWithTransBill.getTransBills()) {
+                                                        dataBase.transBillDao().deleteTransBill(b.getBillUnique());
+                                                    }
+                                                    dataBase.transDataDao().deleteTransData(t);
+                                                }));
+                                    }
+
+                                    deductsTransData.clear();
+                                    handlePendingBills();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                onFailure(e.getMessage());
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(String failureMsg) {
+                            if (failureMsg != null)
+                            errorMsg.setValue(failureMsg);
+                           serviceState.setValue(false);
+                            handlePendingBills();
+                        }
+                    });
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
         serviceState.setValue(false);
         compositeDisposable.dispose();
+        serviceLifecycleDispatcher.onServicePreSuperOnDestroy();
+    }
+
+    @androidx.annotation.NonNull
+    @Override
+    public Lifecycle getLifecycle() {
+        return serviceLifecycleDispatcher.getLifecycle();
     }
 }

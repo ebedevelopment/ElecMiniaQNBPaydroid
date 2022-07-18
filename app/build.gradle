@@ -100,9 +100,12 @@ dependencies {
     def lifecycle_version = "2.5.0-alpha04"
     implementation "androidx.lifecycle:lifecycle-viewmodel:2.5.0-alpha04"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0-alpha04"
+    implementation 'androidx.lifecycle:lifecycle-service:2.5.0'
+
     // LiveData
     implementation "androidx.lifecycle:lifecycle-livedata:2.5.0-alpha04"
     annotationProcessor "androidx.lifecycle:lifecycle-compiler:2.5.0-alpha04"
+
 
     //fragments
     def fragment_version = "1.4.1"

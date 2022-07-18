@@ -31,6 +31,8 @@ public class TransDataEntity {
 
     private String drmData;
 
+    private int deductType;
+
 
     private int printCount;
 
@@ -49,31 +51,8 @@ public class TransDataEntity {
         }
     }
 
-
-    public enum STATUS {
-        INITIATED(1),
-        PENDING_CASH_PAYMENT_REQ(2),
-        PENDING_SALE_REQ(3),
-        PENDING_CARD_PAYMENT_REQ(4),
-        PENDING_DELETE_REQ(5),
-        DELETED_PENDING_VOID_REQ(6),
-        PAID_PENDING_DRM_REQ(7),
-        DELETED_PENDING_DRM_REQ(8),
-        PENDING_QR_SALE_REQ(13),
-        COMPLETED(9),
-        CANCELLED(10),
-        REPRINT(11),
-        PENDING_ONLINE_PAYMENT_REQ(12); //IN CASE OF OFFLINE CASH PAYMENT
-
-        private final int value;
-
-        private STATUS(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
+    public int getDeductType() {
+        return deductType;
     }
 
     public TransDataEntity() {
@@ -183,5 +162,36 @@ public class TransDataEntity {
 
     public void setPrintCount(int printCount) {
         this.printCount = printCount;
+    }
+
+    public void setDeductType(int deductType) {
+        this.deductType = deductType;
+    }
+
+    public enum STATUS {
+        INITIATED(1),
+        PENDING_CASH_PAYMENT_REQ(2),
+        PENDING_SALE_REQ(3),
+        PENDING_CARD_PAYMENT_REQ(4),
+        PENDING_DELETE_REQ(5),
+        DELETED_PENDING_VOID_REQ(6),
+        PAID_PENDING_DRM_REQ(7),
+        DELETED_PENDING_DRM_REQ(8),
+        PENDING_QR_SALE_REQ(13),
+        COMPLETED(9),
+        CANCELLED(10),
+        REPRINT(11),
+        PENDING_ONLINE_PAYMENT_REQ(12), //IN CASE OF OFFLINE CASH PAYMENT
+        PENDING_DEDUCT_REQ(13);
+
+        private final int value;
+
+        private STATUS(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
     }
 }

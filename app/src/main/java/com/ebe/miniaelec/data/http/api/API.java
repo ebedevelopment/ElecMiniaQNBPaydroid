@@ -84,4 +84,11 @@ public interface API {
     @POST("api/APIBankQNBClints")
     Call<ResponseBody> offlineBillsPay(@Body JsonObject body);
 
+    @Headers({"Content-Type: application/json"})
+    @POST("api/APIBankQNBKasms")
+    Call<ResponseBody> sendDeducts(@Body JsonObject body);
+
+    @GET("api/APIBankQNBKasms")
+    Call<ResponseBody> khasmTypes(@QueryMap Map<String, String> params);
+
 }
