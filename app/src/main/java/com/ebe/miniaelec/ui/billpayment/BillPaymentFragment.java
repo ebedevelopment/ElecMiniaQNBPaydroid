@@ -1006,7 +1006,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                         try {
                             responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
                             String Error = responseBody.optString("Error").trim();
-                            if (!Error.isEmpty()) {
+                            if (Error.isEmpty()) {
                                 JSONArray deducts = new JSONArray(response);
                                 if (deducts.length() > 0) {
                                     dataBase.deductsDao().clearDeducts();
