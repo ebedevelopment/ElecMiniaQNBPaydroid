@@ -45,6 +45,7 @@ import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.data.database.AppDataBase;
 import com.ebe.miniaelec.data.database.PrefsManager;
 import com.ebe.miniaelec.data.database.entities.BillDataEntity;
+import com.ebe.miniaelec.data.database.entities.DeductType;
 import com.ebe.miniaelec.data.database.entities.OfflineClientEntity;
 import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
@@ -157,6 +158,10 @@ dataBase= AppDataBase.getInstance(this);
         Bundle bundle = getIntent().getBundleExtra("params");
         if (bundle != null) {
             isAfterLogin = bundle.getBoolean("after_login");
+        }
+
+        if (isAfterLogin) {
+            updateDeductsTypes();
         }
 
         startService(new Intent(this, FinishPendingTransService.class));
@@ -737,5 +742,35 @@ dataBase= AppDataBase.getInstance(this);
         });
 
         alertDialog.show();
+    }
+
+
+    private void updateDeductsTypes(){
+        new ApiServices(cntxt).deductsTypes(new RequestListener() {
+            @Override
+            public void onSuccess(String response) {
+                JSONObject responseBody = null;
+                try {
+                    responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                    String Error = responseBody.optString("Error").trim();
+                    if (!Error.isEmpty()) {
+                        JSONArray deducts = new JSONArray(response);
+                        if (deducts.length() > 0) {
+                           dataBase.deductsDao().clearDeducts();
+                        }
+                        for (int i = 0; i < deducts.length(); i++) {
+                            DeductType deductType = new Gson().fromJson(deducts.get(i).toString(), DeductType.class);
+                           dataBase.deductsDao().addDeductType(deductType);
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            @Override
+            public void onFailure(String failureMsg) {
+
+            }
+        });
     }
 }

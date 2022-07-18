@@ -135,6 +135,7 @@ public class FinishPendingTransService extends Service implements LifecycleOwner
             public void accept(List<TransDataWithTransBill> transDataWithTransBills) throws Throwable {
                 pendingTransData = new ArrayList<>();
                 offlineTransData = new ArrayList<>();
+                deductsTransData = new ArrayList<>();
                 ArrayList<TransDataWithTransBill> transData = new ArrayList<>(transDataWithTransBills);
 
                 for (TransDataWithTransBill b :

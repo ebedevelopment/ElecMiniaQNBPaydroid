@@ -101,7 +101,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
     LinearLayout ll_bills;
     Spinner paymentTypes;
     NavController navController;
-    private ArrayList<DeductType> deductTypes;
+    private ArrayList<DeductType> deductTypes = new ArrayList<>();
 
     public ITransAPI transAPI;
     //float commission = 0;
@@ -187,15 +187,29 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         b_pay = view.findViewById(R.id.pay);
         b_pay.setOnClickListener(this);
         ll_paymentMethods = view.findViewById(R.id.payment_methods);
-        ll_phone_number = view.findViewById(R.id.ll_phone_number);
+       // ll_phone_number = view.findViewById(R.id.ll_phone_number);
         b_deduct = view.findViewById(R.id.deduct);
         b_deduct.setOnClickListener(this);
         ll_bills = view.findViewById(R.id.ll_bills);
         paymentTypes = view.findViewById(R.id.payment_types);
         selected_bills_value = view.findViewById(R.id.selected_bills_value);
+        //deductTypes = new ArrayList<>(DBHelper.getInstance(cntxt).getDeductTypes());
+        getDeductTypes();
 
         setBillData();
 
+    }
+
+    private void getDeductTypes()
+    {
+        compositeDisposable.add(dataBase.deductsDao().getDeductTypes().subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(deductTypes -> {
+                this.deductTypes.addAll(deductTypes);
+                }
+
+
+        ));
     }
     private void setBillData() {
         //Bundle bundle = getIntent().getBundleExtra("params");
@@ -261,7 +275,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         transData = new TransDataEntity((int) RECEIPT_NO, clientId,
                 inquiryId, TransDataEntity.STATUS.INITIATED.getValue());
         if (phoneNumber != null && !phoneNumber.isEmpty() && !phoneNumber.equalsIgnoreCase("null")) {
-            ll_phone_number.setVisibility(View.GONE);
+            //ll_phone_number.setVisibility(View.GONE);
         } else phoneNumber = "01064030305";;
 
         tv_clientID.setText(transData.getClientID());

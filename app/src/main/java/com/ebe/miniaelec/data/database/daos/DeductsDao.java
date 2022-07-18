@@ -7,6 +7,10 @@ import androidx.room.Query;
 
 import com.ebe.miniaelec.data.database.entities.DeductType;
 
+import java.util.List;
+
+import io.reactivex.rxjava3.core.Single;
+
 @Dao
 public interface DeductsDao {
 
@@ -15,4 +19,7 @@ public interface DeductsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void addDeductType(DeductType deductType);
+
+    @Query("SELECT * FROM deducts")
+    Single<List<DeductType>> getDeductTypes();
 }
