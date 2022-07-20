@@ -609,8 +609,12 @@ ApiServices {
     }
 
 
-    public void sendDeducts(final JsonArray ModelBillKasmV, final RequestListener listener) {
-        showDialog();
+    public void sendDeducts(final JsonArray ModelBillKasmV,Boolean isView, final RequestListener listener) {
+        if (isView)
+        {
+            showDialog();
+        }
+
         final JsonObject params = new JsonObject();
         params.addProperty("InquiryID", MiniaElectricity.getPrefsManager().getInquiryID());
         params.addProperty("UserSessionID", MiniaElectricity.getPrefsManager().getSessionId());
@@ -629,6 +633,7 @@ ApiServices {
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 //                Log.e("onResponse", response.code() + response.message());
                 if (response.isSuccessful()) {
+                    if (isView)
                     hideDialog();
 
                     try {
@@ -638,9 +643,9 @@ ApiServices {
                         listener.onFailure(e.getMessage() + "");
                     }
                 } else if (isFirst) {
-                    reTry(true,APi.offlineBillsPay(/*url, ModelBillPaymentV*/params), this, listener);
+                    reTry(isView,APi.offlineBillsPay(/*url, ModelBillPaymentV*/params), this, listener);
                 } else {
-                    hideDialog();
+                   // hideDialog();
                     listener.onFailure(response.code() + ": " + response.message());
 
                 }
@@ -650,9 +655,10 @@ ApiServices {
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 Log.e("onFailure", t.getMessage() + "");
                 if (isFirst) {
-                    reTry(true,APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
+                    reTry(isView,APi.billPayment(/*url, ModelBillPaymentV*/params), this, listener);
                 } else {
                     listener.onFailure("لقد تعذر الوصول للخادم!" + "\n" + t.getMessage());
+                    if (isView)
                     hideDialog();
                 }
 

@@ -6,10 +6,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ServiceLifecycleDispatcher;
 
 import com.ebe.miniaelec.MiniaElectricity;
 import com.ebe.miniaelec.data.database.AppDataBase;
@@ -41,9 +38,9 @@ import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
-public class FinishPendingTransService extends Service implements LifecycleOwner {
+public class FinishPendingTransService extends Service {
 
-    private ServiceLifecycleDispatcher serviceLifecycleDispatcher=new ServiceLifecycleDispatcher(this);
+
     private ArrayList<TransDataEntity> pendingTransData = new ArrayList<>();
     private ArrayList<TransDataEntity> offlineTransData;
     public static MutableLiveData<String> errorMsg = new MutableLiveData<String>("");
@@ -53,6 +50,8 @@ public class FinishPendingTransService extends Service implements LifecycleOwner
     public static MutableLiveData<ArrayList<TransDataEntity>> pendingData = new MutableLiveData<ArrayList<TransDataEntity>>(new ArrayList<>());
     public static MutableLiveData<Boolean> serviceState = new MutableLiveData<>(true);
     private ArrayList<TransDataEntity> deductsTransData;
+    boolean pendingRequest = false;
+
 
     private static int index = 0;
     ApiServices services;
@@ -72,20 +71,20 @@ public class FinishPendingTransService extends Service implements LifecycleOwner
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        serviceLifecycleDispatcher.onServicePreSuperOnBind();
+
 
         return null;
     }
 
     @Override
     public void onCreate() {
-       serviceLifecycleDispatcher.onServicePreSuperOnCreate();
+
         super.onCreate();
     }
 
     @Override
     public void onStart(Intent intent, int startId) {
-        serviceLifecycleDispatcher.onServicePreSuperOnStart();
+
         super.onStart(intent, startId);
     }
 
@@ -93,7 +92,6 @@ public class FinishPendingTransService extends Service implements LifecycleOwner
     public int onStartCommand(Intent intent, int flags, int startId) {
         services = new ApiServices(this, false);
          drmServices = new ApiServices(this, true);
-        serviceLifecycleDispatcher.onServicePreSuperOnStart();
 
         loadingState = services.dialogState;
         drmLoadingState = drmServices.dialogState;
@@ -104,7 +102,7 @@ public class FinishPendingTransService extends Service implements LifecycleOwner
 
         if (intent != null)
         {
-            boolean pendingRequest =intent.getBooleanExtra("pending",false);
+            pendingRequest =intent.getBooleanExtra("pending",false);
 
             if (pendingRequest)
             {
@@ -351,8 +349,15 @@ public class FinishPendingTransService extends Service implements LifecycleOwner
 
         } else
         {
-            goToPayment.postValue(true);
+            if (pendingRequest)
+            {
+                goToPayment.postValue(true);
+            }
+
+            goToPayment.postValue(false);
+
             stopSelf();
+
         }
 
     }
@@ -483,7 +488,7 @@ public class FinishPendingTransService extends Service implements LifecycleOwner
             for (TransDataEntity transData :
                     deductsTransData) {
 
-                compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(transData.getReferenceNo())
+                compositeDisposable.add(dataBase.transDataDao().getTransByClientId(transData.getClientID())
                         .subscribeOn(Schedulers.io())
                         .subscribe(new Consumer<TransDataWithTransBill>() {
                             @Override
@@ -500,66 +505,78 @@ public class FinishPendingTransService extends Service implements LifecycleOwner
 
                             }
                         }, throwable -> {
-                            errorMsg.setValue(throwable.getMessage());
+                            //errorMsg.postValue(throwable.getMessage());
+                            Log.e("deducts", "handleDeducts: "+ errorMsg.toString() );
                         }));
 
 
             }
-            new ApiServices(this, false).offlineBillPayment(ModelBillKasmV,
-                    new RequestListener() {
-                        @Override
-                        public void onSuccess(String response) {
-                            try {
-                                JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
-                                String Error = responseBody.optString("Error").trim();
-                                String operationStatus = responseBody.getString("OperationStatus");
-                                if (!operationStatus.trim().equalsIgnoreCase("successful")) {
-                                    if (Error.contains("ليس لديك صلاحيات الوصول للهندسه") || Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
-                                        MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                        //ToastUtils.showMessage(FinishPendingTransActivity.this, Error);
-                                        errorMsg.setValue(Error);
+            try {
+                services.sendDeducts(ModelBillKasmV,false,
+                        new RequestListener() {
+                            @Override
+                            public void onSuccess(String response) {
+                                try {
+                                    JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                                    String Error = responseBody.optString("Error").trim();
+                                    String operationStatus = responseBody.getString("OperationStatus");
+                                    if (!operationStatus.trim().equalsIgnoreCase("successful")) {
+                                        if (Error.contains("ليس لديك صلاحيات الوصول للهندسه") || Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
+                                            MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                                            //ToastUtils.showMessage(FinishPendingTransActivity.this, Error);
+                                            errorMsg.setValue(Error);
 //                                    Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
 
-                                        //   Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
-                                        startActivity(new Intent(FinishPendingTransService.this, LoginActivity.class));
-                                        serviceState.setValue(false);
-                                       stopSelf();
-                                    } else onFailure("فشل في خصم الفواتير\n" + Error);
+                                            //   Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
+                                            startActivity(new Intent(FinishPendingTransService.this, LoginActivity.class));
+                                            serviceState.setValue(false);
+                                            stopSelf();
+                                        } else onFailure("فشل في خصم الفواتير\n" + Error);
 
-                                } else {
-                                    for (TransDataEntity t :
-                                            deductsTransData) {
-                                        t.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
-                                        dataBase.transDataDao().updateTransData(t);
+                                    } else {
+                                        for (TransDataEntity t :
+                                                deductsTransData) {
+                                            t.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
+                                            dataBase.transDataDao().updateTransData(t);
 
-                                        compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(t.getReferenceNo())
-                                                .subscribeOn(Schedulers.io())
-                                                .subscribe(transDataWithTransBill -> {
-                                                    for (TransBillEntity b :
-                                                            transDataWithTransBill.getTransBills()) {
-                                                        dataBase.transBillDao().deleteTransBill(b.getBillUnique());
-                                                    }
-                                                    dataBase.transDataDao().deleteTransData(t);
-                                                }));
+                                            compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(t.getReferenceNo())
+                                                    .subscribeOn(Schedulers.io())
+                                                    .observeOn(AndroidSchedulers.mainThread())
+                                                    .subscribe(transDataWithTransBill -> {
+                                                        for (TransBillEntity b :
+                                                                transDataWithTransBill.getTransBills()) {
+                                                            dataBase.transBillDao().deleteTransBill(b.getBillUnique());
+                                                        }
+                                                        dataBase.transDataDao().deleteTransData(t);
+                                                    },throwable -> {
+                                                        //  errorMsg.setValue(throwable.getMessage());
+                                                    }));
+                                        }
+
+                                        deductsTransData.clear();
+                                        handlePendingBills();
                                     }
-
-                                    deductsTransData.clear();
-                                    handlePendingBills();
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                    onFailure(e.getMessage());
                                 }
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                                onFailure(e.getMessage());
                             }
-                        }
 
-                        @Override
-                        public void onFailure(String failureMsg) {
-                            if (failureMsg != null)
-                            errorMsg.setValue(failureMsg);
-                           serviceState.setValue(false);
-                            handlePendingBills();
-                        }
-                    });
+                            @Override
+                            public void onFailure(String failureMsg) {
+                                if (failureMsg != null)
+                                   // errorMsg.setValue(failureMsg);
+                                handlePendingBills();
+                            }
+                        });
+            }catch (Exception e)
+            {
+               // errorMsg.setValue(e.getMessage());
+
+                Log.e("deductsError", "handleDeducts: "+ e.getMessage() );
+
+            }
+
         }
     }
 
@@ -568,12 +585,8 @@ public class FinishPendingTransService extends Service implements LifecycleOwner
         super.onDestroy();
         serviceState.setValue(false);
         compositeDisposable.dispose();
-        serviceLifecycleDispatcher.onServicePreSuperOnDestroy();
+
     }
 
-    @androidx.annotation.NonNull
-    @Override
-    public Lifecycle getLifecycle() {
-        return serviceLifecycleDispatcher.getLifecycle();
-    }
+
 }

@@ -335,6 +335,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                     // startActivityForResult(new Intent(getActivity(), FinishPendingTransActivity.class), FINISH_PENDING_TRANS_START);
                     requireActivity().startService(new Intent(requireContext(), FinishPendingTransService.class));
 
+
                 } else {
 
                     Bundle bundle = new Bundle();
@@ -445,6 +446,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
             //Log.e("onActivityResult", "null");
 
             requireActivity().startService(serviceIntent);
+
         } else {
             boolean isTransResponse = baseResponse instanceof TransResponse;
             if (isTransResponse) {

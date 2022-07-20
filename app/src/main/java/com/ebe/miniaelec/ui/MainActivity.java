@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private static Toolbar toolbar;
     private static TextView title;
-    private static Activity cntxt;
+    public static Activity cntxt;
     private static int BACK_ACTION;
     DrawerLayout dlDrawer;
     NavigationView nvNavigation;
@@ -118,7 +118,7 @@ dataBase= AppDataBase.getInstance(this);
                 (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.content);
         assert navHostFragment != null;
          navController = navHostFragment.getNavController();
-         services = new ApiServices(this, false);
+         services = new ApiServices(MainActivity.this, false);
 
 
         cntxt = this;
@@ -714,6 +714,7 @@ dataBase= AppDataBase.getInstance(this);
     protected void onDestroy() {
         super.onDestroy();
         disposable.dispose();
+
         if (Utils.compositeDisposable!=null)
             Utils.compositeDisposable.dispose();
         if (observer != null)
@@ -746,7 +747,7 @@ dataBase= AppDataBase.getInstance(this);
 
 
     private void updateDeductsTypes(){
-        new ApiServices(cntxt).deductsTypes(new RequestListener() {
+        services.deductsTypes(new RequestListener() {
             @Override
             public void onSuccess(String response) {
                 JSONObject responseBody = null;

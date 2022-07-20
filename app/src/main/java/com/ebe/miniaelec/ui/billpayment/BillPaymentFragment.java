@@ -999,7 +999,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
             if (deductTypes.size() > 0) {
                 selectDeductType();
             } else if (!offline) {
-                new ApiServices(cntxt).deductsTypes(new RequestListener() {
+                new ApiServices(this.requireActivity()).deductsTypes(new RequestListener() {
                     @Override
                     public void onSuccess(String response) {
                         JSONObject responseBody = null;
@@ -1187,8 +1187,9 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                     CustomDialog.showMessage(requireActivity(), deductTypes.get(sp_deducts.getSelectedItemPosition()).getDeductType());
                     transData.setStatus(TransDataEntity.STATUS.PENDING_DEDUCT_REQ.getValue());
                     transData.setDeductType(deductTypes.get(sp_deducts.getSelectedItemPosition()).getDeductId());
+
                     try {
-                        dataBase.transDataDao().addTransData(transData);
+                        dataBase.transDataDao().updateTransData(transData);
                         if (offline) {
                             deleteBills();
                             navController.navigateUp();
@@ -1216,56 +1217,59 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
         JsonArray ModelBillKasmV = new JsonArray();
 
 
-        compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(transData.getReferenceNo())
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(transDataWithTransBill -> {
-                    for (TransBillEntity b :
-                            transDataWithTransBill.getTransBills()) {
-                        JsonObject j = new JsonObject();
-                        j.addProperty("BillUnique", b.getBillUnique());
-                        j.addProperty("KTID", transData.getDeductType());
+//        compositeDisposable.add(dataBase.transDataDao().getTransByClientId(transData.getClientID())
+//                .subscribeOn(Schedulers.computation())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(transDataWithTransBill -> {
+//
+//                }));
 
-                        ModelBillKasmV.add(j);
-                    }
 
-                    new ApiServices(cntxt).sendDeducts(ModelBillKasmV, new RequestListener() {
-                        @Override
-                        public void onSuccess(String response) {
-                            try {
-                                JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
-                                String Error = responseBody.optString("Error").trim();
-                                //Log.e("requestCashPayment", response);
-                                if (Error != null && !Error.isEmpty()) {
-                                    if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
-                                        for (TransBillEntity b :
-                                                transBills) {
-                                            dataBase.transBillDao().deleteTransBill(b.getBillUnique());
-                                        }
-                                        dataBase.transDataDao().deleteTransData(transData);
-                                        MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                        startActivity(new Intent(requireActivity(), LoginActivity.class));
-                                        requireActivity().finish();
-                                    } else onFailure("فشل في تسجيل خصم الفواتير!\n" + Error);
-                                } else {
-                                    transData.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
-                                    dataBase.transDataDao().updateTransData(transData);
-                                    deleteBills();
-                                    navController.navigateUp();
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                onFailure("فشل في تسجيل خصم الفواتير!\n" + e.getMessage());
+        for (TransBillEntity b :
+               transBills) {
+            JsonObject j = new JsonObject();
+            j.addProperty("BillUnique", b.getBillUnique());
+            j.addProperty("KTID", transData.getDeductType());
+
+            ModelBillKasmV.add(j);
+        }
+
+        new ApiServices(this.requireActivity()).sendDeducts(ModelBillKasmV,true, new RequestListener() {
+            @Override
+            public void onSuccess(String response) {
+                try {
+                    JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                    String Error = responseBody.optString("Error").trim();
+                    //Log.e("requestCashPayment", response);
+                    if (Error != null && !Error.isEmpty()) {
+                        if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
+                            for (TransBillEntity b :
+                                    transBills) {
+                                dataBase.transBillDao().deleteTransBill(b.getBillUnique());
                             }
-                        }
+                            dataBase.transDataDao().deleteTransData(transData);
+                            MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                            startActivity(new Intent(requireActivity(), LoginActivity.class));
+                            requireActivity().finish();
+                        } else onFailure("فشل في تسجيل خصم الفواتير!\n" + Error);
+                    } else {
+                        transData.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
+                        dataBase.transDataDao().updateTransData(transData);
+                        deleteBills();
+                        navController.navigateUp();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    onFailure("فشل في تسجيل خصم الفواتير!\n" + e.getMessage());
+                }
+            }
 
-                        @Override
-                        public void onFailure(String failureMsg) {
-                            CustomDialog.showMessage(requireActivity(), failureMsg);
-                            navController.navigateUp();
-                        }
-                    });
-                }));
+            @Override
+            public void onFailure(String failureMsg) {
+                CustomDialog.showMessage(requireActivity(), failureMsg);
+                // navController.navigateUp();
+            }
+        });
 
 
     }

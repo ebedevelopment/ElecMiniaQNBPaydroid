@@ -92,7 +92,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.READ_PHONE_STATE};
-        services = new ApiServices(this, false);
+        services = new ApiServices(LoginActivity.this, false);
 
         requestPermissions(permissions);
 
@@ -221,6 +221,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                     onFailure("فشل في عملية تسجيل الدخول!\n" + Error);
                                 } else if (!UserSessionID.isEmpty()) {
                                     progressDialog.show();
+                                   // MiniaElectricity.getPrefsManager().setLoggedStatus(true);
                                     MiniaElectricity.getPrefsManager().setCollectorCode(et_collector_code.getText().toString().trim());
                                     MiniaElectricity.getPrefsManager().setPassword(et_password.getText().toString().trim());
                                     MiniaElectricity.getPrefsManager().setSessionId(UserSessionID);
@@ -255,6 +256,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
                         @Override
                         public void onFailure(String failureMsg) {
+                            progressDialog.dismiss();
                             CustomDialog.showMessage(LoginActivity.this, failureMsg);
                             et_collector_code.setText("");
                             et_password.setText("");
@@ -323,6 +325,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     protected void onStop() {
         super.onStop();
         disposable.dispose();
+        progressDialog.dismiss();
         if (observer !=null)
         observer.dispose();
     }
@@ -366,9 +369,15 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         {
 
                             if (serviceCount ==0)
-                                startService(new Intent(cntxt, FinishPendingTransService.class));
+                            {
+
+
+                              startService(new Intent(cntxt, FinishPendingTransService.class));
+                            }
+
                             else
                             {
+                                progressDialog.dismiss();
                                 CustomDialog.showMessage(cntxt, "فشل في عملية تسجيل الدخول");
                             }
                         }
