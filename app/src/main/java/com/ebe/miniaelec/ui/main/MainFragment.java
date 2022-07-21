@@ -90,6 +90,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
     public ITransAPI transAPI;
     ArrayAdapter<String> daysAdapter;
     PagingClientsAdapter pagingAdapter;
+    String error_message ="";
 
     ArrayList<TransDataEntity> pendingTransData;
     boolean dataState = false;
@@ -404,8 +405,12 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
                         public void run() {
-                            CustomDialog.showMessage(getActivity(), failureMsg);
-                            et_clientID.setText("");
+                            if (!requireActivity().isDestroyed())
+                            {
+                                CustomDialog.showMessage(getActivity(), failureMsg);
+                                et_clientID.setText("");
+                            }
+
                         }
                     });
 
@@ -535,7 +540,8 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
             @Override
             public void onChanged(String s) {
                 if (!s.isEmpty())
-                    CustomDialog.showMessage(requireActivity(), s);
+                    error_message = s;
+
             }
         });
 
@@ -543,6 +549,10 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
             @Override
             public void onChanged(Boolean aBoolean) {
                 if (aBoolean) {
+                    if (!error_message.isEmpty())
+                    {
+                        CustomDialog.showMessage(requireActivity(), error_message);
+                    }
                     requireActivity().startActivity(new Intent(requireContext(), LoginActivity.class));
                     requireActivity().finish();
                 }

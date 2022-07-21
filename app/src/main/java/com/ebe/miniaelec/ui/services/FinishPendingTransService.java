@@ -260,9 +260,9 @@ public class FinishPendingTransService extends Service {
                                    if (Error.contains("ليس لديك صلاحيات الوصول للهندسه") || Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول") || userStatus == 0) {
                                        MiniaElectricity.getPrefsManager().setLoggedStatus(false);
                                        errorMsg.postValue(Error);
-                                       //Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
-                                       //startActivity(new Intent(FinishPendingTransActivity.this, LoginActivity.class));
+
                                        goToLogin.postValue(true);
+                                       //serviceState.postValue(false);
                                        stopSelf();
                                    } else onFailure("فشل في مزامنة عمليات الدفع\n" + Error);
 
@@ -311,7 +311,6 @@ public class FinishPendingTransService extends Service {
                        public void onFailure(String failureMsg) {
                            if (failureMsg != null)
                                //Toast.makeText(this, failureMsg, Toast.LENGTH_LONG).show();
-
                                errorMsg.postValue(failureMsg);
                            MiniaElectricity.getPrefsManager().setOfflineBillsStatus(0);
                            handleDeducts();
@@ -502,6 +501,7 @@ public class FinishPendingTransService extends Service {
                                 }
 
 
+                                sendDeducts(ModelBillKasmV,false);
 
                             }
                         }, throwable -> {
@@ -511,74 +511,79 @@ public class FinishPendingTransService extends Service {
 
 
             }
-            try {
-                services.sendDeducts(ModelBillKasmV,false,
-                        new RequestListener() {
-                            @Override
-                            public void onSuccess(String response) {
-                                try {
-                                    JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
-                                    String Error = responseBody.optString("Error").trim();
-                                    String operationStatus = responseBody.getString("OperationStatus");
-                                    if (!operationStatus.trim().equalsIgnoreCase("successful")) {
-                                        if (Error.contains("ليس لديك صلاحيات الوصول للهندسه") || Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
-                                            MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                            //ToastUtils.showMessage(FinishPendingTransActivity.this, Error);
-                                            errorMsg.setValue(Error);
-//                                    Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
 
-                                            //   Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
-                                            startActivity(new Intent(FinishPendingTransService.this, LoginActivity.class));
-                                            serviceState.setValue(false);
-                                            stopSelf();
-                                        } else onFailure("فشل في خصم الفواتير\n" + Error);
-
-                                    } else {
-                                        for (TransDataEntity t :
-                                                deductsTransData) {
-                                            t.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
-                                            dataBase.transDataDao().updateTransData(t);
-
-                                            compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(t.getReferenceNo())
-                                                    .subscribeOn(Schedulers.io())
-                                                    .observeOn(AndroidSchedulers.mainThread())
-                                                    .subscribe(transDataWithTransBill -> {
-                                                        for (TransBillEntity b :
-                                                                transDataWithTransBill.getTransBills()) {
-                                                            dataBase.transBillDao().deleteTransBill(b.getBillUnique());
-                                                        }
-                                                        dataBase.transDataDao().deleteTransData(t);
-                                                    },throwable -> {
-                                                        //  errorMsg.setValue(throwable.getMessage());
-                                                    }));
-                                        }
-
-                                        deductsTransData.clear();
-                                        handlePendingBills();
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                    onFailure(e.getMessage());
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(String failureMsg) {
-                                if (failureMsg != null)
-                                   // errorMsg.setValue(failureMsg);
-                                handlePendingBills();
-                            }
-                        });
-            }catch (Exception e)
-            {
-               // errorMsg.setValue(e.getMessage());
-
-                Log.e("deductsError", "handleDeducts: "+ e.getMessage() );
-
-            }
 
         }
     }
+
+     private void sendDeducts(JsonArray ModelBillKasmV,boolean isView)
+     {
+         try {
+             services.sendDeducts(ModelBillKasmV,isView,
+                     new RequestListener() {
+                         @Override
+                         public void onSuccess(String response) {
+                             try {
+                                 JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                                 String Error = responseBody.optString("Error").trim();
+                                 String operationStatus = responseBody.getString("OperationStatus");
+                                 if (!operationStatus.trim().equalsIgnoreCase("successful")) {
+                                     if (Error.contains("ليس لديك صلاحيات الوصول للهندسه") || Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
+                                         MiniaElectricity.getPrefsManager().setLoggedStatus(false);
+                                         //ToastUtils.showMessage(FinishPendingTransActivity.this, Error);
+                                         errorMsg.setValue(Error);
+//                                    Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
+
+                                         //   Toast.makeText(cntxt, Error, Toast.LENGTH_LONG).show();
+                                         startActivity(new Intent(FinishPendingTransService.this, LoginActivity.class));
+                                         serviceState.setValue(false);
+                                         stopSelf();
+                                     } else onFailure("فشل في خصم الفواتير\n" + Error);
+
+                                 } else {
+                                     for (TransDataEntity t :
+                                             deductsTransData) {
+                                         t.setStatus(TransDataEntity.STATUS.COMPLETED.getValue());
+                                         dataBase.transDataDao().updateTransData(t);
+
+                                         compositeDisposable.add(dataBase.transDataDao().getTransByRefNo(t.getReferenceNo())
+                                                 .subscribeOn(Schedulers.io())
+                                                 .observeOn(AndroidSchedulers.mainThread())
+                                                 .subscribe(transDataWithTransBill -> {
+                                                     for (TransBillEntity b :
+                                                             transDataWithTransBill.getTransBills()) {
+                                                         dataBase.transBillDao().deleteTransBill(b.getBillUnique());
+                                                     }
+                                                     dataBase.transDataDao().deleteTransData(t);
+                                                 },throwable -> {
+                                                     //  errorMsg.setValue(throwable.getMessage());
+                                                 }));
+                                     }
+
+                                     deductsTransData.clear();
+                                     handlePendingBills();
+                                 }
+                             } catch (JSONException e) {
+                                 e.printStackTrace();
+                                 onFailure(e.getMessage());
+                             }
+                         }
+
+                         @Override
+                         public void onFailure(String failureMsg) {
+                             if (failureMsg != null)
+                                 // errorMsg.setValue(failureMsg);
+                                 handlePendingBills();
+                         }
+                     });
+         }catch (Exception e)
+         {
+             // errorMsg.setValue(e.getMessage());
+
+             Log.e("deductsError", "handleDeducts: "+ e.getMessage() );
+
+         }
+     }
 
     @Override
     public void onDestroy() {
