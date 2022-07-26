@@ -250,6 +250,8 @@ public class FinishPendingTransService extends Service {
                        public void onSuccess(String response) {
                            try {
 
+
+
                                JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
                                String Error = responseBody.optString("Error").trim();
                                int billsStatus = responseBody.optInt("UserNewBillStatus");
@@ -267,6 +269,7 @@ public class FinishPendingTransService extends Service {
                                    } else onFailure("فشل في مزامنة عمليات الدفع\n" + Error);
 
                                } else {
+                                   Utils.deleteOffBillsFile();
                                    MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
                                            .format(new Date(System.currentTimeMillis())));
                                    MiniaElectricity.getPrefsManager().setOfflineBillValue(0);

@@ -16,6 +16,7 @@ import com.ebe.miniaelec.R;
 import com.ebe.miniaelec.data.database.AppDataBase;
 import com.ebe.miniaelec.data.database.PrefsManager;
 import com.ebe.miniaelec.data.database.entities.TransBillEntity;
+import com.ebe.miniaelec.data.database.entities.TransDataEntity;
 import com.ebe.miniaelec.data.database.entities.TransDataWithTransBill;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -24,12 +25,14 @@ import com.pax.dal.exceptions.PhoneDevException;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -305,4 +308,79 @@ public class Utils {
     {
        compositeDisposable.dispose();
     }
+
+    public static void copyToFile(TransDataEntity transData, ArrayList<TransBillEntity> transBills) {
+        String name = "OffBills";
+        File outFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "MiddleEgypt", name);
+        FileWriter writer = null;
+        try {
+            writer = new FileWriter(outFile);
+            JsonArray jBills = new JsonArray();
+            if (transBills != null && !transBills.isEmpty()) {
+                for (TransBillEntity bill :
+                        transBills) {
+                    JsonObject jBill = new JsonObject();
+                    jBill.addProperty("clientId", transData.getClientID());
+                    jBill.addProperty("RowNum", bill.getRawNum());
+                    jBill.addProperty("SectorName", bill.getSectorName());
+                    jBill.addProperty("BranchName", bill.getBranchName());
+                    jBill.addProperty("ClientAddress", bill.getClientAddress());
+                    jBill.addProperty("ClientActivity", bill.getClientActivity());
+                    jBill.addProperty("ClientPlace", bill.getClientPlace());
+                    jBill.addProperty("CurrentRead", bill.getCurrentRead());
+                    jBill.addProperty("PreviousRead", bill.getPreviousRead());
+                    jBill.addProperty("Consumption", bill.getConsumption());
+                    jBill.addProperty("Installment", bill.getInstallments());
+                    jBill.addProperty("Fees", bill.getFees());
+                    jBill.addProperty("Payments", bill.getPayments());
+                    jBill.addProperty("CommissionValue", bill.getCommissionValue());
+                    jBill.addProperty("ClientName", bill.getClientName());
+                    jBill.addProperty("BillDate", bill.getBillDate());
+                    jBill.addProperty("BillValue", bill.getBillValue());
+                    jBill.addProperty("MntkaCode", bill.getMntkaCode());
+                    jBill.addProperty("DayCode", bill.getDayCode());
+                    jBill.addProperty("MainCode", bill.getMainCode());
+                    jBill.addProperty("FaryCode", bill.getFaryCode());
+                    jBill.addProperty("PrintCount", transData.getPrintCount());
+                    jBill.addProperty("ReceiptNo", transData.getStan());
+                    jBill.addProperty("TransDateTime", transData.getTransDateTime());
+                    jBill.addProperty("ClientMobileNo", transData.getClientMobileNo());
+                    jBill.addProperty("BankTransactionID", transData.getBankTransactionID());
+                    jBill.addProperty("DrmData", transData.getDrmData());
+                    jBill.addProperty("InquiryID", transData.getInquiryID());
+                    jBill.addProperty("Status", transData.getStatus());
+                    jBill.addProperty("PaymentType", transData.getPaymentType());
+                    jBills.add(jBill);
+
+                }
+            } else {
+                JsonObject jBill = new JsonObject();
+                jBill.addProperty("clientId", transData.getClientID());
+                jBill.addProperty("PrintCount", transData.getPrintCount());
+                jBill.addProperty("ReceiptNo", transData.getStan());
+                jBill.addProperty("TransDateTime", transData.getTransDateTime());
+                jBill.addProperty("ClientMobileNo", transData.getClientMobileNo());
+                jBill.addProperty("BankTransactionID", transData.getBankTransactionID());
+                jBill.addProperty("DrmData", transData.getDrmData());
+                jBill.addProperty("InquiryID", transData.getInquiryID());
+                jBill.addProperty("Status", transData.getStatus());
+                jBill.addProperty("PaymentType", transData.getPaymentType());
+                jBills.add(jBill);
+            }
+            writer.append(jBills.toString());
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteOffBillsFile() {
+        String name = "OffBills";
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), name);
+        if (file.exists()) {
+            file.delete();
+        }
+    }
+
 }

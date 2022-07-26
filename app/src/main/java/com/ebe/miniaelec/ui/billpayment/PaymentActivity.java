@@ -439,7 +439,9 @@ public class PaymentActivity extends AppCompatActivity implements View.OnClickLi
                                 public void run() {
                                     ReportEntity report = new ReportEntity(transData.getClientID(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.DATE_PATTERN2), finalAmount, billsCount, transData.getPaymentType(), Utils.convert(transData.getTransDateTime(), Utils.DATE_PATTERN, Utils.TIME_PATTERN2), transData.getBankTransactionID());
                                     dataBase.reportEntityDaoDao().addReport(report);
+
                                     deleteBills();
+                                    Utils.copyToFile(transData,transBills);
                                     Log.e("addReport", "run: "+report );
                                 }
                             }).subscribeOn(Schedulers.io())
