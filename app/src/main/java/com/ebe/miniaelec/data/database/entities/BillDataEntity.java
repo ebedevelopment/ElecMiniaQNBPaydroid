@@ -14,6 +14,7 @@ public class BillDataEntity {
     private int id = 0;
 
 
+    
     long clientRowId;
 
     String clientId;
