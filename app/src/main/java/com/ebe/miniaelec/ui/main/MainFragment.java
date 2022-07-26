@@ -50,6 +50,7 @@ import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
 import com.ebe.miniaelec.ui.adapters.AdapterOfflineClients;
 import com.ebe.miniaelec.ui.adapters.PagingClientsAdapter;
+import com.ebe.miniaelec.ui.billpayment.PaymentActivity;
 import com.ebe.miniaelec.ui.login.LoginActivity;
 import com.ebe.miniaelec.ui.services.FinishPendingTransService;
 import com.ebe.miniaelec.utils.CustomDialog;
@@ -388,9 +389,12 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                             bundle.putString("clientID", clientId);
                             // fragment.setArguments(bundle);
                             bundle.putBoolean("offline", false);
+                            Intent intent = new Intent(requireActivity(), PaymentActivity.class);
                             et_clientID.setText("");
                             clientId = "";
-                            navController.navigate(R.id.billPaymentFragment, bundle);
+                            intent.putExtra("data",bundle);
+                           // navController.navigate(R.id.paymentActivity, bundle);
+                            requireActivity().startActivity(intent);
 
                             // MainActivity.fragmentTransaction(fragment, "BillPayment");
                         }
@@ -1016,11 +1020,22 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
 
             requireActivity().startService(new Intent(requireContext(), FinishPendingTransService.class));
         } else {
+//            Bundle bundle = new Bundle();
+//            bundle.putString("clientID", clientId);
+//            bundle.putBoolean("offline", true);
+//            et_clientID.setText("");
+//            navController.navigate(R.id.billPaymentFragment, bundle);
+
             Bundle bundle = new Bundle();
             bundle.putString("clientID", clientId);
-            bundle.putBoolean("offline", true);
+            // fragment.setArguments(bundle);
+            bundle.putBoolean("offline", false);
+            Intent intent = new Intent(requireActivity(), PaymentActivity.class);
             et_clientID.setText("");
-            navController.navigate(R.id.billPaymentFragment, bundle);
+            clientId = "";
+            intent.putExtra("data",bundle);
+            // navController.navigate(R.id.paymentActivity, bundle);
+            requireActivity().startActivity(intent);
         }
     }
 }

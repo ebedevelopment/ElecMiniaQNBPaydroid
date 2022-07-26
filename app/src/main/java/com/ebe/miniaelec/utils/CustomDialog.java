@@ -51,6 +51,8 @@ public class CustomDialog {
                 }
             }
         };
+
+
         MiniaElectricity.getInstance().runOnUiThread(() -> {
             AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
             LayoutInflater inflater = context.getLayoutInflater();
@@ -64,8 +66,15 @@ public class CustomDialog {
             alert.show();
             Message dismissMsg = handler.obtainMessage();
             dismissMsg.what = INT_DISMISS;
-            handler.sendMessageDelayed(dismissMsg, 5000);
+           // handler.sendMessageDelayed(dismissMsg, 2000);
         });
+    }
+
+
+   public static void dismissCustomDialog()
+    {
+        if (alert !=null)
+        alert.dismiss();
     }
 
 

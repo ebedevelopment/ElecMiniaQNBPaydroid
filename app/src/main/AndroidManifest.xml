@@ -14,12 +14,15 @@
     <application
         android:name="com.ebe.miniaelec.MiniaElectricity"
         android:allowBackup="true"
+        android:hardwareAccelerated="true"
         android:icon="@drawable/minia_elec_logo"
         android:label="@string/app_name"
         android:roundIcon="@drawable/minia_elec_logo"
         android:supportsRtl="true"
-        android:hardwareAccelerated="true"
         android:theme="@style/AppTheme.NoActionBar">
+        <activity
+            android:name=".ui.billpayment.PaymentActivity"
+            android:exported="false" />
         <activity
             android:name="com.ebe.miniaelec.ui.MainActivity"
             android:windowSoftInputMode="adjustPan">
@@ -27,19 +30,18 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-
         <activity
             android:name="com.ebe.miniaelec.ui.login.LoginActivity"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-
-        <service android:name=".ui.services.FinishPendingTransService"/>
+        <service android:name=".ui.services.FinishPendingTransService" />
     </application>
 
 </manifest>
