@@ -104,13 +104,7 @@ public class FinishPendingTransService extends Service {
         {
             pendingRequest =intent.getBooleanExtra("pending",false);
 
-            if (pendingRequest)
-            {
-                handlePendingBills();
-            }else
-            {
-                init();
-            }
+            init();
 
         }
 

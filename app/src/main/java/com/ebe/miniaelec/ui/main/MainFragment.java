@@ -664,7 +664,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
     public void onStop() {
         super.onStop();
         Intent intent = new Intent(requireContext(), FinishPendingTransService.class);
-
+        CustomDialog.dismissCustomDialog();
         requireActivity().stopService(intent);
         viewModel.saveFilterParams(selectesMntka, selectedDay, selectedMain, selectedFary);
       offlineClientsAdapter.disposeAdapterDisposable();
@@ -681,6 +681,8 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
         selectedFary = viewModel.fary;
 
     }
+
+
 
     @Override
     public void onDestroy() {
@@ -1029,7 +1031,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
             Bundle bundle = new Bundle();
             bundle.putString("clientID", clientId);
             // fragment.setArguments(bundle);
-            bundle.putBoolean("offline", false);
+            bundle.putBoolean("offline", true);
             Intent intent = new Intent(requireActivity(), PaymentActivity.class);
             et_clientID.setText("");
             clientId = "";

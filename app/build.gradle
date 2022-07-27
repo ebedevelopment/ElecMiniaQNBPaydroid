@@ -5,6 +5,10 @@ plugins {
     id 'androidx.navigation.safeargs'
 }
 
+def static releaseTime() {
+    return new Date().format("yyyyMMdd", TimeZone.getTimeZone("UTC"))
+}
+
 
 android {
     compileSdkVersion 31
@@ -12,8 +16,8 @@ android {
         applicationId "com.ebe.miniaelec"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 30 // next test version 25, production 23
-        versionName "1.0.30"
+        versionCode 35 // next test version 25, production 23
+        versionName  String.format("1.0.%02d", versionCode) + "." + releaseTime()
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         ndk {
             abiFilters "armeabi-v7a", "x86", "armeabi", "mips"
@@ -23,7 +27,27 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            applicationVariants.all { variant ->
+                variant.outputs.all { output ->
+                    if (outputFileName != null && outputFile.name.endsWith('.apk')) {
+                        def type = ""
+                        if (variant.buildType.name == 'debug') {
+                            type = "_debug"
+                        }
+                        def fileName = "MiniaElec_V${defaultConfig.versionName}${type}.apk"
+                        outputFileName = fileName
+                    }
+                }
+            }
         }
+
+        lintOptions {
+            checkReleaseBuilds false
+            abortOnError false
+        }
+
+
     }
     sourceSets.main {
         jni.srcDirs = []

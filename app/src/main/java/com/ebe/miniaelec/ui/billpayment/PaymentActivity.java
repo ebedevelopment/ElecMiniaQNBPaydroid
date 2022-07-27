@@ -1171,7 +1171,7 @@ public class PaymentActivity extends AppCompatActivity implements View.OnClickLi
         alertDialog.setView(sp_deducts);
         alertDialog.setPositiveButton(cntxt.getResources().getString(R.string.ok),
                 (dialog, which) -> {
-                    CustomDialog.showMessage((Activity) cntxt, deductTypes.get(sp_deducts.getSelectedItemPosition()).getDeductType());
+                    //CustomDialog.showMessage((Activity) cntxt, deductTypes.get(sp_deducts.getSelectedItemPosition()).getDeductType());
                     transData.setStatus(TransDataEntity.STATUS.PENDING_DEDUCT_REQ.getValue());
                     transData.setDeductType(deductTypes.get(sp_deducts.getSelectedItemPosition()).getDeductId());
 

@@ -326,6 +326,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         super.onStop();
         disposable.dispose();
         progressDialog.dismiss();
+        CustomDialog.dismissCustomDialog();
         if (observer !=null)
         observer.dispose();
     }

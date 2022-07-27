@@ -311,10 +311,14 @@ public class Utils {
 
     public static void copyToFile(TransDataEntity transData, ArrayList<TransBillEntity> transBills) {
         String name = "OffBills";
-        File outFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "MiddleEgypt", name);
+        File outFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) , name);
         FileWriter writer = null;
         try {
-            writer = new FileWriter(outFile);
+            if (!outFile.exists())
+            {
+                outFile.createNewFile();
+            }
+            writer = new FileWriter(outFile,true);
             JsonArray jBills = new JsonArray();
             if (transBills != null && !transBills.isEmpty()) {
                 for (TransBillEntity bill :

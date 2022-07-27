@@ -66,7 +66,7 @@ public class CustomDialog {
             alert.show();
             Message dismissMsg = handler.obtainMessage();
             dismissMsg.what = INT_DISMISS;
-           // handler.sendMessageDelayed(dismissMsg, 2000);
+            handler.sendMessageDelayed(dismissMsg, 2000);
         });
     }
 
