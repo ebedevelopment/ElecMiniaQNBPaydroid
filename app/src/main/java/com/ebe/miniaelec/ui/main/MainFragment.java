@@ -379,7 +379,7 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                             onFailure("فشل في الاستعلام!\n" + Error);
                             if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
                                 MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                startActivity(new Intent(requireActivity(), LoginActivity.class));
+                                requireActivity().startActivity(new Intent(requireActivity(), LoginActivity.class));
                                 requireActivity().finish();
                             }
                         } else {
@@ -688,6 +688,8 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
     public void onDestroy() {
         super.onDestroy();
         compositeDisposable.dispose();
+        progressDialog.dismiss();
+
     }
 
 
@@ -1019,8 +1021,10 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
             }
 
             Log.d("Pressed", "onItemClick: clicked ");
+            Intent serviceIntent = new Intent(requireContext(), FinishPendingTransService.class);
+            serviceIntent.putExtra("pending", true);
 
-            requireActivity().startService(new Intent(requireContext(), FinishPendingTransService.class));
+            requireActivity().startService(serviceIntent);
         } else {
 //            Bundle bundle = new Bundle();
 //            bundle.putString("clientID", clientId);

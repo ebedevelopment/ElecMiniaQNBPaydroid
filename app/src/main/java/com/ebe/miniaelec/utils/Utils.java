@@ -374,6 +374,7 @@ public class Utils {
             writer.append(jBills.toString());
             writer.flush();
             writer.close();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
