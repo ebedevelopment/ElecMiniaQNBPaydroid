@@ -282,8 +282,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             //Log.e("response", "//" + transResponse.toString());
             MiniaElectricity.getPrefsManager().setLoggedStatus(true);
             MiniaElectricity.getPrefsManager().setTerminalId(transResponse.getTerminalId());
+            Log.e("terminal", "onActivityResult: "+  transResponse.getTerminalId());
             MiniaElectricity.getPrefsManager().setMerchantId(transResponse.getMerchantId());
+            Log.e("marchant", "onActivityResult: "+ transResponse.getMerchantId() );
             MiniaElectricity.getPrefsManager().setFixedFees(transResponse.getFixedFees());
+            Log.e("fees", "onActivityResult: "+ transResponse.getFixedFees() );
             MiniaElectricity.getPrefsManager().setPercentFees(transResponse.getPercentFees());
             MiniaElectricity.getPrefsManager().setOfflineStartingTime(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
                     .format(new Date(System.currentTimeMillis())));
@@ -430,6 +433,14 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
                     }
                 }
+
+            }
+        });
+
+
+        FinishPendingTransService.errorMsg.observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
 
             }
         });

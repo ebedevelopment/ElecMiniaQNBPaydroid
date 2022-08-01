@@ -22,7 +22,7 @@ public interface TransDataDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     Long addTransData( TransDataEntity transData);
 
-    @Update
+    @Update(onConflict = OnConflictStrategy.REPLACE )
     void updateTransData(TransDataEntity transDataEntity);
 
     @Delete

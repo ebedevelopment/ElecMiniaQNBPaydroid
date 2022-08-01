@@ -393,6 +393,7 @@ public class FinishPendingTransService extends Service {
                                                         dataBase.transBillDao().deleteTransBill(b.getBillUnique());
                                                     }
                                                     dataBase.transDataDao().deleteTransData(transData);
+                                                    handlePendingBills();
                                                 }
                                             },throwable -> {
                                                 Log.e("delete payment", "onSuccess: "+throwable.getLocalizedMessage() );
@@ -466,6 +467,8 @@ public class FinishPendingTransService extends Service {
                 @Override
                 public void onFailure(String failureMsg) {
                     Log.i("failureMsg", failureMsg);
+                    loadingState.postValue(false);
+                    errorMsg.postValue(failureMsg);
                     handlePendingBills();
                 }
             });

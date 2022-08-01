@@ -425,10 +425,12 @@ public class PaymentActivity extends AppCompatActivity implements View.OnClickLi
 
                 sendCashDRM(false);
                 transDataId = Math.toIntExact(dataBase.transDataDao().addTransData(transData));
+
                 if (transDataId < 0) {
                     CustomDialog.showMessage((Activity) cntxt, "برجاء اعادة المحاولة!");
                     finish();
                 } else {
+                    transData.setId(transDataId);
 
                     MiniaElectricity.getPrefsManager().setOfflineBillCount(MiniaElectricity.getPrefsManager().getOfflineBillCount() + billsCount);
                     MiniaElectricity.getPrefsManager().setOfflineBillValue(MiniaElectricity.getPrefsManager().getOfflineBillValue() + finalAmount);
@@ -490,6 +492,7 @@ public class PaymentActivity extends AppCompatActivity implements View.OnClickLi
                 Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
                 finish();
             } else {
+                transData.setId(transDataId);
                 JsonArray ModelBillPaymentV = new JsonArray();
                 for (TransBillEntity b :
                         transBills) {
@@ -1100,7 +1103,9 @@ public class PaymentActivity extends AppCompatActivity implements View.OnClickLi
         SendContent.addProperty("password", "PAX_pos3");
         SendContent.addProperty("access_key", "PAX_ACCESS");
         SendContent.addProperty("OrganizationId", 4);
-        SendContent.addProperty("TID", MiniaElectricity.getPrefsManager().getTerminalId());
+       // MiniaElectricity.getPrefsManager().getTerminalId()
+        SendContent.addProperty("TID", //999999999
+                MiniaElectricity.getPrefsManager().getTerminalId());
         SendContent.addProperty("MID", MiniaElectricity.getPrefsManager().getMerchantId());
         SendContent.addProperty("Header1", "test ECR");
         SendContent.addProperty("Header2", /*"           MAIN ADDRESS"*/MiniaElectricity.getPrefsManager().getCollectorCode());

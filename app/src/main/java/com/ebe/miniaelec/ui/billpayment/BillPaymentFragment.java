@@ -513,6 +513,7 @@ public class BillPaymentFragment extends Fragment implements View.OnClickListene
                 Toast.makeText(cntxt, "برجاء اعادة المحاولة!", Toast.LENGTH_LONG).show();
                 navController.popBackStack();
             } else {
+                transData.setId(transDataId);
                 JsonArray ModelBillPaymentV = new JsonArray();
                 for (TransBillEntity b :
                         transBills) {
