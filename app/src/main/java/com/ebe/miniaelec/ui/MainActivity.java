@@ -25,6 +25,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentOnAttachListener;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -97,7 +98,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     CompositeDisposable disposable;
     DisposableCompletableObserver observer;
     MainViewModel viewModel;
-
+   public static MutableLiveData<Boolean> goToLogin = new MutableLiveData<>(false);
+    int serviceCount =0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -200,30 +202,50 @@ dataBase= AppDataBase.getInstance(this);
                     if (!MiniaElectricity.getPrefsManager().isLoggedIn()) {
                         finish();
                     } else {
-                        onNavigationItemSelected(nvNavigation.getMenu().getItem(0));
-                       disposable.add(dataBase.offlineClientsDao().offlineClientsCount()
-                               .subscribeOn(Schedulers.io())
-                               .observeOn(AndroidSchedulers.mainThread())
-                               .subscribe(new Consumer<Long>() {
-                                   @Override
-                                   public void accept(Long aLong) throws Throwable {
-                                       if ((MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 ||
+                        if (serviceCount==0)
+                        {
+                            serviceCount = 1;
+                            onNavigationItemSelected(nvNavigation.getMenu().getItem(0));
+                            disposable.add(dataBase.offlineClientsDao().offlineClientsCount()
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(new Consumer<Long>() {
+                                        @Override
+                                        public void accept(Long aLong) throws Throwable {
+                                            if ((MiniaElectricity.getPrefsManager().getOfflineBillStatus() == 1 ||
 
-                                               (isAfterLogin && aLong == 0 && Utils.checkConnection(MainActivity.this)))) {
-                                           getClientsData();
-                                       }else
-                                       {
-                                           viewModel.PostInsertionState.setValue(true);
-                                       }
-                                   }
-                               },throwable -> {
-                                   Log.e("serviceState", "onChanged: "+throwable.getLocalizedMessage() );
-                               }));
+                                                    (isAfterLogin && aLong == 0 && Utils.checkConnection(MainActivity.this)))) {
+                                                getClientsData();
+                                            }else
+                                            {
+                                                viewModel.PostInsertionState.setValue(true);
+                                            }
+                                        }
+                                    },throwable -> {
+                                        Log.e("serviceState", "onChanged: "+throwable.getLocalizedMessage() );
+                                    }));
+
+                        }
 
 
                     }
+
+
                 }
 
+            }
+        });
+
+        goToLogin.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (aBoolean)
+                {
+                    Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                    intent.putExtra("logout",true);
+                    startActivity(intent);
+                    finish();
+                }
             }
         });
 
@@ -238,7 +260,9 @@ dataBase= AppDataBase.getInstance(this);
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                intent.putExtra("logout",true);
+                startActivity(intent);
                 finish();
                 return true;
             }
@@ -714,6 +738,7 @@ dataBase= AppDataBase.getInstance(this);
     protected void onDestroy() {
         super.onDestroy();
         disposable.dispose();
+        CustomDialog.dismissCustomDialog();
 
         if (Utils.compositeDisposable!=null)
             Utils.compositeDisposable.dispose();

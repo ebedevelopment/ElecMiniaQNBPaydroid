@@ -422,6 +422,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 {
                     serviceCount=1;
                     if (!MiniaElectricity.getPrefsManager().isLoggedIn()) {
+                       if (!getIntent().getBooleanExtra("logout",false))
                         finish();
                     } else {
 

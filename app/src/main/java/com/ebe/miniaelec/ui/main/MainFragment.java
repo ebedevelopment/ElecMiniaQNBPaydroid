@@ -48,6 +48,7 @@ import com.ebe.miniaelec.data.database.entities.TransDataEntity;
 import com.ebe.miniaelec.data.database.entities.TransDataWithTransBill;
 import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
+import com.ebe.miniaelec.ui.MainActivity;
 import com.ebe.miniaelec.ui.adapters.AdapterOfflineClients;
 import com.ebe.miniaelec.ui.adapters.PagingClientsAdapter;
 import com.ebe.miniaelec.ui.billpayment.PaymentActivity;
@@ -376,11 +377,18 @@ public class MainFragment extends Fragment implements View.OnClickListener,Adapt
                         String Error = responseBody.optString("Error").trim();
                         //Log.e("response", response);
                         if (!Error.isEmpty()) {
-                            onFailure("فشل في الاستعلام!\n" + Error);
+
                             if (Error.contains("تم انتهاء صلاحية الجلسه") || Error.contains("لم يتم تسجيل الدخول")) {
                                 MiniaElectricity.getPrefsManager().setLoggedStatus(false);
-                                requireActivity().startActivity(new Intent(requireActivity(), LoginActivity.class));
-                                requireActivity().finish();
+                                CustomDialog.showMessage(getActivity(), Error);
+                                et_clientID.setText("");
+                               // Toast.makeText(requireActivity(),Error,Toast.LENGTH_LONG).show();
+                                navController.popBackStack();
+                                MainActivity.goToLogin.setValue(true);
+
+                            }else
+                            {
+                                onFailure("فشل في الاستعلام!\n" + Error);
                             }
                         } else {
 
