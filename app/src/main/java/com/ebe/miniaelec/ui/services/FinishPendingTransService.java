@@ -350,7 +350,7 @@ public class FinishPendingTransService extends Service {
                 goToPayment.postValue(true);
             }
 
-            goToPayment.postValue(false);
+         //  goToPayment.postValue(false);
 
             stopSelf();
 
