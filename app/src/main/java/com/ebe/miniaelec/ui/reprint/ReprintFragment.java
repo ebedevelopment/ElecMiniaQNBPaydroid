@@ -28,6 +28,7 @@ import com.ebe.miniaelec.data.http.ApiServices;
 import com.ebe.miniaelec.data.http.RequestListener;
 import com.ebe.miniaelec.data.print.PrintListener;
 import com.ebe.miniaelec.data.print.PrintReceipt;
+import com.ebe.miniaelec.ui.MainActivity;
 import com.google.gson.Gson;
 
 import org.json.JSONArray;
@@ -116,6 +117,12 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
         compositeDisposable.add(dataBase.transDataDao().getTransByClientId(et_clientID.getText().toString().trim())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
+                        .doOnError(new Consumer<Throwable>() {
+                            @Override
+                            public void accept(Throwable throwable) throws Throwable {
+                                reprintOnline();
+                            }
+                        })
                 .map(response -> {
 
                     transBillEntities.addAll(response.getTransBills());
@@ -152,70 +159,83 @@ public class ReprintFragment extends Fragment implements View.OnClickListener {
                                            });
                                        }
                                    } else
-                                       new ApiServices(requireContext(), false).rePrint(et_clientID.getText().toString().trim(), new RequestListener() {
-                                           @Override
-                                           public void onSuccess(String response) {
-                                               try {
-                                                   JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
-                                                   String Error = responseBody.optString("Error").trim();
-                                                   Log.e("response", response);
-                                                   if (Error != null && !Error.isEmpty()) {
-                                                       onFailure("فشل في اعادة الطباعة!\n" + Error);
-                                                   } else {
-                                                       TransDataEntity transData = new TransDataEntity();
-                                                       JSONArray billsData = responseBody.optJSONArray("ModelPrintInquiryV");
-                                                       transData.setReferenceNo(responseBody.getInt("BankReceiptNo"));
-                                                       transData.setStan(String.valueOf(responseBody.getInt("BankReceiptNo")));
-                                                       transData.setPaymentType(responseBody.getInt("PayType"));
-                                                       transData.setTransDateTime(responseBody.getString("BankDateTime"));
-                                                       transData.setClientID(et_clientID.getText().toString().trim());
-                                                       transData.setStatus(TransDataEntity.STATUS.REPRINT.getValue());
-                                                       ArrayList<TransBillEntity> billDetails = new ArrayList<>();
-                                                       for (int i = 0; i < Objects.requireNonNull(billsData).length(); i++) {
-                                                           TransBillEntity bill = new Gson().fromJson(billsData.getJSONObject(i).toString(), TransBillEntity.class);
-                                                           billDetails.add(bill);
-                                                           bill.setTransDataId(transData.getClientID());
-                                                       }
-
-                                                       int printCount = responseBody.getInt("PrintCount");
-                                                       if (printCount > 2) {
-                                                           Toast.makeText(requireContext(), "تمت اعادة طباعة هذه الفاتورة من قبل!", Toast.LENGTH_SHORT).show();
-                                                           navController.popBackStack(R.id.mainFragment, false);
-                                                       } else {
-                                                           new PrintReceipt(requireContext(), transBillEntities,transDataEntity, new PrintListener() {
-                                                               @Override
-                                                               public void onFinish() {
-                                                                   et_clientID.setText("");
-                                                                   navController.popBackStack(R.id.mainFragment, false);
-
-                                                               }
-
-                                                               @Override
-                                                               public void onCancel() {
-
-                                                               }
-                                                           });
-                                                       }
-                                                   }
-                                               } catch (JSONException e) {
-                                                   e.printStackTrace();
-                                                   onFailure(e.getMessage());
-                                               }
-                                           }
-
-                                           @Override
-                                           public void onFailure(String failureMsg) {
-                                               Toast.makeText(requireContext(), failureMsg, Toast.LENGTH_SHORT).show();
-                                               et_clientID.setText("");
-
-                                           }
-                                       });
+                                       reprintOnline();
                                }
-                           },throwable -> {Toast.makeText(ReprintFragment.this.requireContext(),throwable.getLocalizedMessage(),Toast.LENGTH_LONG).show();}
+                           },throwable -> {//Toast.makeText(ReprintFragment.this.requireContext(),throwable.getLocalizedMessage(),Toast.LENGTH_LONG).show();
+                }
 
                 )
 );
 
+    }
+
+
+    private void reprintOnline()
+    {
+        new ApiServices(requireContext(), false).rePrint(et_clientID.getText().toString().trim(), new RequestListener() {
+            @Override
+            public void onSuccess(String response) {
+                try {
+                    JSONObject responseBody = new JSONObject(response.subSequence(response.indexOf("{"), response.length()).toString());
+                    String Error = responseBody.optString("Error").trim();
+                    Log.e("response", response);
+                    if (Error != null && !Error.isEmpty()) {
+                        onFailure("فشل في اعادة الطباعة!\n" + Error);
+                        if (Error.contains("تم انتهاء صلاحية الجلسه"))
+                        {
+
+                            MainActivity.goToLogin.postValue(true);
+                        }
+                    } else {
+                        TransDataEntity transData = new TransDataEntity();
+                        JSONArray billsData = responseBody.optJSONArray("ModelPrintInquiryV");
+                        transData.setReferenceNo(responseBody.getInt("BankReceiptNo"));
+                        transData.setStan(String.valueOf(responseBody.getInt("BankReceiptNo")));
+                        transData.setPaymentType(responseBody.getInt("PayType"));
+                        transData.setTransDateTime(responseBody.getString("BankDateTime"));
+                        transData.setClientID(et_clientID.getText().toString().trim());
+                        transData.setStatus(TransDataEntity.STATUS.REPRINT.getValue());
+                        ArrayList<TransBillEntity> billDetails = new ArrayList<>();
+                        for (int i = 0; i < Objects.requireNonNull(billsData).length(); i++) {
+                            TransBillEntity bill = new Gson().fromJson(billsData.getJSONObject(i).toString(), TransBillEntity.class);
+                            billDetails.add(bill);
+                            bill.setTransDataId(transData.getClientID());
+                        }
+
+                        int printCount = responseBody.getInt("PrintCount");
+                        if (printCount > 2) {
+                            Toast.makeText(requireContext(), "تمت اعادة طباعة هذه الفاتورة من قبل!", Toast.LENGTH_SHORT).show();
+                            navController.popBackStack(R.id.mainFragment, false);
+                        } else {
+                            new PrintReceipt(requireContext(), billDetails,transData, new PrintListener() {
+                                @Override
+                                public void onFinish() {
+                                    et_clientID.setText("");
+                                    navController.popBackStack(R.id.mainFragment, false);
+
+                                }
+
+                                @Override
+                                public void onCancel() {
+
+                                }
+                            });
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    onFailure(e.getMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(String failureMsg) {
+                Toast.makeText(requireContext(), failureMsg, Toast.LENGTH_SHORT).show();
+                et_clientID.setText("");
+
+
+            }
+        });
     }
 
     @Override
